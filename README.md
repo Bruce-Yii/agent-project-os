@@ -1,22 +1,22 @@
 # Agent Project OS
 
-> Development documentation · v0.2 · 2026-11-09  
-> Working name; product brand is not frozen.
+> **Development documentation · v0.2 · 2026-11-09**  
+> Product codename: **Agent Project OS** (working name; brand not frozen)
 
-An independent, Project-centered operating system for humans and multiple AI Agents to organize long-lived work across projects, tasks, knowledge, execution environments, tools, and devices.
+An independent, project-centered workspace for humans and multiple AI agents to organize long-lived work across projects, tasks, knowledge, execution environments, tools, and devices.
 
-**The product is organized around Projects, not Agent chats.** People own goals and important decisions. The system maintains project and work state. Humans and Agents can both participate in work. Agent Sessions, Runs, Providers, and machines are replaceable execution resources.
+**The product is organized around Projects, not Agent chats.** People own goals and important decisions. The system maintains project and work state. Humans and Agents can both participate in work. Agent sessions, runs, providers, and machines are replaceable execution resources.
 
-This repository is a product and engineering design baseline. It is not an implementation repository yet.
+This repository contains the product and engineering design needed to implement the system. It is not an implementation repository yet.
 
 ## Current status
 
-- Product direction: confirmed at the concept level by the product owner.
-- Full capability scope: preserved; implementation may be staged, but the product is not reduced to an Agent client or execution relay.
-- Domain model and architecture: design proposals; review required before schema/API freeze.
-- Code: not started in this repository.
-- Release / production evidence: none.
-- Local Agent Session: Desktop must create/open a local Agent Session and continuously receive new messages.
+- Product direction: **confirmed at the concept level** by the product owner.
+- Full capability scope: **preserved**; implementation may be staged, but the product scope is not reduced to an Agent client or execution relay.
+- Domain model: **design proposal; requires review before schema freeze**.
+- Architecture: **design proposal; technology choices are not frozen**.
+- Code: **not started in this repository**.
+- Release / production evidence: **none**.
 
 ## Read in dependency order
 
@@ -30,36 +30,52 @@ This repository is a product and engineering design baseline. It is not an imple
 | 05 | [Execution and runtime](docs/05-execution-runtime.md) | How are assignments, runs, sessions, runtimes, and recovery represented? |
 | 06 | [Delivery, review, and governance](docs/06-review-delivery-governance.md) | How do we prove work is done and authorize side effects? |
 | 07 | [Orchestration and autonomy](docs/07-orchestration-and-autonomy.md) | How are work planned, routed, triggered, and continued? |
-| 08 | [Knowledge and context](docs/08-knowledge-context-memory.md) | How does durable project knowledge inform execution? |
+| 08 | [Knowledge and context](docs/08-knowledge-context-memory.md) | How does durable project knowledge inform execution without polluting it? |
 | 09 | [Client experience](docs/09-client-experience.md) | How should Desktop, Mobile, and Web expose the same Project OS? |
-| 10 | [Plugins and integrations](docs/10-plugins-integrations.md) | How do Providers and external systems connect safely? |
-| 11 | [Platform, security, and reliability](docs/11-platform-security-reliability.md) | What infrastructure makes the product dependable? |
+| 10 | [Plugins and integrations](docs/10-plugins-integrations.md) | How do providers and external systems connect safely? |
+| 11 | [Platform, security, and reliability](docs/11-platform-security-reliability.md) | What cross-cutting infrastructure makes the product dependable? |
 | 12 | [Development sequence](docs/12-development-roadmap.md) | In what dependency order should the system be built? |
 | 13 | [Competitor and reuse analysis](docs/13-competitor-and-reuse-analysis.md) | What should be learned from existing products and projects? |
-| 14 | [Open decisions](docs/14-open-decisions.md) | What is confirmed, proposed, or unresolved? |
-| 15 | [Glossary](docs/15-glossary.md) | What do the terms mean? |
+| 14 | [Open decisions](docs/14-open-decisions.md) | What is confirmed, proposed, or still unresolved? |
+| 15 | [Glossary](docs/15-glossary.md) | What do the terms mean in this product? |
 | 16 | [Source traceability](docs/16-source-traceability.md) | Where did each capability and design rule come from? |
 | 17 | [Agent development contract](docs/17-agent-development-contract.md) | How should multiple developers and Agent windows work safely? |
-| 18 | [Local Agent Session subsystem](docs/18-local-agent-session-subsystem.md) | How does Desktop create/attach local Agent Sessions and continuously receive new messages? |
+| 18 | [Local Agent Session subsystem](docs/18-local-agent-session-subsystem.md) | How does Desktop create/attach local Agent Sessions and continuously receive new messages safely? |
 
 Templates: [ADR](docs/templates/ADR.md), [Module contract](docs/templates/module-contract.md), [Work package](docs/templates/work-package.md).
 
-## Product invariants
+## Core product model
 
-1. Project is stable; windows, Agents, Providers, Sessions, Runs, and machines are dynamic.
-2. Task ≠ Assignment ≠ Run ≠ Session.
-3. Human responsibility and Agent execution are separate.
-4. Agent completion is not acceptance; acceptance requires evidence.
-5. Direct Agent use and coordinated multi-Agent work are both first-class.
-6. Project management is broader than coding.
-7. Autonomous execution is a sub-capability, not the product identity.
-8. External systems retain authority over their live facts.
-9. The complete product scope remains visible; delivery is staged by dependency.
-10. Complexity must reduce user coordination, not create more of it.
-11. Local Agent Sessions are a first-class Desktop capability.
-12. Direct Session use is supported without a Task; Project/Task/Run binding is explicit.
+```mermaid
+flowchart TB
+  HUMAN["Humans / Teams"] --> PROJECT["Project OS"]
+  AGENT["Agents / Providers"] --> PROJECT
+  PROJECT --> WORK["Projects · Goals · Tasks · Dependencies"]
+  PROJECT --> COLLAB["People · Agents · Discussions · Decisions"]
+  PROJECT --> EXEC["Assignments · Runs · Sessions · Artifacts"]
+  PROJECT --> KNOW["Knowledge · Context · Resources"]
+  PROJECT --> CONTROL["Review · Approval · Workflow · Governance"]
+  EXEC --> RUNTIME["Local · Remote · Cloud Runtime"]
+  CONTROL --> EXT["GitHub · Notion · Feishu · MCP · Other services"]
+  CLIENT["Desktop · Mobile · Web"] <--> PROJECT
+```
 
-## Status labels
+## Non-negotiable product invariants
+
+1. **Project is stable; windows, Agents, Providers, Sessions, Runs, and machines are dynamic.**
+2. **Task ≠ Assignment ≠ Run ≠ Session.** A Task survives multiple assignments and execution attempts.
+3. **Human responsibility and Agent execution are separate.** A human can remain accountable while an Agent performs the work.
+4. **Agent completion is not acceptance.** Acceptance requires evidence against explicit criteria and, where required, human approval.
+5. **Direct Agent use and coordinated multi-Agent work are both first-class.** A Coordinator is not a mandatory bottleneck.
+6. **Project management is broader than coding.** Research, design, operations, documents, external systems, and team work belong in the model.
+7. **Autonomous execution is a sub-capability, not the product identity.** Its user-specific execution Skill is a supporting input, not a separate product or control plane.
+8. **External systems retain authority over their live facts.** GitHub owns current PR/CI facts; the OS stores references and verified projections.
+9. **The complete product scope remains visible.** Delivery is staged by dependency; the product is not redefined as an MVP-only Agent manager.
+10. **Complexity must reduce user coordination, not create more of it.** Protocols and state are internal unless they help a real user decision.
+11. **Local Agent Sessions are a first-class Desktop capability.** The product must create/open a local Agent Session and continuously receive new messages; Provider Session, RuntimeProcess, and client connection are separate facts.
+12. **Direct Session use is supported without a Task.** Project/Task/Run binding is explicit; a Session is not an alternative Project identity.
+
+## Status labels used in this repository
 
 - `CONFIRMED`: explicitly established by the product owner.
 - `PROPOSED`: a design recommendation; not yet frozen.
@@ -69,19 +85,23 @@ Templates: [ADR](docs/templates/ADR.md), [Module contract](docs/templates/module
 
 Do not promote a proposal to a confirmed decision just because it appears in a document.
 
-## Primary lineage
+## Primary lineage and evidence
 
 - [AWRP repository](https://github.com/Bruce-Yii/agent-relay) — historical protocol and implementation evidence.
-- [Linear Personal Project OS](https://linear.app/yi383775/project/personal-project-oslinear-notion-governance-a75ee24846a2) — actual Linear + Notion operating model.
-- [Notion product definition](https://app.notion.com/p/40f1e795caee812cb4e6d122fea4d784) and [system architecture](https://app.notion.com/p/40f1e795caee8100a6a9fa9a5de3437d) — current design references.
-- [DeepSeek DSH](https://github.com/deepseek-ai/dsh-superagent-prototype), [Paperclip](https://github.com/paperclipai/paperclip), [Paseo](https://github.com/getpaseo/paseo), [Superset](https://github.com/superset-sh/superset), [OpenHands](https://github.com/All-Hands-AI/OpenHands), [Conductor](https://github.com/Conductor-OSS/conductor).
-- Provider references: [Codex App Server](https://github.com/openai/codex/blob/main/codex-rs/app-server/README.md), [Claude Agent SDK sessions](https://code.claude.com/docs/en/agent-sdk/sessions), [OpenCode Server](https://opencode.ai/docs/server/), [Pi RPC](https://pi.dev/docs/latest/rpc).
+- [AWRP protocol](https://github.com/Bruce-Yii/agent-relay/blob/main/protocol/AWRP-0.1.md), [Worker Contract](https://github.com/Bruce-Yii/agent-relay/blob/main/protocol/WORKER-CONTRACT.md), [Coordinator Adapter](https://github.com/Bruce-Yii/agent-relay/blob/main/protocol/CHATGPT-ADAPTER.md).
+- [Linear Personal Project OS](https://linear.app/yi383775/project/personal-project-oslinear-notion-governance-a75ee24846a2) — actual Linear + Notion operating model and governance history.
+- [Notion product definition](https://app.notion.com/p/40f1e795caee812cb4e6d122fea4d784) and [Notion system architecture](https://app.notion.com/p/40f1e795caee8100a6a9fa9a5de3437d) — current design discussion references.
+- [DeepSeek DSH Super-agent prototype](https://github.com/deepseek-ai/dsh-superagent-prototype), [Paperclip](https://github.com/paperclipai/paperclip), [Paseo](https://github.com/getpaseo/paseo), [Superset](https://github.com/superset-sh/superset), [OpenHands Agent Canvas](https://github.com/All-Hands-AI/OpenHands), [Conductor](https://github.com/Conductor-OSS/conductor).
+- Local Provider session APIs: [Codex App Server](https://github.com/openai/codex/blob/main/codex-rs/app-server/README.md), [Claude Agent SDK sessions](https://code.claude.com/docs/en/agent-sdk/sessions), [OpenCode Server](https://opencode.ai/docs/server/), [Pi RPC](https://pi.dev/docs/latest/rpc).
 
-## Contribution rules
+Competitor and implementation evidence was reviewed on **2026-11-09**. Local Agent Session design was expanded on the same date from official Provider protocol/SDK documentation. Re-check moving branches, current API support, platform availability, and licenses before implementation.
 
-- Change the document that owns the subject; do not duplicate the same contract.
+## Repository contribution rules
+
+- Change the document that owns the subject; do not duplicate the same contract in multiple places.
 - Update `14-open-decisions.md` when a material decision changes.
 - Record architecture-changing decisions with an ADR.
-- Stabilize domain/API contracts before parallel implementation.
+- Keep API/domain contracts stable before parallel implementation begins.
 - Use isolated branches/worktrees for parallel work; never share one mutable checkout between independent Agents.
-- Do not add production code, credentials, private customer data, or Provider secrets to this documentation repository.
+- Do not add production code, credentials, private customer data, or provider secrets to this documentation repository.
+
