@@ -1,5 +1,22 @@
 # Changelog
 
+## v0.5 — 2026-11-10
+
+### Added
+- Added `docs/20-design-baseline.md` with the G0 asset inventory, layered authority model, Notion-to-Git ownership map, repository snapshots, and discrepancy register.
+- Completed G0 on the existing PR #1 branch; G1–G5 remain not started and PR merge remains pending.
+
+### Corrected
+- Aligned README, STATUS, CHANGELOG, manifest, and checksums to documentation baseline v0.5.
+- Corrected the section numbers in `docs/06` and `docs/07` to match their filenames and README order.
+- Defined the existing `N` source key in `docs/16` as new-product synthesis grounded in product-owner-confirmed design.
+- Removed a duplicate top-level Changelog heading.
+
+### Not changed
+- No product code or runtime implementation was added.
+- No technology stack, schema, or deployment topology was frozen.
+- No product scope was removed; the complete 32-group target remains.
+
 ## v0.4 — 2026-11-10
 
 ### Added
@@ -27,8 +44,6 @@
 ### Not frozen
 - Exact open-source license, contribution governance, initial launch segment, first coherent release boundary, hosted service model, technology stack, and canonical deployment topology.
 - No code implementation or production capability is claimed by this documentation update.
-
-# Changelog
 
 ## v0.2 — 2026-11-09
 
