@@ -1,4 +1,4 @@
-# 07 — Deliverables, Review, Approval, and Governance
+# 06 — Deliverables, Review, Approval, and Governance
 
 ## 1. Completion model
 
