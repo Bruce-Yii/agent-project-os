@@ -1,4 +1,4 @@
-# 06 — Orchestration, Workflow, and Autonomous Execution
+# 07 — Orchestration, Workflow, and Autonomous Execution
 
 ## 1. Orchestration is a Project capability
 

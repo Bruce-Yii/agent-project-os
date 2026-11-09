@@ -130,12 +130,12 @@ Logs must be useful for debugging without leaking secrets or unnecessary user co
 | Backend | TypeScript/Node or another suitable runtime | domain transaction, plugin SDK, operations |
 | Primary store | PostgreSQL; SQLite for local cache/Hub | transactions, migrations, local deployment |
 | Event transport | WebSocket / SSE / message broker | realtime, backpressure, reconnect |
-| Workflow engine | Temporal / Conductor / custom bounded engine / LangGraph | durability, human wait, retries, vendor/ops cost |
+| Workflow engine | DBOS (primary G2 candidate), Temporal (distributed fallback), Hatchet (alternative with current open risks), Conductor/LangGraph references | durability, human wait, retries, release stability, operational cost |
 | Artifact store | object storage + immutable references | large files, diff, evidence, retention |
 | Search | full-text + vector + structured filters | provenance, ACL, freshness |
 | Isolation | Git worktree, container, OS sandbox, remote VM | security, reproducibility, cost |
 
-No framework or database is frozen by this document.
+Additional G2 classifications and evidence are in [22 — Mature-module Reuse Assessment](22-mature-module-reuse-assessment.md). This table remains a high-level candidate list; no framework or database is frozen by this document.
 
 ## 11. Acceptance criteria
 

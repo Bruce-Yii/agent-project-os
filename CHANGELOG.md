@@ -1,5 +1,67 @@
 # Changelog
 
+## v0.7 — 2026-11-10
+
+### Added
+- Added `docs/22-mature-module-reuse-assessment.md` with the G2 reuse matrix, license/version snapshots, upstream Issue/PR and maintainer evidence, explicit adoption boundaries, exclusions, and bounded G3 validation spikes.
+- Completed G2 as a source-based reuse-design assessment: every major subsystem now has a Direct Reuse / Adapt / Reference / Build decision.
+
+### Corrected
+- Updated README, STATUS, manifest, source traceability, open decisions, competitor/reuse synthesis, and checksums to documentation baseline v0.7.
+- Corrected the project readiness state: G3 engineering decomposition is next; G2 validation spikes are bounded G3 work, not a reason to leave G2 uncompleted.
+
+### Not changed
+- No product code or package dependency was added.
+- No technology stack, database schema, deployment topology, or package version was frozen.
+- No parallel implementation was authorized; PR #1 remains Draft and unmerged.
+
+## v0.6 — 2026-11-10
+
+### Added
+- Added `docs/21-architecture-review.md` with the six-journey coverage map, 32-group module ownership map, core object/state authority map, degraded-path review, and prioritized architecture findings.
+- Completed G1 as an architecture audit on the existing PR #1 branch; critical decisions remain owned by G2/G3 and block parallel implementation.
+
+### Corrected
+- Renamed the implementation-stage acceptance labels in `docs/12` to Stage 0–7 gates, avoiding collision with the separate G0–G5 preparation gates.
+- Updated README, STATUS, manifest, and checksums to documentation baseline v0.6.
+- Corrected the G0 report's next-gate pointer to G2 after the G1 architecture audit passed.
+- Recomputed all 30 `CHECKSUMS.sha256` entries using a SHA-256 implementation that passes the standard `abc` known-vector test; withdrew the earlier unverified 21/30 mismatch count.
+
+### Not changed
+- No schema, API, event contract, deployment topology, Provider, or technology stack was frozen.
+- No product code was added and no parallel implementation was authorized.
+
+## v0.5 — 2026-11-10
+
+### Added
+- Added `docs/20-design-baseline.md` with the G0 asset inventory, layered authority model, Notion-to-Git ownership map, repository snapshots, and discrepancy register.
+- Completed G0 on the existing PR #1 branch; G1–G5 remain not started and PR merge remains pending.
+
+### Corrected
+- Aligned README, STATUS, CHANGELOG, manifest, and checksums to documentation baseline v0.5.
+- Corrected the section numbers in `docs/06` and `docs/07` to match their filenames and README order.
+- Defined the existing `N` source key in `docs/16` as new-product synthesis grounded in product-owner-confirmed design.
+- Removed a duplicate top-level Changelog heading.
+
+### Not changed
+- No product code or runtime implementation was added.
+- No technology stack, schema, or deployment topology was frozen.
+- No product scope was removed; the complete 32-group target remains.
+
+## v0.4 — 2026-11-10
+
+### Added
+- Added `docs/19-pre-development-readiness.md` for the pre-implementation sequence: G0 design baseline, G1 architecture review, G2 mature-module reuse assessment, G3 engineering decomposition, G4 independently usable release roadmap, and G5 documentation handoff.
+- Clarified that G0–G5 are preparation gates, distinct from the implementation sequence in docs/12.
+- Recorded the design-stage GO decision and the rule that feasibility can be assessed from product design, architecture, source research, mature technical paths, and reuse analysis; a prototype or full competitor E2E run is not a prerequisite.
+- Preserved the complete 32-group scope, Project-first model, direct Agent and Coordinator modes, DeepSeek DSH as an architectural input, and Experience-to-Skill as a supporting capability.
+
+### Not changed
+- No product code or runtime implementation was added.
+- No technology stack or deployment topology was frozen.
+- No gate is claimed as complete; G0–G5 remain NOT STARTED.
+- Existing docs/00–18 and ownership rules remain in place; this adds a preparation plan, not a parallel documentation hierarchy.
+
 ## v0.3 — 2026-11-09
 
 ### Added / clarified
@@ -13,8 +75,6 @@
 ### Not frozen
 - Exact open-source license, contribution governance, initial launch segment, first coherent release boundary, hosted service model, technology stack, and canonical deployment topology.
 - No code implementation or production capability is claimed by this documentation update.
-
-# Changelog
 
 ## v0.2 — 2026-11-09
 
@@ -40,4 +100,3 @@
 - Product remains the complete Project-centered OS for people and multiple Agents.
 - Autonomous execution remains a sub-capability; Personal Execution Skill remains a supporting method input.
 - Technology stack remains unfrozen; no code implementation or production capability is claimed.
-

@@ -185,3 +185,19 @@ Before claiming a competitive moat, run side-by-side tests with representative u
 6. Measure setup time, coordination time, state reconstruction, accepted outcome rate, and operational cost against a stitched-together toolchain.
 
 The differentiated position remains a **testable product hypothesis** until these journeys work better in practice than the alternatives.
+
+## 10. G2 mature-module reuse findings (2026-11-10)
+
+The detailed source/version/license/maintenance matrix is in [22 — Mature-module Reuse Assessment](22-mature-module-reuse-assessment.md). This section is the short product-level synthesis; it does not itself freeze package versions.
+
+| Capability | G2 recommendation | Boundary |
+|---|---|---|
+| Local Agent Daemon | Adapt/wrap Paseo's published Daemon packages; use ACP where supported and native Provider APIs where richer | Paseo is a runtime candidate, not our Project domain; its plugin backend is trusted/unsandboxed |
+| Durable workflows | DBOS is the primary TypeScript/PostgreSQL candidate; Temporal is the distributed fallback | Keep Task/Assignment/Run and external-effect authority in Project OS; validate exact stable DBOS version |
+| Connectors and tools | Selectively reuse Activepieces community pieces; use MCP for tool interoperability | Do not embed a second workflow engine; connectors call validated Project OS commands |
+| Offline sync | PowerSync Open Edition is the leading conditional candidate | Sync only authorized projections; writes return through our backend; keep Session streaming separate |
+| Memory and Skills | Own canonical Memory/Decision state; adopt Agent Skills `SKILL.md` as an interchange format | Mem0 is optional retrieval only; Skill metadata never grants permissions |
+| Product domain, policy, review, attention, UX | Build ourselves | These are the product's differentiating canonical semantics, not generic infrastructure |
+
+DeepSeek Harness and its Super-agent prototype remain architectural references rather than production dependencies. Composio's self-hosted deployment is an Enterprise arrangement; full Activepieces and unsandboxed third-party plugin execution are not part of the free self-hosted core. Hatchet and Electric remain alternatives/reference designs, not selected defaults.
+

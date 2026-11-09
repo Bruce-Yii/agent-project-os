@@ -46,6 +46,15 @@ This document separates product-owner decisions from design proposals and valida
 | P-011 | Local Session event durability | Persist durable message/turn/permission boundaries; stream token/terminal deltas separately; reconcile Provider history after reconnect | PROPOSED |
 | P-012 | Multi-client Session control | Multiple observers with one active controller lease by default; serialized commands | PROPOSED |
 | P-013 | Local Session data policy | Provider transcript remains Provider-owned; Project OS stores metadata and user-selected sync/retention projections | PROPOSED; privacy/storage validation required |
+| P-014 | Durable workflow runtime | DBOS is the primary TypeScript/PostgreSQL candidate behind a `DurableWorkflowPort`; Temporal is the distributed fallback; Hatchet is not the default while replay/stream issues remain open | PROPOSED; G3 must validate the exact stable DBOS release and recovery semantics |
+| P-015 | Local Agent Daemon | Evaluate Paseo's published server subpaths behind our `LocalRuntimeNode` contract; use ACP for compatible Providers and native adapters where richer | PROPOSED; G3 real-Provider spike required; Paseo's plugin runtime is not our marketplace security model |
+| P-016 | Connector reuse | Selectively vendor/adapt Activepieces community pieces; use MCP as a tool interoperability protocol | PROPOSED; per-piece license/dependency audit and Service Connector adapter required |
+| P-017 | Offline client sync | PowerSync Open Edition is the leading conditional candidate; client writes must return through the Project OS backend API | PROPOSED; G3 must validate Desktop/Mobile, authorization, checkpoint, migration, and conflict behavior |
+| P-018 | Canonical Memory | Project OS owns facts, decisions, provenance, freshness, and supersession; third-party retrieval may only propose candidates | PROPOSED; Mem0 is not canonical due mutable-fact/stale-retrieval risk |
+| P-019 | Skill interchange | Adopt the Agent Skills `SKILL.md` format for import/export; Project OS owns extraction, evaluation, approval, version, scope, and rollback | PROPOSED; optional `allowed-tools` metadata is not an authorization boundary |
+| P-020 | Authorization and plugin trust | Build the Project OS capability/approval model; require explicit scopes and isolation for untrusted plugins | PROPOSED; defer OPA/OpenFGA until relationship-policy complexity justifies them |
+| P-021 | Data and observability | PostgreSQL canonical store, SQLite local store/cache, object storage for large artifacts, OpenTelemetry-compatible instrumentation | PROPOSED; deployment topology remains open |
+| P-022 | Product UI and desktop shell | Build the Project-first UX; reuse established terminal/editor/diff components; choose Tauri/Electron only after runtime/OS constraints are clear | PROPOSED; G3 shell ADR required |
 
 ## 4. Open product questions
 
