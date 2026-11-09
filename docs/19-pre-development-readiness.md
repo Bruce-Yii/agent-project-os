@@ -1,6 +1,6 @@
 # 19 — Pre-development Readiness Plan
 
-**Status:** Plan recorded; G0–G5 have not started.  
+**Status:** G0 complete on the existing PR #1 branch; merge pending. G1–G5 have not started.  
 **Snapshot:** 2026-11-10  
 **Purpose:** Prepare the existing product and architecture design for implementation by checking consistency, closing critical architecture gaps, assessing reusable modules, defining engineering contracts, and producing an executable development-document package.
 
@@ -62,12 +62,12 @@ Update the document that owns a subject. Add a new document only when a distinct
 - Record exact repository/document baseline.
 
 **Deliverables**
-- Design asset inventory and authority map.
-- Notion-to-Git traceability map.
-- Consistency/discrepancy register, distinguishing confirmed conflict, stale copy, missing decision, and non-blocking difference.
-- List of documents to update in place versus genuinely new documents.
+- Design asset inventory and layered authority map: [20 — Design Baseline](20-design-baseline.md).
+- Notion-to-Git ownership and traceability map.
+- Consistency/discrepancy register, distinguishing stale snapshots, repository metadata defects, traceability defects, historical references, and non-blocking differences.
+- List of documents updated in place versus the one genuinely new G0 document.
 
-**Exit condition:** Every product/domain/architecture/engineering rule has an identifiable authority. No implementation-critical contradiction is hidden in an old discussion or duplicate document.
+**Exit condition:** Every major product/domain/architecture/engineering rule has an identifiable authority; stale copies and inconsistencies are classified; implementation-critical conflicts are either resolved or explicitly blocked. G0 evidence and remaining non-blocking items are recorded in [20 — Design Baseline](20-design-baseline.md).
 
 ## 5. G1 — Architecture review and completeness audit
 
@@ -204,7 +204,7 @@ Writing this plan does not mark any gate complete.
 
 | Gate | Status | Completion evidence |
 |---|---|---|
-| G0 — Design Baseline | NOT STARTED | Inventory, authority map, discrepancy register |
+| G0 — Design Baseline | COMPLETE on PR #1 branch (merge pending) | [20 — Design Baseline](20-design-baseline.md); Notion/Git mapping; discrepancy register |
 | G1 — Architecture Review | NOT STARTED | Journey/module map, review matrix, critical gaps resolved |
 | G2 — Reuse Assessment | NOT STARTED | Reuse matrix, license/version checks, adopt/adapt/build decisions |
 | G3 — Engineering Decomposition | NOT STARTED | Contracts, ownership map, Work Packages, dependency DAG |
@@ -227,4 +227,4 @@ G5 is complete when current specifications and implementation Work Packages are 
 
 After G5, implementation may begin in dependency order under docs/17. The first implementation Work Package must still inspect the actual local repository/environment and current upstream versions before changing code; that is implementation bootstrap, not a substitute for this preparation phase.
 
-**Current state:** this document records the preparation plan only. G0–G5 remain NOT STARTED. No code implementation is claimed.
+**Current state:** G0 baseline is complete on the existing PR #1 branch; merge is pending. G1–G5 remain NOT STARTED. No code implementation is claimed.
