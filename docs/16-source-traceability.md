@@ -41,6 +41,13 @@ This matrix shows where the feature inventory and design rules originated. It is
 | O4 | [Temporal workflows](https://docs.temporal.io/workflows) | durable history/replay and recovery | official docs |
 | O5 | [LangGraph checkpointers](https://docs.langchain.com/oss/python/langgraph/checkpointers) | checkpointing, human-in-loop, pending writes | official docs |
 
+| U4 | [Product PRD and lineage](00-product-charter.md) | explicit synthesis of AWRP, our Linear operating model, and DSH; unified Project OS positioning; free self-hosted open-source requirement | product-owner-confirmed design history |
+| P3 | [Paperclip repository](https://github.com/paperclipai/paperclip) and [self-hosted overview](https://paperclip.ing/product/open-source/) | MIT license, self-hosted install, Agent organization/projects/tasks/goals/governance | official repository and product docs |
+| S5 | [Paseo repository](https://github.com/getpaseo/paseo) and [product docs](https://github.com/getpaseo/paseo/blob/main/docs/product.md) | Apache-2.0, local Daemon, self-hosted cross-device Agent development environment | official repository and product docs |
+| OH1 | [OpenHands Agent Canvas repository](https://github.com/All-Hands-AI/OpenHands) and [official pricing](https://www.openhands.dev/pricing) | MIT Agent Canvas, free self-hosted single-user offering, paid team/enterprise distinction | official repository and pricing page |
+| SU1 | [Superset repository](https://github.com/superset-sh/superset) | Elastic License 2.0/source-available position and local/remote feature split | official repository; re-check current product identity |
+| L7 | [Linear pricing](https://linear.app/pricing) and [AI credits](https://linear.app/docs/ai-credits) | free tier limits and usage-based AI coding/Loop credits; hosted SaaS distribution | official pricing and billing docs |
+
 ## 2. Feature group mapping
 
 | Feature IDs | Main sources |

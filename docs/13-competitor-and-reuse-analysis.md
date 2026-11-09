@@ -115,3 +115,73 @@ Primary docs: [Codex App Server](https://github.com/openai/codex/blob/main/codex
 
 The differentiated product hypothesis is the **unified Project workspace and canonical model across people, Agents, work, knowledge, runtimes, and delivery**. No single listed feature is assumed to be unique.
 
+
+
+## 9. Product positioning: unified Project OS, not a feature bundle
+
+The strongest product thesis is not that each individual capability is new. Project management, multi-Agent orchestration, local Agent Sessions, cross-device access, and self-hosting already exist in different combinations across the market.
+
+The hypothesis is that a user should not have to be the integration layer between these capabilities. The Project OS must unify them through:
+
+1. shared durable identities for Project, Task, Assignment, Run, Session, Context, and Artifact;
+2. a single Project Current State derived from canonical work state and verified external facts;
+3. one lifecycle from goal → work package → assignment → execution → evidence → review → accepted outcome;
+4. one context and permission boundary across local/remote Agents, connectors, and devices;
+5. one attention surface for meaningful messages, approvals, blockers, and changes;
+6. a complete core product that can be self-hosted without mandatory feature subscriptions.
+
+A product that only embeds multiple tools or synchronizes a few task fields does not satisfy this thesis.
+
+### 9.1 Competitive landscape and honest overlap
+
+| Product | Verified open-source / distribution position | Strong implemented overlap | Relative product center / boundary |
+|---|---|---|---|
+| [Paperclip](https://github.com/paperclipai/paperclip) | MIT; open-source, self-hosted; no Paperclip account required for local install | Agent organization, goals, projects/tasks, delegation, approvals, budgets, run history, skills, connections, mobile-ready management | Strongest broad overlap. Its public framing centers on running an AI-agent company/workforce with org charts, roles, budgets, and governance. We should not claim it lacks Project or task management. |
+| [Paseo](https://github.com/getpaseo/paseo) | Apache-2.0; open-source, self-hosted; local Daemon with Desktop/Mobile/Web/CLI clients | Multi-Provider local Agents, parallel worktrees, Sessions, terminals, diffs, remote access, cross-device control, plugins | Strongest local Agent workspace overlap. Its documented center is an agentic development environment and coding workflow, rather than a general non-coding Project lifecycle and Project governance model. |
+| [OpenHands Agent Canvas](https://github.com/All-Hands-AI/OpenHands) | MIT Agent Canvas; free self-hosted single-user tier; paid Teams/Enterprise capabilities exist | Multiple Agent backends, local/remote/cloud execution, automations, integrations, Agent conversations | Strong developer control-center overlap. The free/self-hosted and paid team tiers must be distinguished; do not describe the entire ecosystem as one license or one tier. |
+| [Superset / current repository identity](https://github.com/superset-sh/superset) | Repository currently identifies/redirects to a renamed product lineage; Elastic License 2.0 is source-available, not an OSI-approved open-source license. Verify current name and license before reuse. | Parallel coding Agents, worktrees, terminal, diff, remote access, automation, mobile in paid plan | Coding execution workspace. Local desktop use is free; some remote/mobile/automation capabilities are part of paid services. |
+| [Linear](https://linear.app/pricing) | Hosted SaaS with a free tier and paid tiers; not self-hostable as the same product | Project/Issue management, Agent platform, Linear Agent, Loops, coding sessions (AI-credit usage applies) | Mature Project/Task product with expanding Agent support. Its free tier is not equivalent to a free, self-hosted, user-controlled Project OS. |
+
+**Important correction:** open-source and free self-hosting are not unique by themselves. Paperclip, Paseo, and OpenHands Agent Canvas already provide meaningful open-source/self-hosted options. Likewise, some hosted products have free tiers. The product must compete on the *combination and quality of unification*, not on an inaccurate claim that every alternative is paid or closed.
+
+Primary references:
+- Paperclip [repository/license/quickstart](https://github.com/paperclipai/paperclip) and [self-hosted product explanation](https://paperclip.ing/product/open-source/).
+- Paseo [repository/license](https://github.com/getpaseo/paseo), [product architecture](https://github.com/getpaseo/paseo/blob/main/docs/product.md), and [self-hosted client/Daemon model](https://github.com/getpaseo/paseo/blob/main/docs/architecture.md).
+- OpenHands [Agent Canvas repository](https://github.com/All-Hands-AI/OpenHands) and [official pricing](https://www.openhands.dev/pricing).
+- Superset [repository and license](https://github.com/superset-sh/superset).
+- Linear [official pricing](https://linear.app/pricing) and [AI credits](https://linear.app/docs/ai-credits).
+
+### 9.2 Where our differentiation must be proven
+
+| Dimension | Product hypothesis | Required proof |
+|---|---|---|
+| Project-first continuity | Project remains the stable center while Agent, Provider, Session, and Runtime change | Resume a multi-week Project after switching Provider, client, and machine without reconstructing state manually |
+| Unified lifecycle | Task/Assignment/Run/Session/Artifact/Review share one consistent model | Follow one work package end-to-end; no manual copy/paste or duplicate Task creation |
+| Direct + coordinated Agents | Direct local Session and Coordinator-delegated work use the same Project model | Start a local Session directly, then bind selected output to a Task; separately run parallel Assignments |
+| Broad work types | Research, product, operations, documents, and software work share one Project OS | Demonstrate a complete non-coding workflow, not only a coding demo |
+| Unified attention | Messages, approvals, blockers, review requests, and external changes are actionable in one inbox | User can manage multiple active Sessions without polling every window |
+| Free self-hosted core | Full core capability works on user-controlled infrastructure with BYO Providers | Clean install, connect Provider, create Project, execute/review work, backup/restore without mandatory vendor service |
+| Open ecosystem | Provider and plugin additions do not fork core domain semantics | Add a new Provider/connector through stable contracts and permission review |
+
+### 9.3 Competitive advantage vs product parity
+
+- **Parity features:** boards, task lists, Agent registry, chat/session UI, worktrees, integrations, automation triggers, mobile views. These are necessary, but not defensible on their own.
+- **Potential differentiators:** durable Project Current State across Providers; shared human/Agent accountability; unified direct Session and delegated execution; inspectable Context Pack; evidence-backed lifecycle; open-source free self-hosted completeness.
+- **Not a differentiator by itself:** number of supported models, number of integrations, a large feature checklist, or a claim that competitors are all paid.
+
+### 9.4 What to build vs reuse
+
+Own the canonical Project domain, lifecycle, context, authorization, review, attention, and product experience. Reuse mature Provider SDKs, Daemon patterns, workflow engines, UI patterns, and external service APIs where licensing and operational fit allow. Avoid implementing a new coding Agent harness, model provider, Git forge, or general-purpose workflow engine unless a measured product gap requires it.
+
+### 9.5 Validation plan
+
+Before claiming a competitive moat, run side-by-side tests with representative users and workflows:
+
+1. Start and resume a long-lived Project across two Providers and two clients.
+2. Run direct local Agent Sessions and Project-bound multi-Agent Assignments in one workspace.
+3. Complete one non-coding Project lifecycle (research → decision → task → artifact → review → accepted outcome).
+4. Recover from Agent process exit, Desktop restart, host offline, and missed Provider events.
+5. Install and operate the complete core product on a clean user-controlled machine/server.
+6. Measure setup time, coordination time, state reconstruction, accepted outcome rate, and operational cost against a stitched-together toolchain.
+
+The differentiated position remains a **testable product hypothesis** until these journeys work better in practice than the alternatives.

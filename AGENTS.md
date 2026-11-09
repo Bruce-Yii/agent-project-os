@@ -1,6 +1,6 @@
 # Agent Instructions — Agent Project OS
 
-Read the root `README.md` first. Before changing product behavior or shared contracts, read:
+Read the root `README.md` and `docs/00-product-charter.md` (PRD) first. Before changing product behavior or shared contracts, read:
 
 1. `docs/00-product-charter.md`
 2. `docs/01-functional-catalog.md`
@@ -12,7 +12,12 @@ Read the root `README.md` first. Before changing product behavior or shared cont
 
 ## Product constraints
 
-- The product is a complete, Project-centered OS for humans and multiple Agents. Do not narrow it into a coding-agent launcher, chat UI, Linear clone, or DSH port.
+- The product is a complete, Project-centered OS for humans and multiple Agents. Do not narrow it into a coding-agent launcher, chat UI, Linear clone, DSH port, or a UI bundle of disconnected products.
+- Product lineage is AWRP + our Linear Project/Current State operating model + DeepSeek DSH orchestration ideas. Preserve the distinct contribution and limitations of each; do not claim the product is a direct port.
+- The product is open source and free to self-host for personal/team use. Do not introduce mandatory paid gates for core Project OS capabilities. Exact open-source license remains an explicit decision until selected and published.
+- Users bring their own model/provider credentials and choose local/remote/cloud runtimes. Never imply that model inference, hardware, hosting, or third-party service usage is free.
+- Unification must exist in canonical identities, state lifecycle, context, authorization, attention, and audit—not merely in one combined UI.
+- Competitor analysis must acknowledge open-source/self-hosted overlaps such as Paperclip, Paseo, and OpenHands Agent Canvas. Do not claim free self-hosting is unique; prove differentiation through integrated Project continuity and workflow outcomes.
 - Preserve the full 32-group functional scope. Implementation order may be staged; product scope may not be silently deleted.
 - Project is durable. Task, Assignment, Run, and Session are different objects.
 - Human accountability and Agent execution are separate.

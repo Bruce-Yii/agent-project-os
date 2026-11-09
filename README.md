@@ -1,13 +1,23 @@
 # Agent Project OS
 
-> **Development documentation · v0.2 · 2026-11-09**  
+> **Product requirements and development documentation · v0.3 · 2026-11-09**  
 > Product codename: **Agent Project OS** (working name; brand not frozen)
 
-An independent, project-centered workspace for humans and multiple AI agents to organize long-lived work across projects, tasks, knowledge, execution environments, tools, and devices.
+An open-source, free-to-self-host Project OS for people and teams working with multiple AI Agents. It unifies long-lived Projects, human–Agent collaboration, multi-Agent execution, local Sessions, knowledge, workflows, integrations, review, governance, and cross-device control.
 
 **The product is organized around Projects, not Agent chats.** People own goals and important decisions. The system maintains project and work state. Humans and Agents can both participate in work. Agent sessions, runs, providers, and machines are replaceable execution resources.
 
-This repository contains the product and engineering design needed to implement the system. It is not an implementation repository yet.
+This repository contains the canonical product requirements (PRD), domain model, architecture proposals, and engineering contracts. It is not an implementation repository yet.
+
+## Product positioning and distribution
+
+- **Product center:** durable Projects and accepted outcomes, not Agent chats or a fixed Agent org chart.
+- **Design lineage:** AWRP execution reliability + our Linear Project/Current State operating model + DeepSeek DSH event-driven orchestration ideas. This is a new synthesis, not a port.
+- **Unification:** one canonical domain, lifecycle, context, permission, attention, and audit model across people, Agents, Sessions, Runs, knowledge, and external systems.
+- **Distribution:** open source and free to self-host for personal/team use. The complete core product is not split behind a mandatory subscription. Users bring their own model/provider credentials and pay their chosen inference, hosting, hardware, and third-party service costs.
+- **Competitive honesty:** Paperclip, Paseo, and OpenHands Agent Canvas already offer meaningful open-source/self-hosted capabilities. Our differentiation is the quality and breadth of the unified Project-centered lifecycle, not the claim that no free alternatives exist.
+
+Read the full [Product Requirements Document](docs/00-product-charter.md) before changing scope or positioning.
 
 ## Current status
 
@@ -22,7 +32,7 @@ This repository contains the product and engineering design needed to implement 
 
 | Order | Document | Main question |
 |---:|---|---|
-| 00 | [Product charter](docs/00-product-charter.md) | Why this product, for whom, and what must remain true? |
+| 00 | [Product Requirements Document (PRD) & Charter](docs/00-product-charter.md) | Why this product, for whom, what is unified, and how is it distributed? |
 | 01 | [Functional catalog](docs/01-functional-catalog.md) | What capabilities belong to the complete product? |
 | 02 | [Domain model](docs/02-domain-model.md) | What are the durable objects, relations, states, and authorities? |
 | 03 | [Project and work management](docs/03-project-and-work-management.md) | How do Projects, Goals, Tasks, dependencies, and Current State work? |
@@ -74,6 +84,10 @@ flowchart TB
 10. **Complexity must reduce user coordination, not create more of it.** Protocols and state are internal unless they help a real user decision.
 11. **Local Agent Sessions are a first-class Desktop capability.** The product must create/open a local Agent Session and continuously receive new messages; Provider Session, RuntimeProcess, and client connection are separate facts.
 12. **Direct Session use is supported without a Task.** Project/Task/Run binding is explicit; a Session is not an alternative Project identity.
+13. **Open source and free self-hosting are product requirements.** Do not create mandatory paid gates for core Project OS capabilities.
+14. **Users control model and infrastructure costs.** BYO model/provider credentials are supported; inference, hosting, hardware, and third-party service charges remain external costs.
+15. **Unification is a shared operating model, not a single screen.** Canonical identities, lifecycle, context, permissions, attention, and audit must work across modules and clients.
+16. **Competitive claims must be evidence-based.** Do not claim a capability or free/self-hosted position is unique without current primary-source comparison.
 
 ## Status labels used in this repository
 

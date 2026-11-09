@@ -155,3 +155,40 @@ A meaningful full-system E2E should eventually verify:
 - Do not implement a broad autonomous loop before authorization, idempotency, Run recovery, and review are reliable.
 - Do not delete full-product requirements merely to simplify the first release.
 
+
+
+## 7. Open-source and free self-hosted delivery gates
+
+The free self-hosted promise must be engineered and tested. It is not satisfied by publishing source code while the working product depends on a mandatory vendor service.
+
+### Gate D0 — License and dependency policy
+
+Before the first public code release:
+- select and publish the exact open-source license;
+- audit dependency, SDK, plugin, and bundled asset licenses;
+- define contribution, third-party notices, security disclosure, and versioning policy;
+- document which optional hosted services exist and confirm they are not required by the core self-hosted path.
+
+### Gate D1 — Local personal installation
+
+A new user can install the Desktop app or local Hub, configure local storage/secrets, connect one supported Agent Provider, create a Project, open a local Agent Session, and complete one reviewed Work Package without a mandatory vendor account.
+
+### Gate D2 — User-controlled server deployment
+
+Provide a documented self-hosted server/Docker deployment with configuration, persistent storage, authentication, network exposure guidance, TLS/reverse-proxy guidance, backup, restore, update, and rollback. Do not expose a local Daemon or administrative API to the LAN/Internet without explicit authentication and pairing.
+
+### Gate D3 — Cross-client operation without vendor lock-in
+
+Desktop, Web, and paired Mobile clients can connect to the user's own authority/runtime. Optional relay services may simplify remote access, but users retain a direct network/VPN/Tailscale or self-operated relay option. Core Project state must not depend on a vendor-hosted relay.
+
+### Gate D4 — Complete-core verification
+
+The free self-hosted path must include the core Project lifecycle, human/Agent collaboration, direct local Session use, coordinated Assignments/Runs, knowledge/context, review/approval, core workflow, plugin/connector framework, and essential observability. Any exception requires an explicit product-owner decision; no feature may be moved behind a subscription merely to manufacture a tier difference.
+
+### Gate D5 — Portability and recovery
+
+A user can export all canonical Project OS data, back up files and secrets according to documented rules, restore into a clean environment, reconnect Providers, and continue existing Projects. Provider-native sessions that cannot be migrated must be reported accurately, with a Context Handoff/restart path where possible.
+
+### Release principle
+
+A hosted offering may later sell operational convenience, managed uptime, support, or enterprise administration. It must not make the free self-hosted core intentionally incomplete. Model inference, compute, storage, network, and external service costs remain the responsibility of the chosen Providers or infrastructure owners.

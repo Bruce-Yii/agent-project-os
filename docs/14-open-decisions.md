@@ -23,6 +23,11 @@ This document separates product-owner decisions from design proposals and valida
 | C-007 | Autonomous execution is a sub-capability; the Personal Execution Skill is a supporting dependency/method input, not a separate product | CONFIRMED |
 | C-008 | Humans should operate at the Project level, not be forced to manage every Agent chat manually | CONFIRMED |
 | C-009 | Desktop must be able to create/open Sessions with local Agents and continuously receive newly arriving messages | CONFIRMED (minimum product requirement) |
+| C-010 | Product is open source: source code is public and inspectable/modifiable under a published open-source license | CONFIRMED; exact license not selected |
+| C-011 | Complete core product is free to self-host for personal/team use; no mandatory subscription or artificial feature wall for core Project OS capabilities | CONFIRMED; optional hosted services remain open |
+| C-012 | Product differentiation must come from a unified Project-centered domain/lifecycle/context/permission/attention model, not merely aggregating separate tool UIs | CONFIRMED product principle; market advantage requires validation |
+| C-013 | Product design lineage is AWRP + our Linear operating model + DeepSeek DSH, synthesized into a new product rather than a direct port | CONFIRMED |
+| C-014 | Users can bring their own model/provider credentials and choose local, remote, or cloud runtimes; external inference/hosting/service costs are user-selected | CONFIRMED direction; detailed cost display is proposed |
 
 ## 3. Proposed architecture decisions
 
@@ -79,7 +84,8 @@ This document separates product-owner decisions from design proposals and valida
 
 ## 7. Open platform questions
 
-- Cloud-hosted, self-hosted, or hybrid authority model?
+- What is the canonical authority topology for local-first, self-hosted Hub, and hybrid deployments?
+- What telemetry/privacy default and opt-in policy should apply to a self-hosted open-source product?
 - Which event/workflow engine is appropriate, and what is the operational cost?
 - How should offline clients submit commands and resolve conflicts?
 - What secret store works across Desktop, Mobile, Web, and remote runtimes?

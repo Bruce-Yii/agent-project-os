@@ -1,7 +1,14 @@
 # 01 — Complete Functional Catalog
 
-**Status:** Candidate capability inventory v0.2. All 32 functional groups are retained as full-product scope; this is not a frozen implementation plan. F12/F16 now specify the local Agent Session capability in detail.  
+**Status:** Candidate capability inventory v0.3. All 32 functional groups are retained as full-product scope. The complete core product is intended to be open-source and free to self-host; this catalog does not define paid feature tiers. F12/F16 include the required local Agent Session capability.  
 **Source key:** `A` AWRP; `U` our Linear + Notion operating model; `L` Linear product; `D` DeepSeek DSH; `P` Paperclip; `S` Paseo; `O` other products / workflow infrastructure; `N` new product design synthesis.
+
+## Product-wide requirements
+
+- The product must unify Projects, people, Agents, Tasks, Assignments, Runs, Sessions, Knowledge, Context, Artifacts, Reviews, Workflows, and external integrations through shared identities, lifecycle, permissions, and canonical state. A dashboard that merely embeds separate products is not sufficient.
+- The product is open source and free to self-host for personal or team use. Core Project OS capabilities must not be artificially gated behind a mandatory subscription. Users provide their own model/API credentials and pay their chosen model, hosting, hardware, and third-party service costs.
+- Full capability scope is retained. Engineering phases sequence dependencies; they do not redefine the product into a smaller Agent launcher or coding-only tool.
+- Design lineage: AWRP reliability/handoff; our Linear operating model and Project Current State; DeepSeek DSH event-driven decision, mandate, assignment, and recovery ideas. These are inputs to a new product model, not copied product boundaries.
 
 ## A. Workspace, Project, and Work Management
 
