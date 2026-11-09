@@ -10,7 +10,7 @@
 - Renamed the implementation-stage acceptance labels in `docs/12` to Stage 0–7 gates, avoiding collision with the separate G0–G5 preparation gates.
 - Updated README, STATUS, manifest, and checksums to documentation baseline v0.6.
 - Corrected the G0 report's next-gate pointer to G2 after the G1 architecture audit passed.
-- Regenerated `CHECKSUMS.sha256` after a full hash audit found 21 stale entries among 30 tracked files.
+- Recomputed all 30 `CHECKSUMS.sha256` entries using a SHA-256 implementation that passes the standard `abc` known-vector test; withdrew the earlier unverified 21/30 mismatch count.
 
 ### Not changed
 - No schema, API, event contract, deployment topology, Provider, or technology stack was frozen.
