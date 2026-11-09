@@ -1,6 +1,6 @@
 # 19 — Pre-development Readiness Plan
 
-**Status:** G0 complete on the existing PR #1 branch; merge pending. G1–G5 have not started.  
+**Status:** G0 and G1 complete on the existing PR #1 branch; merge pending. G2–G5 have not started.  
 **Snapshot:** 2026-11-10  
 **Purpose:** Prepare the existing product and architecture design for implementation by checking consistency, closing critical architecture gaps, assessing reusable modules, defining engineering contracts, and producing an executable development-document package.
 
@@ -91,6 +91,8 @@ Update the document that owns a subject. Add a new document only when a distinct
 - ADRs for material choices; non-blocking unknowns remain in docs/14.
 
 **Exit condition:** Every critical journey has a clear module owner and state authority. Critical ambiguities are resolved or explicitly owned and blocked from leaking into parallel implementation.
+
+G1 result: [21 — Architecture Review and Completeness Audit](21-architecture-review.md). G1 passes as an audit only; no parallel implementation is authorized.
 
 ## 6. G2 — Mature-module reuse assessment
 
@@ -200,12 +202,12 @@ Inspect official docs, source, tests, releases, open/closed Issues, PRs, maintai
 
 ## 11. Gate status
 
-Writing this plan does not mark any gate complete.
+Gate status is evidence-based; writing this plan alone does not mark a gate complete.
 
 | Gate | Status | Completion evidence |
 |---|---|---|
 | G0 — Design Baseline | COMPLETE on PR #1 branch (merge pending) | [20 — Design Baseline](20-design-baseline.md); Notion/Git mapping; discrepancy register |
-| G1 — Architecture Review | NOT STARTED | Journey/module map, review matrix, critical gaps resolved |
+| G1 — Architecture Review | COMPLETE on PR #1 branch (merge pending) | [21 — Architecture Review](21-architecture-review.md); critical gaps assigned to G2/G3 and blocked from parallel implementation |
 | G2 — Reuse Assessment | NOT STARTED | Reuse matrix, license/version checks, adopt/adapt/build decisions |
 | G3 — Engineering Decomposition | NOT STARTED | Contracts, ownership map, Work Packages, dependency DAG |
 | G4 — Release Roadmap | NOT STARTED | Independently usable staged release plan |
@@ -227,4 +229,4 @@ G5 is complete when current specifications and implementation Work Packages are 
 
 After G5, implementation may begin in dependency order under docs/17. The first implementation Work Package must still inspect the actual local repository/environment and current upstream versions before changing code; that is implementation bootstrap, not a substitute for this preparation phase.
 
-**Current state:** G0 baseline is complete on the existing PR #1 branch; merge is pending. G1–G5 remain NOT STARTED. No code implementation is claimed.
+**Current state:** G0 baseline and G1 architecture audit are complete on the existing PR #1 branch; merge is pending. G2–G5 remain NOT STARTED. No code implementation is claimed.
