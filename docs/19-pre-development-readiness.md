@@ -1,6 +1,6 @@
 # 19 — Pre-development Readiness Plan
 
-**Status:** G0 and G1 complete on the existing PR #1 branch; merge pending. G2–G5 have not started.  
+**Status:** G0, G1, and G2 complete on the existing PR #1 branch; merge pending. G3–G5 have not started.  
 **Snapshot:** 2026-11-10  
 **Purpose:** Prepare the existing product and architecture design for implementation by checking consistency, closing critical architecture gaps, assessing reusable modules, defining engineering contracts, and producing an executable development-document package.
 
@@ -130,6 +130,8 @@ Inspect official docs, source, tests, releases, open/closed Issues, PRs, maintai
 
 **Exit condition:** Every major subsystem has a defensible reuse/adapt/reference/build decision. No large subsystem is marked self-build without checking mature alternatives; no candidate is adopted merely because it is popular or associated with DeepSeek.
 
+**G2 result:** COMPLETE on the PR #1 branch. The reuse matrix and evidence are in [22 — Mature-module Reuse Assessment](22-mature-module-reuse-assessment.md). DBOS is the primary durable-workflow candidate behind an adapter; Paseo/ACP is the Local Runtime candidate; Activepieces community pieces are selective connector sources; PowerSync is conditional for offline sync; canonical Project domain, policy, Memory, and Skill governance remain Project OS-owned. The exact stable packages and the bounded recovery/sync/provider checks are G3 validation work, not a technology freeze.
+
 ## 7. G3 — Engineering decomposition and contracts
 
 **Objective:** Turn the reviewed architecture into bounded work that independent windows/Agents can execute without inventing incompatible interfaces.
@@ -208,7 +210,7 @@ Gate status is evidence-based; writing this plan alone does not mark a gate comp
 |---|---|---|
 | G0 — Design Baseline | COMPLETE on PR #1 branch (merge pending) | [20 — Design Baseline](20-design-baseline.md); Notion/Git mapping; discrepancy register |
 | G1 — Architecture Review | COMPLETE on PR #1 branch (merge pending) | [21 — Architecture Review](21-architecture-review.md); critical gaps assigned to G2/G3 and blocked from parallel implementation |
-| G2 — Reuse Assessment | NOT STARTED | Reuse matrix, license/version checks, adopt/adapt/build decisions |
+| G2 — Reuse Assessment | COMPLETE on PR #1 branch (merge pending) | [22 — Mature-module Reuse Assessment](22-mature-module-reuse-assessment.md); reuse matrix, license/version checks, upstream Issues/PRs, adoption boundaries, G3 validation gates |
 | G3 — Engineering Decomposition | NOT STARTED | Contracts, ownership map, Work Packages, dependency DAG |
 | G4 — Release Roadmap | NOT STARTED | Independently usable staged release plan |
 | G5 — Documentation Handoff | NOT STARTED | Consistent implementation-ready document package |
@@ -229,4 +231,6 @@ G5 is complete when current specifications and implementation Work Packages are 
 
 After G5, implementation may begin in dependency order under docs/17. The first implementation Work Package must still inspect the actual local repository/environment and current upstream versions before changing code; that is implementation bootstrap, not a substitute for this preparation phase.
 
-**Current state:** G0 baseline and G1 architecture audit are complete on the existing PR #1 branch; merge is pending. G2–G5 remain NOT STARTED. No code implementation is claimed.
+**G2 evidence:** [22 — Mature-module Reuse Assessment](22-mature-module-reuse-assessment.md).
+
+**Current state:** G0 baseline, G1 architecture audit, and G2 reuse assessment are complete on the existing PR #1 branch; merge is pending. G3–G5 remain NOT STARTED. No code implementation is claimed.
