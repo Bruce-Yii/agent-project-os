@@ -19,6 +19,6 @@
 - Technology stack and canonical deployment topology: not frozen
 - Next planned work: G1 architecture review, then G2 reuse assessment, G3 engineering decomposition, G4 staged release planning, and G5 documentation handoff
 
-See [PRD](docs/00-product-charter.md), [Domain Model](docs/02-domain-model.md), [Development Sequence](docs/12-development-roadmap.md), [Open Decisions](docs/14-open-decisions.md), [Agent Development Contract](docs/17-agent-development-contract.md), [Local Agent Session](docs/18-local-agent-session-subsystem.md), and [Pre-development Readiness](docs/19-pre-development-readiness.md), and [G0 Design Baseline](docs/20-design-baseline.md).
+See [PRD](docs/00-product-charter.md), [Domain Model](docs/02-domain-model.md), [Development Sequence](docs/12-development-roadmap.md), [Open Decisions](docs/14-open-decisions.md), [Agent Development Contract](docs/17-agent-development-contract.md), [Local Agent Session](docs/18-local-agent-session-subsystem.md), [Pre-development Readiness](docs/19-pre-development-readiness.md), and [G0 Design Baseline](docs/20-design-baseline.md).
 
 **Important:** G0–G5 are preparation gates, not product release numbers. They do not replace the implementation stages in docs/12. G0 is complete on the pending PR branch; G1–G5 have not passed, and implementation has not started.
