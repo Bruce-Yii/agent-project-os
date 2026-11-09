@@ -167,4 +167,4 @@ G0 exit evidence:
 - non-semantic documentation defects corrected in the existing PR branch;
 - Notion CURRENT and readiness page updated to point to this baseline.
 
-**Next gate: G1 — Architecture Review and Completeness Audit.** G1 should inspect user journeys, object lifecycles, state authority, module ownership, event/recovery, local Session, permissions, and failure paths. Do not start parallel implementation during G1/G2/G3 preparation.
+**Next gate: G2 — Mature-module Reuse Assessment.** G1 architecture review is complete; G2 now evaluates reusable implementations, licenses, maintenance, integration boundaries, and known failure modes. Do not start parallel implementation before the relevant G3 contracts and ownership gates pass.
