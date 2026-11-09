@@ -65,6 +65,7 @@ Two integration hazards prevent blind adoption:
 
 - The `@getpaseo/server` root export eagerly loads Daemon bootstrap. Its package exposes explicit subpaths such as `/daemon-control`, `/configuration`, and `/process`; any reuse must start from those narrow imports and inspect the dependency graph.
 - Paseo explicitly documents plugin backend code as trusted and unsandboxed. A plugin subprocess has access to the Daemon user's files, processes, credentials, and network. This cannot be our third-party marketplace trust model.
+- Permission UX is also an active upstream issue: [#6923](https://github.com/getpaseo/paseo/issues/6923) remains open and triaged P2 because Claude permission cards can omit the reason a prompt appeared; proposed [PR #3950](https://github.com/getpaseo/paseo/pull/3950) was still open/unmerged at this snapshot. Maintainers counted multiple reports, but the reason must be verified in our G3 permission-flow test.
 
 **Recommendation:** G3 should first test whether the published Daemon package can be hosted behind our `LocalRuntimeNode` adapter without importing Paseo's Workspace/Agent domain as our canonical state. If it fits, wrap it. If not, port only the smallest process, Provider, and event-stream modules that pass license and dependency review. Keep plugin execution disabled for untrusted third-party code until our own isolation boundary exists.
 
@@ -149,7 +150,7 @@ These are the only follow-up experiments justified by the public evidence. They 
 | Spike | Goal | Required evidence / pass condition | Stop condition |
 |---|---|---|---|
 | G3-S1 DBOS | Prove durable workflow adapter with the exact stable package | kill/restart recovery; persisted event wait; duplicate command/idempotency; queue concurrency; workflow version upgrade; Outbox replay; Postgres pool behavior | If the required fix is not in a stable release or recovery semantics cannot be made compatible, compare Temporal before writing a custom engine |
-| G3-S2 Paseo / ACP | Prove Local Runtime Node boundary with one real Provider | create/attach/resume; structured events; reconnect/history reconciliation; permission request; Daemon restart; no duplicate Session; exact package subpath dependency tree | If Paseo's domain/dependency coupling is too high, implement our own thin Daemon around native Provider SDKs/ACP, not a new Agent harness |
+| G3-S2 Paseo / ACP | Prove Local Runtime Node boundary with one real Provider | create/attach/resume; structured events; reconnect/history reconciliation; permission request and visible decision reason; Daemon restart; no duplicate Session; exact package subpath dependency tree | If Paseo's domain/dependency coupling is too high, implement our own thin Daemon around native Provider SDKs/ACP, not a new Agent harness |
 | G3-S3 Connector | Port one high-value community piece through our Service Connector contract | license + dependency audit; OAuth scope declaration; read/write separation; rate-limit/retry; webhook dedup; command API only | If the connector depends on Activepieces engine state, use its API pattern as reference instead of vendoring |
 | G3-S4 PowerSync | Prove local data sync without bypassing domain authority | Postgres source + PostgreSQL bucket storage; allowlisted publication; Sync Stream authorization; offline write upload through backend; reconnect/checkpoint; Desktop and Mobile compatibility | If desktop SDK or isolation semantics fail, defer offline sync and keep a simpler authenticated API/realtime path; do not add Electric as a second engine |
 | G3-S5 Skills | Prove portable Skill import/export and governance | validate `SKILL.md`; add Project OS provenance/scope/version metadata; evaluation and approval; confirm tool grants are enforced outside Skill metadata | If an Agent ignores optional metadata, safety remains unchanged because Policy owns permissions |
@@ -162,7 +163,7 @@ The following are evaluation snapshots, not dependency lockfiles:
 
 | Project | Snapshot / license | Maintenance evidence that changes our decision |
 |---|---|---|
-| Paseo | v0.15.3, Apache-2.0; separately published server/client/protocol/plugin packages | Active release line; package is pre-1.0 and plugin backend is unsandboxed. Treat APIs as moving and pin exact package versions during G3. |
+| Paseo | v0.15.3, Apache-2.0; separately published server/client/protocol/plugin packages | Active release line; package is pre-1.0 and plugin backend is unsandboxed. Issue #6923 remains open P2 and PR #3950 unmerged for missing permission reasons. Treat APIs as moving and pin exact package versions during G3. |
 | DBOS Transact TS | v5.4 stable, MIT | Issues #1427/#1423 received fixes merged in PRs #1430/#1424; PR #1430 landed after v5.4 release. Preview ownership fix #1442 merged 2026-11-09. Good maintainer responsiveness, but release lag matters. |
 | Temporal | v1.32.2, MIT | Mature server/workflow project; separate deployment/operations cost is the main fit issue, not license. |
 | Hatchet | v0.114.2, MIT | Maintainers engaged on #5327, but it remained open; #5387 was also open at snapshot. Recovery/stream issues block default selection. |
@@ -187,7 +188,7 @@ The following are evaluation snapshots, not dependency lockfiles:
 ## 9. Primary sources
 
 ### Local Agent runtime and protocols
-- [Paseo repository](https://github.com/getpaseo/paseo), [architecture](https://github.com/getpaseo/paseo/blob/main/docs/architecture.md), [server package](https://www.npmjs.com/package/@getpaseo/server), [plugin security reference](https://paseo.sh/docs/plugins/reference).
+- [Paseo repository](https://github.com/getpaseo/paseo), [architecture](https://github.com/getpaseo/paseo/blob/main/docs/architecture.md), [server package](https://www.npmjs.com/package/@getpaseo/server), [plugin security reference](https://paseo.sh/docs/plugins/reference), [permission reason issue #6923](https://github.com/getpaseo/paseo/issues/6923), [proposed fix #3950](https://github.com/getpaseo/paseo/pull/3950).
 - [ACP v2 overview](https://agentclientprotocol.com/protocol/v2/overview), [prompt lifecycle](https://agentclientprotocol.com/protocol/v2/prompt-lifecycle).
 - [MCP specification](https://modelcontextprotocol.io/specification).
 - [DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harness), [safety notice](https://github.com/deepseek-ai/deepseek-harness/blob/master/SAFETY.md), [Super-agent prototype](https://github.com/deepseek-ai/dsh-superagent-prototype).
