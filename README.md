@@ -1,6 +1,6 @@
 # Agent Project OS
 
-> **Product requirements and development documentation · v0.6 · 2026-11-10**  
+> **Product requirements and development documentation · v0.7 · 2026-11-10**  
 > Product codename: **Agent Project OS** (working name; brand not frozen)
 
 An open-source, free-to-self-host Project OS for people and teams working with multiple AI Agents. It unifies long-lived Projects, human–Agent collaboration, multi-Agent execution, local Sessions, knowledge, workflows, integrations, review, governance, and cross-device control.
@@ -22,7 +22,7 @@ Read the full [Product Requirements Document](docs/00-product-charter.md) before
 ## Current status
 
 - Product direction: **confirmed; design-stage decision: GO — worth developing**.
-- Current phase: **Pre-development readiness**; G0 design baseline and G1 architecture review are complete on PR #1's branch (merge pending); G2 reuse assessment is next.
+- Current phase: **Pre-development readiness**; G0 design baseline, G1 architecture review, and G2 reuse assessment are complete on PR #1's branch (merge pending); G3 engineering decomposition is next.
 - Full capability scope: **preserved**; implementation may be staged, but the product scope is not reduced to an Agent client or execution relay.
 - Domain model: **design proposal; requires review before schema freeze**.
 - Architecture: **design proposal; technology choices are not frozen**.
@@ -55,6 +55,7 @@ Read the full [Product Requirements Document](docs/00-product-charter.md) before
 | 19 | [Pre-development readiness](docs/19-pre-development-readiness.md) | What must be reviewed and specified before parallel implementation begins (G0–G5)? |
 | 20 | [Design baseline](docs/20-design-baseline.md) | Which existing assets are authoritative, where do they map, and what discrepancies were found in G0? |
 | 21 | [Architecture review](docs/21-architecture-review.md) | Do the journeys, modules, objects, states, authorities, and failure paths form a complete architecture? |
+| 22 | [Mature-module reuse assessment](docs/22-mature-module-reuse-assessment.md) | Which mature modules should be reused, adapted, referenced, or built ourselves? |
 
 Templates: [ADR](docs/templates/ADR.md), [Module contract](docs/templates/module-contract.md), [Work package](docs/templates/work-package.md).
 
