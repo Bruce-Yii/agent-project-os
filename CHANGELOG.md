@@ -9,6 +9,7 @@
 ### Corrected
 - Renamed the implementation-stage acceptance labels in `docs/12` to Stage 0–7 gates, avoiding collision with the separate G0–G5 preparation gates.
 - Updated README, STATUS, manifest, and checksums to documentation baseline v0.6.
+- Corrected the G0 report's next-gate pointer to G2 after the G1 architecture audit passed.
 
 ### Not changed
 - No schema, API, event contract, deployment topology, Provider, or technology stack was frozen.
