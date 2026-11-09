@@ -1,6 +1,6 @@
 {
   "name": "agent-project-os",
-  "version": "0.6",
+  "version": "0.7",
   "snapshot_date": "2026-11-10",
   "files": [
     "AGENTS.md",
@@ -28,6 +28,7 @@
     "docs/19-pre-development-readiness.md",
     "docs/20-design-baseline.md",
     "docs/21-architecture-review.md",
+    "docs/22-mature-module-reuse-assessment.md",
     "docs/templates/ADR.md",
     "docs/templates/module-contract.md",
     "docs/templates/work-package.md",
