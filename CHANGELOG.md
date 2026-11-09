@@ -1,5 +1,19 @@
 # Changelog
 
+## v0.6 — 2026-11-10
+
+### Added
+- Added `docs/21-architecture-review.md` with the six-journey coverage map, 32-group module ownership map, core object/state authority map, degraded-path review, and prioritized architecture findings.
+- Completed G1 as an architecture audit on the existing PR #1 branch; critical decisions remain owned by G2/G3 and block parallel implementation.
+
+### Corrected
+- Renamed the implementation-stage acceptance labels in `docs/12` to Stage 0–7 gates, avoiding collision with the separate G0–G5 preparation gates.
+- Updated README, STATUS, manifest, and checksums to documentation baseline v0.6.
+
+### Not changed
+- No schema, API, event contract, deployment topology, Provider, or technology stack was frozen.
+- No product code was added and no parallel implementation was authorized.
+
 ## v0.5 — 2026-11-10
 
 ### Added
