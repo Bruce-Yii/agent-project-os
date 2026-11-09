@@ -15,7 +15,7 @@
 
 **Deliverables:** product charter, functional catalog, domain model, state transition tables, API/event contract draft, ADRs for unresolved choices.
 
-**Gate G0:** no two parallel implementation streams can interpret the same object or state transition differently.
+**Stage 0 exit gate:** no two parallel implementation streams can interpret the same object or state transition differently.
 
 ### Stage 1 — Project and Work Management core
 
@@ -26,7 +26,7 @@ Build:
 - Project Current State and core views;
 - human ownership and basic collaboration.
 
-**Gate G1:** Project and Task remain stable across clients/restarts; dependencies and status semantics pass contract tests.
+**Stage 1 acceptance gate:** Project and Task remain stable across clients/restarts; dependencies and status semantics pass contract tests.
 
 ### Stage 2 — Agent identity and execution foundation
 
@@ -40,7 +40,7 @@ Build:
 - Assignment, Run, Session binding, checkpoint, handoff, and artifact references;
 - direct Agent Session experience without mandatory Task creation.
 
-**Gate G2:** one real local Provider can be discovered, launched, attached, and continuously observed from Desktop; the user can send a follow-up; UI restart/reconnect does not create a duplicate Session; missed events are replayed/reconciled or shown as an explicit gap; supported Session/Run operations are linked to a Project/Task while direct standalone Session mode also works. Provider limitations, credentials, and host offline truth are tested.
+**Stage 2 acceptance gate:** one real local Provider can be discovered, launched, attached, and continuously observed from Desktop; the user can send a follow-up; UI restart/reconnect does not create a duplicate Session; missed events are replayed/reconciled or shown as an explicit gap; supported Session/Run operations are linked to a Project/Task while direct standalone Session mode also works. Provider limitations, credentials, and host offline truth are tested.
 
 ### Stage 3 — Review, approval, and safe delivery
 
@@ -51,7 +51,7 @@ Build:
 - scoped approval and audit;
 - external truth refresh for GitHub or first selected forge.
 
-**Gate G3:** Agent cannot self-accept; a review can verify the exact artifact/commit; high-risk effects are gated.
+**Stage 3 acceptance gate:** Agent cannot self-accept; a review can verify the exact artifact/commit; high-risk effects are gated.
 
 ### Stage 4 — Multi-Agent coordination and workflows
 
@@ -63,7 +63,7 @@ Build:
 - bounded autonomous execution sub-capability;
 - Personal Execution Skill integration as a method input.
 
-**Gate G4:** multiple independent Tasks execute concurrently in isolated workspaces; failure/recovery does not duplicate external effects; autonomy cannot exceed its mandate.
+**Stage 4 acceptance gate:** multiple independent Tasks execute concurrently in isolated workspaces; failure/recovery does not duplicate external effects; autonomy cannot exceed its mandate.
 
 ### Stage 5 — Knowledge and Project context
 
@@ -74,7 +74,7 @@ Build:
 - selective memory extraction;
 - one external Knowledge Provider (Notion is a candidate, not the only possible provider).
 
-**Gate G5:** a new window/Agent can reconstruct the Project from current state and relevant sources without reading the full chat history.
+**Stage 5 acceptance gate:** a new window/Agent can reconstruct the Project from current state and relevant sources without reading the full chat history.
 
 ### Stage 6 — Client breadth and plugin ecosystem
 
@@ -84,7 +84,7 @@ Build:
 - Mobile project control, review, approval, remote Agent interaction;
 - plugin SDK, provider integrations, connector framework, plugin discovery.
 
-**Gate G6:** same Project and Run state is consistent across Desktop/Web/Mobile; plugin permissions and compatibility are visible.
+**Stage 6 acceptance gate:** same Project and Run state is consistent across Desktop/Web/Mobile; plugin permissions and compatibility are visible.
 
 ### Stage 7 — Operational maturity and expansion
 
@@ -95,7 +95,7 @@ Build:
 - plugin marketplace operations;
 - reliability, performance, and scale improvements.
 
-**Gate G7:** operational runbooks, recovery drills, security review, and data portability pass.
+**Stage 7 acceptance gate:** operational runbooks, recovery drills, security review, and data portability pass.
 
 ## 2. Cross-cutting foundations
 
