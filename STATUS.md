@@ -21,4 +21,4 @@
 
 See [PRD](docs/00-product-charter.md), [Domain Model](docs/02-domain-model.md), [Development Sequence](docs/12-development-roadmap.md), [Open Decisions](docs/14-open-decisions.md), [Agent Development Contract](docs/17-agent-development-contract.md), [Local Agent Session](docs/18-local-agent-session-subsystem.md), and [Pre-development Readiness](docs/19-pre-development-readiness.md), and [G0 Design Baseline](docs/20-design-baseline.md).
 
-**Important:** G0–G5 are preparation gates, not product release numbers. They do not replace the implementation stages in docs/12. This status does not mean any gate has passed or implementation has started.
+**Important:** G0–G5 are preparation gates, not product release numbers. They do not replace the implementation stages in docs/12. G0 is complete on the pending PR branch; G1–G5 have not passed, and implementation has not started.
