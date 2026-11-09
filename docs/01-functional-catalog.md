@@ -21,7 +21,7 @@ Capabilities:
 - multiple organizations/workspaces and workspace switching;
 - member invitations, roles, teams, groups, and membership lifecycle;
 - project-level membership and visibility overrides;
-- workspace settings, policies, billing/usage boundary (commercial details TBD);
+- workspace settings and policies; optional hosted-service usage/billing visibility (not required to operate the free self-hosted core);
 - shared resources and workspace-level Agent/Plugin registry.
 
 **Sources:** `L/P/N`. **Dependencies:** identity, authorization, Project.
