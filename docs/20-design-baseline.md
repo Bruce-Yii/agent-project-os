@@ -134,13 +134,14 @@ The 2026-11-05 archive is intentionally preserved. Do not rewrite it to match la
 | G0-08 | A Notion page titled “CURRENT Project OS Architecture & Boundaries” belongs to the earlier Linear Research→Execution Control Plane project | Historical-reference collision risk | P2 | Explicitly classify as historical Linear operating-model evidence; do not use as the new product's current architecture |
 | G0-09 | Linear `P-YU-3` remains In Progress although its current issue query is empty | Historical operational status | P3 | Do not mutate it or create a new Linear project during G0; it is not the new product's execution queue |
 | G0-10 | PR #1 is still Draft; G0 documentation has not reached `main` | External publication state | P2 | Keep the PR Draft and do not merge automatically. Review/merge is a separate gate; `main` remains v0.3 until then |
+| G0-11 | `CHECKSUMS.sha256` contained 21 stale hashes among 30 listed files on the PR branch | Repository integrity defect | P2 | Regenerated the complete checksum file after hashing all 30 tracked files from GitHub raw content; integrity records now match the PR branch |
 
 No unresolved G0 finding changes the confirmed product scope or invalidates the design-stage GO decision. Architecture proposals and open technical questions remain explicitly marked in `docs/02–14` and are inputs to G1/G2, not grounds to silently freeze technology.
 
 ## 8. Existing documents to update vs. new documents
 
 **Updated in place on the G0 PR branch**
-- `README.md`, `STATUS.md`, `CHANGELOG.md`, `manifest.json`, `CHECKSUMS.sha256`;
+- `README.md`, `STATUS.md`, `CHANGELOG.md`, and `manifest.json`; `CHECKSUMS.sha256` was fully regenerated after verifying all 30 listed files.
 - `docs/19-pre-development-readiness.md` to record G0 result;
 - `docs/06` and `docs/07` heading numbers;
 - `docs/16` source registry entry for `N`.
