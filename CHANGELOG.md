@@ -1,5 +1,20 @@
 # Changelog
 
+## v0.7 — 2026-11-10
+
+### Added
+- Added `docs/22-mature-module-reuse-assessment.md` with the G2 reuse matrix, license/version snapshots, upstream Issue/PR and maintainer evidence, explicit adoption boundaries, exclusions, and bounded G3 validation spikes.
+- Completed G2 as a source-based reuse-design assessment: every major subsystem now has a Direct Reuse / Adapt / Reference / Build decision.
+
+### Corrected
+- Updated README, STATUS, manifest, source traceability, open decisions, competitor/reuse synthesis, and checksums to documentation baseline v0.7.
+- Corrected the project readiness state: G3 engineering decomposition is next; G2 validation spikes are bounded G3 work, not a reason to leave G2 uncompleted.
+
+### Not changed
+- No product code or package dependency was added.
+- No technology stack, database schema, deployment topology, or package version was frozen.
+- No parallel implementation was authorized; PR #1 remains Draft and unmerged.
+
 ## v0.6 — 2026-11-10
 
 ### Added
