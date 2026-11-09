@@ -1,5 +1,19 @@
 # Changelog
 
+## v0.4 — 2026-11-10
+
+### Added
+- Added `docs/19-pre-development-readiness.md` for the pre-implementation sequence: G0 design baseline, G1 architecture review, G2 mature-module reuse assessment, G3 engineering decomposition, G4 independently usable release roadmap, and G5 documentation handoff.
+- Clarified that G0–G5 are preparation gates, distinct from the implementation sequence in docs/12.
+- Recorded the design-stage GO decision and the rule that feasibility can be assessed from product design, architecture, source research, mature technical paths, and reuse analysis; a prototype or full competitor E2E run is not a prerequisite.
+- Preserved the complete 32-group scope, Project-first model, direct Agent and Coordinator modes, DeepSeek DSH as an architectural input, and Experience-to-Skill as a supporting capability.
+
+### Not changed
+- No product code or runtime implementation was added.
+- No technology stack or deployment topology was frozen.
+- No gate is claimed as complete; G0–G5 remain NOT STARTED.
+- Existing docs/00–18 and ownership rules remain in place; this adds a preparation plan, not a parallel documentation hierarchy.
+
 ## v0.3 — 2026-11-09
 
 ### Added / clarified
@@ -40,4 +54,3 @@
 - Product remains the complete Project-centered OS for people and multiple Agents.
 - Autonomous execution remains a sub-capability; Personal Execution Skill remains a supporting method input.
 - Technology stack remains unfrozen; no code implementation or production capability is claimed.
-

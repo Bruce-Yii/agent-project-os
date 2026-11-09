@@ -1,6 +1,6 @@
 # Agent Project OS
 
-> **Product requirements and development documentation · v0.3 · 2026-11-09**  
+> **Product requirements and development documentation · v0.4 · 2026-11-10**  
 > Product codename: **Agent Project OS** (working name; brand not frozen)
 
 An open-source, free-to-self-host Project OS for people and teams working with multiple AI Agents. It unifies long-lived Projects, human–Agent collaboration, multi-Agent execution, local Sessions, knowledge, workflows, integrations, review, governance, and cross-device control.
@@ -21,7 +21,8 @@ Read the full [Product Requirements Document](docs/00-product-charter.md) before
 
 ## Current status
 
-- Product direction: **confirmed at the concept level** by the product owner.
+- Product direction: **confirmed; design-stage decision: GO — worth developing**.
+- Current phase: **Pre-development readiness (G0–G5)**; gates are planned but not yet executed.
 - Full capability scope: **preserved**; implementation may be staged, but the product scope is not reduced to an Agent client or execution relay.
 - Domain model: **design proposal; requires review before schema freeze**.
 - Architecture: **design proposal; technology choices are not frozen**.
@@ -51,6 +52,7 @@ Read the full [Product Requirements Document](docs/00-product-charter.md) before
 | 16 | [Source traceability](docs/16-source-traceability.md) | Where did each capability and design rule come from? |
 | 17 | [Agent development contract](docs/17-agent-development-contract.md) | How should multiple developers and Agent windows work safely? |
 | 18 | [Local Agent Session subsystem](docs/18-local-agent-session-subsystem.md) | How does Desktop create/attach local Agent Sessions and continuously receive new messages safely? |
+| 19 | [Pre-development readiness](docs/19-pre-development-readiness.md) | What must be reviewed and specified before parallel implementation begins (G0–G5)? |
 
 Templates: [ADR](docs/templates/ADR.md), [Module contract](docs/templates/module-contract.md), [Work package](docs/templates/work-package.md).
 

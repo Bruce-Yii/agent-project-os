@@ -1,12 +1,11 @@
 {
   "name": "agent-project-os",
-  "version": "0.2",
-  "snapshot_date": "2026-11-09",
+  "version": "0.4",
+  "snapshot_date": "2026-11-10",
   "files": [
     "AGENTS.md",
     "CHANGELOG.md",
-    "README.md",
-    "STATUS.md",
+    "CHECKSUMS.sha256",
     "docs/00-product-charter.md",
     "docs/01-functional-catalog.md",
     "docs/02-domain-model.md",
@@ -26,10 +25,12 @@
     "docs/16-source-traceability.md",
     "docs/17-agent-development-contract.md",
     "docs/18-local-agent-session-subsystem.md",
+    "docs/19-pre-development-readiness.md",
     "docs/templates/ADR.md",
     "docs/templates/module-contract.md",
     "docs/templates/work-package.md",
-    "CHECKSUMS.sha256",
-    "manifest.json"
+    "manifest.json",
+    "README.md",
+    "STATUS.md"
   ]
 }
