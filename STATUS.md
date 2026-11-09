@@ -1,10 +1,10 @@
 # Repository Status
 
-- Documentation baseline: v0.6
+- Documentation baseline: v0.7
 - Snapshot date: 2026-11-10
 - Product decision: **GO — worth developing**, based on the existing product definition, domain model, architecture, mature technical paths, and reusable assets
 - Product phase: **Pre-development readiness (G0–G5)**
-- Preparation-gate status: **G0 and G1 COMPLETE on PR #1 branch (merge pending)**; G2–G5 NOT STARTED
+- Preparation-gate status: **G0, G1, and G2 COMPLETE on PR #1 branch (merge pending)**; G3–G5 NOT STARTED
 - Implementation: not started in this repository
 - GitHub remote: https://github.com/Bruce-Yii/agent-project-os (public)
 - Product center: unified, Project-first operating model for people and multiple Agents
@@ -17,8 +17,8 @@
 - Supporting intelligence direction: learn reusable Skills from project conversations, Agent execution traces, user corrections, and review outcomes; Skills do not replace Memory or grant permissions
 - Exact open-source license: not selected; must be decided before first public code release
 - Technology stack and canonical deployment topology: not frozen
-- Next planned work: G2 reuse assessment, then G3 engineering decomposition, G4 staged release planning, and G5 documentation handoff
+- Next planned work: G3 engineering decomposition, then G4 staged release planning and G5 documentation handoff
 
-See [PRD](docs/00-product-charter.md), [Domain Model](docs/02-domain-model.md), [Development Sequence](docs/12-development-roadmap.md), [Open Decisions](docs/14-open-decisions.md), [Agent Development Contract](docs/17-agent-development-contract.md), [Local Agent Session](docs/18-local-agent-session-subsystem.md), [Pre-development Readiness](docs/19-pre-development-readiness.md), [G0 Design Baseline](docs/20-design-baseline.md), and [G1 Architecture Review](docs/21-architecture-review.md).
+See [G2 Mature-module Reuse Assessment](docs/22-mature-module-reuse-assessment.md), [PRD](docs/00-product-charter.md), [Domain Model](docs/02-domain-model.md), [Development Sequence](docs/12-development-roadmap.md), [Open Decisions](docs/14-open-decisions.md), [Agent Development Contract](docs/17-agent-development-contract.md), [Local Agent Session](docs/18-local-agent-session-subsystem.md), [Pre-development Readiness](docs/19-pre-development-readiness.md), [G0 Design Baseline](docs/20-design-baseline.md), and [G1 Architecture Review](docs/21-architecture-review.md).
 
-**Important:** G0–G5 are preparation gates, not product release numbers. They do not replace the implementation stages in docs/12. G0 and G1 are complete on the pending PR branch; G2–G5 have not passed, and implementation has not started.
+**Important:** G0–G5 are preparation gates, not product release numbers. They do not replace the implementation stages in docs/12. G0, G1, and G2 are complete on the pending PR branch; G3–G5 have not passed, and implementation has not started.
