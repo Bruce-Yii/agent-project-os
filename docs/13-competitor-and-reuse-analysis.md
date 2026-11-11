@@ -102,7 +102,6 @@ Primary docs: [Codex App Server](https://github.com/openai/codex/blob/main/codex
 
 ## 8. Synthesis — what the product should own
 
-
 | Layer | We should own | We should reuse/adapt |
 |---|---|---|
 | Project domain | Project/Goal/Task/Dependency/Current State and ownership rules | mature list/board/timeline interaction patterns |
@@ -114,8 +113,6 @@ Primary docs: [Codex App Server](https://github.com/openai/codex/blob/main/codex
 | Integrations | capability and permission contracts | existing Provider SDKs, MCP, GitHub/Notion/Feishu APIs |
 
 The differentiated product hypothesis is the **unified Project workspace and canonical model across people, Agents, work, knowledge, runtimes, and delivery**. No single listed feature is assumed to be unique.
-
-
 
 ## 9. Product positioning: unified Project OS, not a feature bundle
 
@@ -145,6 +142,7 @@ A product that only embeds multiple tools or synchronizes a few task fields does
 **Important correction:** open-source and free self-hosting are not unique by themselves. Paperclip, Paseo, and OpenHands Agent Canvas already provide meaningful open-source/self-hosted options. Likewise, some hosted products have free tiers. The product must compete on the *combination and quality of unification*, not on an inaccurate claim that every alternative is paid or closed.
 
 Primary references:
+
 - Paperclip [repository/license/quickstart](https://github.com/paperclipai/paperclip) and [self-hosted product explanation](https://paperclip.ing/product/open-source/).
 - Paseo [repository/license](https://github.com/getpaseo/paseo), [product architecture](https://github.com/getpaseo/paseo/blob/main/docs/product.md), and [self-hosted client/Daemon model](https://github.com/getpaseo/paseo/blob/main/docs/architecture.md).
 - OpenHands [Agent Canvas repository](https://github.com/All-Hands-AI/OpenHands) and [official pricing](https://www.openhands.dev/pricing).
@@ -200,4 +198,3 @@ The detailed source/version/license/maintenance matrix is in [22 — Mature-modu
 | Product domain, policy, review, attention, UX | Build ourselves | These are the product's differentiating canonical semantics, not generic infrastructure |
 
 DeepSeek Harness and its Super-agent prototype remain architectural references rather than production dependencies. Composio's self-hosted deployment is an Enterprise arrangement; full Activepieces and unsandboxed third-party plugin execution are not part of the free self-hosted core. Hatchet and Electric remain alternatives/reference designs, not selected defaults.
-

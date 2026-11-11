@@ -1,12 +1,15 @@
 # Repository Status
 
 - Documentation baseline: v0.7
-- Snapshot date: 2026-11-10
+- Snapshot date: 2026-11-12
 - Product decision: **GO — worth developing**, based on the existing product definition, domain model, architecture, mature technical paths, and reusable assets
 - Product phase: **Pre-development readiness (G0–G5)**
-- Preparation-gate status: **G0, G1, and G2 COMPLETE on PR #1 branch (merge pending)**; G3–G5 NOT STARTED
-- Implementation: not started in this repository
-- GitHub remote: https://github.com/Bruce-Yii/agent-project-os (public)
+- Preparation-gate status: **G0, G1, and G2 COMPLETE on PR #1 branch (Draft, merge pending)**; G3 in progress (YU-392 active); G4–G5 NOT STARTED
+- Local dev foundation: **in progress (YU-399)**; Repository Foundation Gate (RFG): **PARTIAL**
+- Implementation: not started in this repository (no product code or production dependency yet)
+- RFG status: **PARTIAL** (bootstrap/CI/toolchain evidence still being established)
+- GitHub remote: <https://github.com/Bruce-Yii/agent-project-os> (public)
+- PR #1: Draft, unmerged; base `main` `6cdb0477cd03131ec62872e24990a30c6a15979d`; head at intake `8f2b50707fef30b47294ebbcd07fc17583abcb11` (refresh live before acting)
 - Product center: unified, Project-first operating model for people and multiple Agents
 - Design lineage: AWRP execution reliability + our Linear Project/Current State operating model + DeepSeek DSH event-driven orchestration ideas
 - Distribution direction: open source and free to self-host for personal/team use; no mandatory subscription or artificial feature wall for core capabilities
@@ -17,8 +20,9 @@
 - Supporting intelligence direction: learn reusable Skills from project conversations, Agent execution traces, user corrections, and review outcomes; Skills do not replace Memory or grant permissions
 - Exact open-source license: not selected; must be decided before first public code release
 - Technology stack and canonical deployment topology: not frozen
-- Next planned work: G3 engineering decomposition, then G4 staged release planning and G5 documentation handoff
+- Active work: YU-392 (G3 engineering decomposition & shared contracts) in progress; YU-399 (local development foundation & Agent operating system) in progress
+- Next planned work: complete G3 (YU-392), local dev foundation (YU-399), then G4 staged release planning and G5 documentation handoff
 
-See [G2 Mature-module Reuse Assessment](docs/22-mature-module-reuse-assessment.md), [PRD](docs/00-product-charter.md), [Domain Model](docs/02-domain-model.md), [Development Sequence](docs/12-development-roadmap.md), [Open Decisions](docs/14-open-decisions.md), [Agent Development Contract](docs/17-agent-development-contract.md), [Local Agent Session](docs/18-local-agent-session-subsystem.md), [Pre-development Readiness](docs/19-pre-development-readiness.md), [G0 Design Baseline](docs/20-design-baseline.md), and [G1 Architecture Review](docs/21-architecture-review.md).
+See [G2 Mature-module Reuse Assessment](docs/22-mature-module-reuse-assessment.md), [PRD](docs/00-product-charter.md), [Domain Model](docs/02-domain-model.md), [Development Sequence](docs/12-development-roadmap.md), [Open Decisions](docs/14-open-decisions.md), [Agent Development Contract](docs/17-agent-development-contract.md), [Local Agent Session](docs/18-local-agent-session-subsystem.md), [Pre-development Readiness](docs/19-pre-development-readiness.md), [G0 Design Baseline](docs/20-design-baseline.md), [G1 Architecture Review](docs/21-architecture-review.md), and [Local Development and Agent Operations](docs/23-local-development-and-agent-operations.md) (new, YU-399).
 
-**Important:** G0–G5 are preparation gates, not product release numbers. They do not replace the implementation stages in docs/12. G0, G1, and G2 are complete on the pending PR branch; G3–G5 have not passed, and implementation has not started.
+**Important:** G0–G5 are preparation gates, not product release numbers. They do not replace the implementation stages in docs/12. G0, G1, and G2 are complete on the pending PR branch; G3 is in progress (YU-392); G4–G5 have not passed, and implementation has not started. Repository Foundation Gate (RFG) is PARTIAL. PR #1 remains Draft and unmerged.

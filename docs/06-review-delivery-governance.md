@@ -103,4 +103,3 @@ A confirmed system-level coordination incident should have a reproducible descri
 - External truth can be refreshed and compared with cached state.
 - Duplicate side effects are prevented or reconciled before retry.
 - Public or destructive actions are gated by policy and human approval.
-

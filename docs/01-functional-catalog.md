@@ -17,6 +17,7 @@
 **Purpose:** establish the access, ownership, and collaboration boundary for personal and team use.
 
 Capabilities:
+
 - personal workspace and team workspace;
 - multiple organizations/workspaces and workspace switching;
 - member invitations, roles, teams, groups, and membership lifecycle;
@@ -29,6 +30,7 @@ Capabilities:
 ### F02 — Project Portfolio and Initiative Management
 
 Capabilities:
+
 - initiatives or portfolio-level goals grouping multiple Projects;
 - portfolio overview, strategic priority, ownership, status, target dates;
 - cross-project dependencies and shared milestones;
@@ -41,6 +43,7 @@ Capabilities:
 ### F03 — Project Lifecycle
 
 Capabilities:
+
 - create, edit, duplicate, pause, resume, archive, restore, and close Projects;
 - project identity stable across sessions and devices;
 - project lead, contributors, labels, target dates, status, and summary;
@@ -53,6 +56,7 @@ Capabilities:
 ### F04 — Project Structure
 
 Capabilities:
+
 - Project, Subproject, Goal, Milestone, phase, and project area;
 - project documents, external resources, repositories, environments, and linked services;
 - multiple workstreams within one Project;
@@ -64,6 +68,7 @@ Capabilities:
 ### F05 — Task and Work Package Management
 
 Capabilities:
+
 - create/edit/archive Tasks and Subtasks;
 - task description, scope, non-scope, constraints, acceptance criteria, priority, estimate, labels, due date;
 - responsible human/team, execution participant, reviewer, and observers;
@@ -76,6 +81,7 @@ Capabilities:
 ### F06 — Task Relationships and Dependency Graph
 
 Capabilities:
+
 - parent/child hierarchy;
 - blocking/blocked-by, related, duplicate, supersedes, and cross-project dependency;
 - DAG validation and cycle detection;
@@ -87,6 +93,7 @@ Capabilities:
 ### F07 — Task Lifecycle and Current State
 
 Capabilities:
+
 - lifecycle states with explicit semantics;
 - waiting for external dependency vs internally blocked vs awaiting review;
 - state transition history and actor attribution;
@@ -99,6 +106,7 @@ Capabilities:
 ### F08 — Intake, Triage, and Deduplication
 
 Capabilities:
+
 - manual inbox, external-event intake, requests, bugs, research findings;
 - classify, enrich, prioritize, accept, decline, snooze, merge duplicates;
 - candidate Work Package pool before durable Task creation;
@@ -113,6 +121,7 @@ Capabilities:
 ### F09 — Human and Agent Participants
 
 Capabilities:
+
 - human users, teams, Agents, service identities, and runtime nodes as distinct participant types;
 - owner/accountable person separate from Agent executor;
 - multiple collaborators, reviewers, watchers, and observers;
@@ -124,6 +133,7 @@ Capabilities:
 ### F10 — Collaboration and Communication
 
 Capabilities:
+
 - Project discussions and Task discussions;
 - comments, mentions, replies, attachments, and threaded conversations;
 - decisions and discussion outcomes linked to affected Tasks;
@@ -136,6 +146,7 @@ Capabilities:
 ### F11 — Agent Registry and Capability Management
 
 Capabilities:
+
 - register local, remote, cloud, and custom Agents;
 - provider, model, version, runtime, capability, cost profile, health, availability;
 - capability negotiation: session create/attach/resume/fork, message send/steer, event subscription/replay, tool calls, permissions, interrupt/cancel, artifacts, usage, etc.;
@@ -152,6 +163,7 @@ Capabilities:
 **Product requirement confirmed:** the Desktop client must be able to create/open a Session with a local Agent and continuously receive newly arriving messages. This is a core Desktop capability within the wider Project OS, not a separate product identity.
 
 Capabilities:
+
 - discover local Agent Providers, create Sessions, attach to existing/running Sessions, and resume by Provider-native identity where supported;
 - direct standalone Session mode that does not require a Task; optional explicit association to Project, Task, Assignment, and Run;
 - continuous bidirectional interaction: send message, stream message deltas, steer an active turn, queue follow-up, interrupt, and respond to permission prompts where supported;
@@ -169,6 +181,7 @@ Capabilities:
 ### F13 — Agent Delegation and Assignment
 
 Capabilities:
+
 - user-selected Agent assignment;
 - Coordinator-selected Agent assignment;
 - human remains accountable while Agent executes;
@@ -181,6 +194,7 @@ Capabilities:
 ### F14 — Multi-Agent Coordination
 
 Capabilities:
+
 - Coordinator and Worker roles without forcing a fixed org chart;
 - task decomposition, parallel fan-out, serial dependency, aggregation;
 - specialist Agents and cross-review;
@@ -193,6 +207,7 @@ Capabilities:
 ### F15 — Run, Event, and Execution Lifecycle
 
 Capabilities:
+
 - durable Assignment and Run records;
 - Run attempts, state, idempotency, start/end, executor identity, and trace;
 - ACK, checkpoint, input request, handoff, failure, interruption, cancel, reconcile;
@@ -205,6 +220,7 @@ Capabilities:
 ### F16 — Execution Environments and Runtime Nodes
 
 Capabilities:
+
 - local Daemon as a user-machine background service, remote host, cloud worker, and sandboxed execution node;
 - local Provider process supervision, attach/reconnect, session discovery, machine startup, shutdown, sleep/wake and crash recovery;
 - workspace, local checkout, worktree, container, terminal/PTY, browser, preview;
@@ -221,6 +237,7 @@ Capabilities:
 ### F17 — Workflow and Event Automation
 
 Capabilities:
+
 - schedule/time triggers;
 - GitHub, Notion, Feishu, calendar, webhook, and application event triggers;
 - conditional routing, event correlation, subscriptions, and deduplication;
@@ -232,6 +249,7 @@ Capabilities:
 ### F18 — Intelligent Planning and Assistance
 
 Capabilities:
+
 - understand user intent and map it to an existing Project;
 - create or update goals, tasks, dependencies, and acceptance criteria;
 - recommend task split, Agent choice, priority, risks, and next actions;
@@ -243,6 +261,7 @@ Capabilities:
 ### F19 — Autonomous Execution (Sub-capability)
 
 Capabilities:
+
 - continue authorized work after a completed step or external trigger;
 - select eligible next work and route it to an Agent/Runtime;
 - handle bounded retries and recoverable failures;
@@ -256,6 +275,7 @@ Capabilities:
 ### F20 — Project Knowledge and Resources
 
 Capabilities:
+
 - project documents, research, links, files, repositories, references, and source registry;
 - search and retrieval across authorized resources;
 - document version and provenance;
@@ -267,6 +287,7 @@ Capabilities:
 ### F21 — Project Memory and Context Assembly
 
 Capabilities:
+
 - workspace/project/task/session context layers;
 - confirmed decisions, methods, failures, and lessons;
 - current state and historical state reconstruction;
@@ -281,6 +302,7 @@ Capabilities:
 ### F22 — Skills, Templates, and Reusable Methods
 
 Capabilities:
+
 - install, author, version, test, enable, disable, and share Skills;
 - Agent profiles, task templates, Project templates, and workflow templates;
 - scope-aware Skill applicability and provider compatibility;
@@ -295,6 +317,7 @@ Capabilities:
 ### F23 — Plugin and Connector Ecosystem
 
 Capabilities:
+
 - Agent Provider plugins;
 - Runtime Provider plugins;
 - Service Connector plugins;
@@ -310,6 +333,7 @@ Capabilities:
 ### F24 — Deliverables and Artifacts
 
 Capabilities:
+
 - code commits, branches, PRs, patches, documents, files, reports, demos, screenshots, logs, and external links;
 - immutable references where possible (commit SHA, document version, content hash);
 - artifact lineage to Task, Assignment, Run, Session, and Agent;
@@ -321,6 +345,7 @@ Capabilities:
 ### F25 — Review and Acceptance
 
 Capabilities:
+
 - acceptance criteria and evidence checklist;
 - automated checks and independent Agent review;
 - human review and final acceptance;
@@ -333,6 +358,7 @@ Capabilities:
 ### F26 — Permission, Risk, and Approval Governance
 
 Capabilities:
+
 - Workspace/Project/Task/Agent/Plugin permission scopes;
 - actor-action-resource authorization;
 - risk tiers for read, local change, private write, public write, merge, destructive action;
@@ -345,6 +371,7 @@ Capabilities:
 ### F27 — Project Visualization
 
 Capabilities:
+
 - portfolio dashboard and Project dashboard;
 - list, board, timeline, calendar, milestone, task tree, dependency graph;
 - workload/capacity views for human participants, Agent pools, and Runtime Nodes;
@@ -358,6 +385,7 @@ Capabilities:
 ### F28 — Multi-platform Clients
 
 Capabilities:
+
 - Desktop: full Project OS and local runtime management;
 - Mobile: project overview, task review, approvals, notifications, Agent interaction, remote control;
 - Web: cross-device workspace, team collaboration, remote project management;
@@ -369,6 +397,7 @@ Capabilities:
 ### F29 — Attention Center and Notifications
 
 Capabilities:
+
 - actionable approvals, blockers, questions, review requests, and significant project changes;
 - prioritize by urgency, risk, and user responsibility;
 - group repetitive/low-value events;
@@ -383,6 +412,7 @@ Capabilities:
 ### F30 — Observability, Cost, and Operations
 
 Capabilities:
+
 - Agent/Provider/Runtime/Daemon health and installed-version diagnostics;
 - Session/Run traces, tool-call logs, event-stream lag/gaps, reconnect counts, failures, retries, and latency;
 - model/provider usage and cost attribution by Project/Task/Run/Session;
@@ -395,6 +425,7 @@ Capabilities:
 ### F31 — Data Portability and Lifecycle
 
 Capabilities:
+
 - export/import workspace, Projects, Tasks, knowledge, Sessions metadata, and artifact references;
 - guided migration from Linear/Jira/Notion/GitHub and other systems with preview, field mapping, relation mapping, duplicate detection, provenance, and rollback plan;
 - backup/restore and migration tools;
@@ -405,10 +436,10 @@ Capabilities:
 
 **Sources:** `A/U/N`. **Dependencies:** schema versioning, storage, connectors.
 
-
 ### F32 — Universal Search and Command Palette
 
 Capabilities:
+
 - permission-aware global search across Projects, Goals, Tasks, Sessions, messages, Decisions, Knowledge, Resources, Artifacts, Agents, and connected external references;
 - combine exact text, semantic retrieval, structured filters, recency, Project scope, Provider, and lifecycle state;
 - jump from a search result to its owning Project/Task/Session and preserve navigation context;
@@ -421,4 +452,3 @@ Capabilities:
 ## Functional completeness rule
 
 A module is not considered designed merely because its name appears here. Before implementation, its specification must include: user scenario, primary objects, commands/events, permissions, states, external truth, failure cases, acceptance criteria, and dependencies. See [Module Contract Template](templates/module-contract.md).
-

@@ -389,4 +389,3 @@ Baselines and target thresholds must be measured with design partners; do not in
 - Optional hosted/enterprise service model.
 - Privacy telemetry policy, data retention defaults, and sync defaults.
 - Which integrations/Providers ship first.
-

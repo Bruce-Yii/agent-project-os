@@ -127,4 +127,3 @@ Skill extraction must preserve provenance and require user validation before tre
 - The system can recover interrupted Assignments without repeating already completed side effects.
 - Autonomy remains within a user-authorized mandate and uses the Personal Execution Skill only as a method input.
 - Human decisions are requested only at genuine authority or uncertainty boundaries.
-

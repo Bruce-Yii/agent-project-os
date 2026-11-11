@@ -60,6 +60,7 @@ All 32 functional groups in `docs/01` have an owning design area. No group is re
 ## 5. Critical architecture findings
 
 Severity meanings:
+
 - **P0 — implementation blocker:** must be resolved or explicitly held behind a Gate before schema/API/shared-contract work or side-effect execution.
 - **P1 — subsystem blocker:** must be resolved before the corresponding subsystem is implemented or released.
 - **P2 — later product validation:** can remain open during architecture preparation if it is visible and does not leak into implementation.

@@ -94,4 +94,3 @@ Web supports cross-device access, team collaboration, Project overview, task man
 - Mobile/Web can observe or control an online local Session only through authenticated pairing and current permission checks.
 - Mobile can approve/review/intervene on an online runtime without owning canonical state.
 - Desktop and Web show consistent Task and Project state after reconnect.
-

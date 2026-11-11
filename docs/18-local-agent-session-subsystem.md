@@ -332,4 +332,3 @@ A real end-to-end acceptance test must prove:
 - [AWRP repository](https://github.com/Bruce-Yii/agent-relay) — durable Task/Run/Event/Handoff and fail-closed execution lessons.
 
 Moving Provider APIs must be re-checked against pinned versions and real machines before implementation. This document describes product contracts and candidate behavior, not a claim that every Provider already supports every capability.
-

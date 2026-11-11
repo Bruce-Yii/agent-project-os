@@ -7,7 +7,8 @@ Plugins extend the Project OS through explicit contracts. A plugin must declare 
 Candidate plugin classes:
 
 1. **Agent Provider:** connect to an Agent CLI, SDK, or API.
-2. **Runtime Provider:** create/manage a local, remote, cloud, or sandbox execution node.3. **Service Connector:** access GitHub, Notion, Feishu, calendar, browser, issue trackers, or business systems.
+2. **Runtime Provider:** create/manage a local, remote, cloud, or sandbox execution node.
+3. **Service Connector:** access GitHub, Notion, Feishu, calendar, browser, issue trackers, or business systems.
 4. **Trigger Provider:** observe event streams and produce normalized Triggers.
 5. **Knowledge Provider:** search/read/write documents or knowledge stores.
 6. **UI Extension:** add a specialized panel or view without changing core domain ownership.
@@ -103,7 +104,6 @@ Plugin discovery/marketplace is part of the complete product scope, but should f
 - Webhook replay and duplicate delivery do not create duplicate Tasks or side effects.
 - Users can inspect and revoke plugin access.
 
-
 ## 6. Local Agent Session Provider references
 
 - [Codex App Server](https://github.com/openai/codex/blob/main/codex-rs/app-server/README.md): local JSON-RPC app-server with thread and turn lifecycle operations and notifications.
@@ -113,4 +113,3 @@ Plugin discovery/marketplace is part of the complete product scope, but should f
 - [Paseo architecture](https://github.com/getpaseo/paseo/blob/main/docs/architecture.md): local Daemon, WebSocket client protocol, multi-client subscriptions, and Provider adapters.
 
 Provider API details are moving targets. Pin versions and test on real machines before implementation; a source reference is not proof that every capability works in our supported environment.
-

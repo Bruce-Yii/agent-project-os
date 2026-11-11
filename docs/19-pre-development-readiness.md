@@ -54,6 +54,7 @@ Update the document that owns a subject. Add a new document only when a distinct
 **Objective:** Establish one reliable inventory of existing assets, their authority, and their status.
 
 **Work**
+
 - Read the actual repository state: default branch, README, AGENTS, docs, templates, manifest, changelog, and status.
 - Read the current Notion project home, product definition, system architecture, design discussions, reuse research, and relevant confirmed decisions.
 - Map Notion design areas to their owning Git documents.
@@ -62,6 +63,7 @@ Update the document that owns a subject. Add a new document only when a distinct
 - Record exact repository/document baseline.
 
 **Deliverables**
+
 - Design asset inventory and layered authority map: [20 — Design Baseline](20-design-baseline.md).
 - Notion-to-Git ownership and traceability map.
 - Consistency/discrepancy register, distinguishing stale snapshots, repository metadata defects, traceability defects, historical references, and non-blocking differences.
@@ -74,6 +76,7 @@ Update the document that owns a subject. Add a new document only when a distinct
 **Objective:** Confirm the current design can support the full product without ambiguous ownership or missing lifecycle paths.
 
 **Review**
+
 - Map core user journeys to modules and domain objects.
 - Review Project, Task, Assignment, Run, Session, Agent, Provider, Runtime, Artifact, Evidence, Review, Approval, Knowledge, Memory, Skill, Workflow, Trigger, and Connector boundaries.
 - Check identity, ownership, lifecycle, authority, relations, and state machines.
@@ -85,6 +88,7 @@ Update the document that owns a subject. Add a new document only when a distinct
 - Inspect failure/degraded paths as well as happy paths.
 
 **Deliverables**
+
 - Architecture review matrix: area, current design, source/evidence, gap, severity, resolution, owning document.
 - User-journey-to-module/object map.
 - State/lifecycle/authority gap list.
@@ -124,6 +128,7 @@ Inspect official docs, source, tests, releases, open/closed Issues, PRs, maintai
 **Evaluation dimensions:** capability fit; license; maintenance/release stability; API/protocol stability; security and isolation; platform/deployment assumptions; data coupling and migration; adaptation and maintenance cost; tests and known Issues; upstream exit strategy.
 
 **Deliverables**
+
 - Reuse matrix: candidate, capability, source/version, classification, rationale, license, integration boundary, risks, cost, fallback.
 - Explicit exclusions from wholesale adoption.
 - Prioritized reuse decisions and ADRs where architecture changes.
@@ -137,6 +142,7 @@ Inspect official docs, source, tests, releases, open/closed Issues, PRs, maintai
 **Objective:** Turn the reviewed architecture into bounded work that independent windows/Agents can execute without inventing incompatible interfaces.
 
 **Work**
+
 - Define module responsibility and ownership boundaries.
 - Define shared domain types/IDs, schemas, state machines, command/event envelopes, API, Provider contracts, and error semantics.
 - Define data ownership, canonical authority, migration boundaries, and external-system truth.
@@ -146,6 +152,7 @@ Inspect official docs, source, tests, releases, open/closed Issues, PRs, maintai
 - Build dependency graph, concurrency plan, integration checkpoints, and independent review ownership.
 
 **Multi-window model**
+
 - W0 is overall control/integration: cross-module alignment, shared contracts, dependency gates, integration, and independent review.
 - W1–W7 are potential bounded work windows. Assign their exact modules only after G1/G2/G3 reveal real boundaries; do not preassign arbitrary roles.
 - The user gives requirements to ChatGPT. ChatGPT is accountable for planning, dispatch quality, prevention, review, correction, and acceptance. Execution Agents implement bounded packages.
@@ -162,6 +169,7 @@ Inspect official docs, source, tests, releases, open/closed Issues, PRs, maintai
 **Objective:** Sequence the complete product without sacrificing its full design.
 
 **Work**
+
 - Reconcile the architecture dependency graph with docs/12.
 - Define stages toward the complete product target (10.0), with intermediate releases such as 1.0, 2.0, and later increments as appropriate.
 - Each stage must be independently installable, runnable, and useful. Development can stop after any delivered stage without leaving an unusable system.
@@ -179,6 +187,7 @@ Inspect official docs, source, tests, releases, open/closed Issues, PRs, maintai
 **Objective:** Make the repository an executable specification for the implementation team.
 
 **Work**
+
 - Update existing docs in their owning locations; do not reorganize the repository for appearance.
 - Add only contracts, ADRs, diagrams, module specs, and Work Packages shown to be missing by G0–G4.
 - Give every document a status, scope, source/decision references, and separation between confirmed requirements, proposals, and unresolved choices.

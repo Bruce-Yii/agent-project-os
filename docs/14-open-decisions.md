@@ -104,4 +104,3 @@ This document separates product-owner decisions from design proposals and valida
 ## 8. Decision record template
 
 Use [ADR Template](templates/ADR.md). Every architecture-changing decision should include context, alternatives, rationale, consequences, status, evidence, and affected documents.
-

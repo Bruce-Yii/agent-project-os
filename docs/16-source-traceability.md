@@ -87,8 +87,6 @@ This matrix shows where the feature inventory and design rules originated. It is
 - A competitor feature is not automatically a product requirement.
 - AWRP and Linear practices are historical evidence from our own workflow, not a mandate to preserve their technical limitations.
 
-
 ## 4. Local Agent Session design references
 
 The detailed local Session contract is in [18 — Local Agent Session Subsystem](18-local-agent-session-subsystem.md). The provider docs establish that structured local integration is feasible through multiple distinct interfaces (JSON-RPC app-server, SDK, HTTP/SSE, JSONL RPC), but they do not establish uniform feature parity. Every adapter must be validated against pinned versions and real-machine tests.
-

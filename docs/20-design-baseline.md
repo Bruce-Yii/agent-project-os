@@ -141,15 +141,18 @@ No unresolved G0 finding changes the confirmed product scope or invalidates the 
 ## 8. Existing documents to update vs. new documents
 
 **Updated in place on the G0 PR branch**
+
 - `README.md`, `STATUS.md`, `CHANGELOG.md`, and `manifest.json`; `CHECKSUMS.sha256` was fully regenerated after verifying all 30 listed files.
 - `docs/19-pre-development-readiness.md` to record G0 result;
 - `docs/06` and `docs/07` heading numbers;
 - `docs/16` source registry entry for `N`.
 
 **New document**
+
 - `docs/20-design-baseline.md` only. Its distinct responsibility is the G0 asset inventory, authority map, and discrepancy register; it does not create a second PRD or architecture hierarchy.
 
 **Preserved without rewriting**
+
 - Notion 02 historical discussion archive;
 - Notion 01 architecture draft (the old repository snapshot is noted here, not erased);
 - AWRP repository and its historical protocol;
@@ -160,6 +163,7 @@ No unresolved G0 finding changes the confirmed product scope or invalidates the 
 ## 9. G0 exit evidence and next gate
 
 G0 exit evidence:
+
 - all primary Notion product/design assets and relevant historical references inventoried;
 - GitHub `main` and PR branch snapshots recorded by exact commit;
 - every major product, domain, module, process, and source-traceability document has an identified owner;

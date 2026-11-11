@@ -7,6 +7,7 @@
 ### Stage 0 — Product and domain contracts
 
 **Must settle first:**
+
 - product invariants and full capability boundary;
 - Workspace/Project/Task/Participant/Assignment/Run/Session/Artifact/Review identities;
 - canonical authority and external truth rules;
@@ -20,6 +21,7 @@
 ### Stage 1 — Project and Work Management core
 
 Build:
+
 - Workspace and membership;
 - Project, Goal, Milestone, Project lifecycle;
 - Task/Subtask, dependency graph, intake/triage;
@@ -31,6 +33,7 @@ Build:
 ### Stage 2 — Agent identity and execution foundation
 
 Build:
+
 - Agent Registry and Provider capability model;
 - Local Daemon lifecycle, Provider discovery/version/capability detection, and secure pairing;
 - Workspace/worktree isolation;
@@ -45,6 +48,7 @@ Build:
 ### Stage 3 — Review, approval, and safe delivery
 
 Build:
+
 - Artifact and Evidence model;
 - Review and acceptance flow;
 - authorization and risk tiers;
@@ -56,6 +60,7 @@ Build:
 ### Stage 4 — Multi-Agent coordination and workflows
 
 Build:
+
 - Coordinator plan and Work Package generation;
 - Scheduler and capability matching;
 - parallel Assignments and dependency-aware routing;
@@ -68,6 +73,7 @@ Build:
 ### Stage 5 — Knowledge and Project context
 
 Build:
+
 - Resource/Knowledge/Decision records;
 - provenance and versioning;
 - retrieval and Context Pack assembly;
@@ -79,6 +85,7 @@ Build:
 ### Stage 6 — Client breadth and plugin ecosystem
 
 Build:
+
 - Desktop full workspace and complete local Agent Session workbench (multi-Provider, multi-Session, terminal/diff/permission views);
 - Web client and shared project experience;
 - Mobile project control, review, approval, remote Agent interaction;
@@ -89,6 +96,7 @@ Build:
 ### Stage 7 — Operational maturity and expansion
 
 Build:
+
 - cost/usage dashboards and budgets;
 - backup/restore, import/export, migration;
 - enterprise/team controls as validated;
@@ -155,8 +163,6 @@ A meaningful full-system E2E should eventually verify:
 - Do not implement a broad autonomous loop before authorization, idempotency, Run recovery, and review are reliable.
 - Do not delete full-product requirements merely to simplify the first release.
 
-
-
 ## 7. Open-source and free self-hosted delivery gates
 
 The free self-hosted promise must be engineered and tested. It is not satisfied by publishing source code while the working product depends on a mandatory vendor service.
@@ -164,6 +170,7 @@ The free self-hosted promise must be engineered and tested. It is not satisfied 
 ### Gate D0 — License and dependency policy
 
 Before the first public code release:
+
 - select and publish the exact open-source license;
 - audit dependency, SDK, plugin, and bundled asset licenses;
 - define contribution, third-party notices, security disclosure, and versioning policy;

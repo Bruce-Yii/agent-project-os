@@ -113,6 +113,7 @@ A Provider-managed conversation/work session that can emit messages, tool calls,
 A Session may exist without a Task (direct Agent mode). It may be explicitly associated with a Project/Task/Assignment/Run, but this association does not create an Assignment or grant execution permission. A Session may only be reused across Runs or Tasks when Provider capability and explicit context boundaries make that safe. Rebinding across Project/Task security boundaries requires explicit user action and audit; never silently leak context.
 
 Separate the following facts:
+
 - `ProviderSessionRef`: Provider-native thread/session ID, Provider version, and resumability metadata;
 - `RuntimeProcess`: actual local/remote process that may be restarted while the Provider Session survives;
 - `SessionConnection`: a transient transport/client subscription; its loss does not end the Session;
@@ -165,6 +166,7 @@ A command sent to a Provider Session should have a unique `command_id`, actor, t
 A reusable method/prompt/tool procedure that can influence how an Agent prepares or performs work. A Skill is versioned and scoped, but it cannot create authority or override Project policy. A personal execution Skill may inform the autonomy sub-capability.
 
 ## 4. Canonical vs derived state
+
 | Data | Canonical owner | Other representations |
 |---|---|---|
 | Workspace/Project/Task identity | Project OS domain store | UI cache, search index, exports |
@@ -260,4 +262,3 @@ Final names and transitions require design validation. Preserve semantic distinc
 - Which Discussion/Thread types deserve durable first-class records versus external references?
 - How much of Project Current State is structured canonical data versus derived summary?
 - What is the minimum cross-workspace permission model for shared Agents and plugins?
-

@@ -83,4 +83,3 @@ Connector rules:
 - Stale knowledge is identified or superseded rather than silently treated as current.
 - Agent output is not automatically promoted to durable memory.
 - Knowledge extraction is selective and does not duplicate external source material unnecessarily.
-

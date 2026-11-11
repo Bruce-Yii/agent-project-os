@@ -188,22 +188,24 @@ The following are evaluation snapshots, not dependency lockfiles:
 ## 9. Primary sources
 
 ### Local Agent runtime and protocols
+
 - [Paseo repository](https://github.com/getpaseo/paseo), [architecture](https://github.com/getpaseo/paseo/blob/main/docs/architecture.md), [server package](https://www.npmjs.com/package/@getpaseo/server), [plugin security reference](https://paseo.sh/docs/plugins/reference), [permission reason issue #6923](https://github.com/getpaseo/paseo/issues/6923), [proposed fix #3950](https://github.com/getpaseo/paseo/pull/3950).
 - [ACP v2 overview](https://agentclientprotocol.com/protocol/v2/overview), [prompt lifecycle](https://agentclientprotocol.com/protocol/v2/prompt-lifecycle).
 - [MCP specification](https://modelcontextprotocol.io/specification).
 - [DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harness), [safety notice](https://github.com/deepseek-ai/deepseek-harness/blob/master/SAFETY.md), [Super-agent prototype](https://github.com/deepseek-ai/dsh-superagent-prototype).
 
 ### Durable workflow
+
 - [DBOS TypeScript durable workflows](https://docs.dbos.dev/typescript/tutorials/durable-workflows), [workflow communication](https://docs.dbos.dev/typescript/tutorials/communicating-with-workflows), [repository/releases](https://github.com/dbos-inc/dbos-transact-ts/releases).
 - [DBOS #1427](https://github.com/dbos-inc/dbos-transact-ts/issues/1427), [PR #1430](https://github.com/dbos-inc/dbos-transact-ts/pull/1430), [PR #1442](https://github.com/dbos-inc/dbos-transact-ts/pull/1442).
 - [Temporal workflows](https://docs.temporal.io/workflows), [self-hosted deployment](https://docs.temporal.io/self-hosted-guide/deployment).
 - [Hatchet self-hosting](https://docs.hatchet.run/self-hosting), [durable tasks](https://docs.hatchet.run/v1/durable-tasks), [event waits](https://docs.hatchet.run/v1/durable-event-waits), [#5327](https://github.com/hatchet-dev/hatchet/issues/5327), [#5387](https://github.com/hatchet-dev/hatchet/issues/5387).
 
 ### Connectors, sync, Memory, and Skills
+
 - [Activepieces license](https://www.activepieces.com/docs/about/license), [piece bundling](https://www.activepieces.com/docs/build-pieces/misc/bundling-pieces), [#16544](https://github.com/activepieces/activepieces/issues/16544).
 - [Composio token custody and deployment options](https://docs.composio.dev/docs/security/token-custody).
 - [PowerSync self-hosted service](https://docs.powersync.com/configuration/powersync-service/self-hosted-instances), [backend write path](https://docs.powersync.com/configuration/app-backend/client-side-integration), [React Native SDK](https://docs.powersync.com/client-sdks/reference/react-native-and-expo), [#846](https://github.com/powersync-ja/powersync-service/issues/846).
 - [Electric Shapes](https://electric-sql.com/docs/guides/shapes), [Electric auth](https://electric-sql.com/docs/guides/auth).
 - [Mem0 OSS](https://docs.mem0.ai/open-source/overview), [#4956](https://github.com/mem0ai/mem0/issues/4956).
 - [Agent Skills specification](https://agentskills.io/specification), [source repository](https://github.com/agentskills/agentskills).
-

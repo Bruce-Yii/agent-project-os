@@ -85,4 +85,3 @@ Every Agent handoff must include:
 - Are real external states and artifacts verified?
 - Did it create duplicate tasks, records, notifications, or side effects?
 - Are docs and ADRs updated when behavior changed?
-

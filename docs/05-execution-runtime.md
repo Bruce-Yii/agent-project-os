@@ -167,4 +167,3 @@ The detailed contract covers:
 - Parallel code work is isolated by default.
 - Handoff artifacts can be independently read and reviewed.
 - Provider-specific credentials never enter general Project Memory or logs.
-

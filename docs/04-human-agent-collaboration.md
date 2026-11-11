@@ -104,4 +104,3 @@ Do not interrupt for every token, tool call, or routine progress update. Keep lo
 - Direct Agent Session use does not bypass Project permissions or event history.
 - The Coordinator is optional for direct work and not a mandatory bottleneck.
 - A human can pause, take over, reassign, review, and cancel work at any point permitted by policy.
-

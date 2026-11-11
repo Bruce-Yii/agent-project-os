@@ -22,12 +22,14 @@ Read the full [Product Requirements Document](docs/00-product-charter.md) before
 ## Current status
 
 - Product direction: **confirmed; design-stage decision: GO — worth developing**.
-- Current phase: **Pre-development readiness**; G0 design baseline, G1 architecture review, and G2 reuse assessment are complete on PR #1's branch (merge pending); G3 engineering decomposition is next.
+- Current phase: **Pre-development readiness**; G0 design baseline, G1 architecture review, and G2 reuse assessment are complete on PR #1's branch (Draft, merge pending); G3 engineering decomposition is in progress (YU-392 active); local development foundation (YU-399) is in progress. Repository Foundation Gate (RFG): **PARTIAL**.
+- Local development foundation: **in progress (YU-399)** — see [`docs/23-local-development-and-agent-operations.md`](docs/23-local-development-and-agent-operations.md) (new) for bootstrap, workspace layout, Agent operation, testing, and recovery.
 - Full capability scope: **preserved**; implementation may be staged, but the product scope is not reduced to an Agent client or execution relay.
 - Domain model: **design proposal; requires review before schema freeze**.
 - Architecture: **design proposal; technology choices are not frozen**.
-- Code: **not started in this repository**.
+- Code: **not started in this repository** (bootstrap/scaffold pending accepted stack decisions).
 - Release / production evidence: **none**.
+- PR #1 remains **Draft** and unmerged; no product code or production dependency has been added.
 
 ## Read in dependency order
 
@@ -52,10 +54,17 @@ Read the full [Product Requirements Document](docs/00-product-charter.md) before
 | 16 | [Source traceability](docs/16-source-traceability.md) | Where did each capability and design rule come from? |
 | 17 | [Agent development contract](docs/17-agent-development-contract.md) | How should multiple developers and Agent windows work safely? |
 | 18 | [Local Agent Session subsystem](docs/18-local-agent-session-subsystem.md) | How does Desktop create/attach local Agent Sessions and continuously receive new messages safely? |
+| 23 | [Local development and agent operations](docs/23-local-development-and-agent-operations.md) | Local dev foundation, CI, RFG status (YU-399). |
+| 24 | [Module responsibility matrix and dependency DAG](docs/24-module-responsibility-and-dependency-dag.md) | 32-group module ownership, dependency DAG, MRG (YU-392). |
+| 26 | [YU-393 DBOS spike evidence](docs/26-yu-393-dbos-spike-evidence.md) | DBOS durable workflow spike: happy path + crash recovery (YU-393). |
+| 27 | [PC-1 canonical authority topology](docs/27-pc1-canonical-authority-topology.md) | Canonical writer, replicas, offline rules (P0-1). |
+| 28 | [PC-2 core object cardinalities](docs/28-pc2-core-object-cardinalities.md) | Object cardinalities with examples/counter-examples (P0-2). |
+| 29 | [First implementation work package](docs/29-first-implementation-work-package.md) | First runnable personal product loop + MRG gaps. |
 | 19 | [Pre-development readiness](docs/19-pre-development-readiness.md) | What must be reviewed and specified before parallel implementation begins (G0–G5)? |
 | 20 | [Design baseline](docs/20-design-baseline.md) | Which existing assets are authoritative, where do they map, and what discrepancies were found in G0? |
 | 21 | [Architecture review](docs/21-architecture-review.md) | Do the journeys, modules, objects, states, authorities, and failure paths form a complete architecture? |
 | 22 | [Mature-module reuse assessment](docs/22-mature-module-reuse-assessment.md) | Which mature modules should be reused, adapted, referenced, or built ourselves? |
+| 23 | [Local development and agent operations](docs/23-local-development-and-agent-operations.md) | How do contributors bootstrap, run, test, and recover the local development environment and Agent operating system? (new; YU-399) |
 
 Templates: [ADR](docs/templates/ADR.md), [Module contract](docs/templates/module-contract.md), [Work package](docs/templates/work-package.md).
 
@@ -123,4 +132,3 @@ Competitor and implementation evidence was reviewed on **2026-11-09**. Local Age
 - Keep API/domain contracts stable before parallel implementation begins.
 - Use isolated branches/worktrees for parallel work; never share one mutable checkout between independent Agents.
 - Do not add production code, credentials, private customer data, or provider secrets to this documentation repository.
-

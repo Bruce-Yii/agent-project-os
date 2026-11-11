@@ -40,8 +40,7 @@
 | Handoff | executor's structured delivery of result and evidence | Task acceptance |
 | Autonomy | optional continuation of authorized work | product identity |
 
-
-### Local Agent Daemon
+## Local Agent Daemon
 
 A user-machine background service that discovers/manages local Agent Providers, supervises processes, maintains Session connections, streams/replays events, and exposes authenticated local/remote control to Project OS clients. It does not own canonical Project/Task state.
 
@@ -68,4 +67,3 @@ An immutable/versioned reference to the Project/Task resources, instructions, Sk
 ### Event Gap
 
 A known interval of Provider/Daemon event history that could not be recovered after disconnect. It must be visible to the user and must not be presented as a complete transcript.
-

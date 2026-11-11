@@ -5,6 +5,7 @@
 A Project is not a repository, a chat, an Agent, or a list of tasks alone. It is a durable work context with a purpose, outcomes, participants, resources, tasks, decisions, deliverables, and current state.
 
 Project must support:
+
 - individual and team work;
 - multiple repositories and external resources;
 - multiple workstreams and subprojects;
@@ -146,4 +147,3 @@ Views are projections over the same domain model. A change from a board must upd
 - Waiting, Blocked, In Review, and Accepted are not conflated.
 - Dormant Projects are not falsely shown as active.
 - Intake deduplicates and links follow-ups before creating new Work Packages.
-

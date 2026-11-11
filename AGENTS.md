@@ -1,14 +1,36 @@
 # Agent Instructions — Agent Project OS
 
-Read the root `README.md` and `docs/00-product-charter.md` (PRD) first. Before changing product behavior or shared contracts, read:
+## Read order
 
-1. `docs/00-product-charter.md`
-2. `docs/01-functional-catalog.md`
-3. `docs/02-domain-model.md`
-4. the module-specific design document you are changing
+1. `README.md`
+2. `docs/00-product-charter.md`
+3. `docs/01-functional-catalog.md`
+4. `docs/02-domain-model.md`
 5. `docs/14-open-decisions.md`
 6. `docs/17-agent-development-contract.md`
-7. `docs/18-local-agent-session-subsystem.md` when touching Provider adapters, Session, Daemon, message streaming, terminal, or cross-device Session control.
+7. `docs/18-local-agent-session-subsystem.md` (when touching Provider adapters, Session, Daemon, message streaming, terminal, or cross-device Session control)
+8. `docs/23-local-development-and-agent-operations.md` (new; local dev foundation, YU-399)
+
+Before changing product behavior or shared contracts, also read the module-specific design document you are changing.
+
+## Recursive Agent Execution (W0)
+
+**Project Identity Lock — inherited by every spawned agent, unchanged:**
+
+- Project: Agent Project OS｜AWRP Next (independent); Linear Project P-YU-18; canonical repo `Bruce-Yii/agent-project-os`.
+- Product invariants: full 32 functional groups retained; Project is the durable center; Direct Agent Session and Coordinator-driven work are both first-class; human accountability is separate from Agent execution; Agent completion ≠ acceptance; external systems own their live facts; OSS free self-hosted; no new production dependencies without approval; AWRP is design evidence only, not copied.
+- Authority: Notion 00–03 for product decisions; Linear for task identity/status; GitHub for code/branches/CI; official upstream sources for package/API/license facts. Resolve conflicts by the authority for that fact.
+- Technology choices and proposed schema are **not frozen** unless an accepted ADR says otherwise.
+
+**Recursion (root = depth 0):** D0 W0 root coordinator; D1 spawned by W0; D2 spawned by D1; D3 spawned by D2 = terminal leaves. D1 and D2 may spawn children; D3 MUST NOT. "Three layers" means up to three delegation layers below the root, not three agents. Fan-out is dynamic, bounded by useful independent work and runtime concurrency — not a fixed count.
+
+**Task envelope (required for every spawn):** Project ID; Issue ID; parent task ID; objective; scope and non-scope; dependencies/blockers; source documents with exact SHAs; owned files/directories and output path; allowed and forbidden operations; acceptance criteria; test/evidence requirements; side-effect approvals; stop conditions; handoff format. Descendants may refine methods but cannot broaden a parent's authority or change product decisions.
+
+**Parent review and stop conditions:** each parent reviews its direct children before accepting; W0 independently reviews material evidence. Stop when identity mismatches (reconcile the affected branch only), when a missing requirement is found (submit a Decision/Scope Change Proposal; do not implement until approved), on duplicate/overlap/contract conflict (escalate to parent/W0), or when evidence is insufficient (mark UNVERIFIED/PARTIAL). External/public/irreversible actions stay gated.
+
+**Evidence:** report exact changed files, branch/commit, commands and observed output, CI runs, tests, side effects and read-back, risks, and next action. No unsupported "complete/tested/working" claims.
+
+Full contract (do not duplicate here): `docs/17-agent-development-contract.md`.
 
 ## Product constraints
 
@@ -19,6 +41,7 @@ Read the root `README.md` and `docs/00-product-charter.md` (PRD) first. Before c
 - Unification must exist in canonical identities, state lifecycle, context, authorization, attention, and audit—not merely in one combined UI.
 - Competitor analysis must acknowledge open-source/self-hosted overlaps such as Paperclip, Paseo, and OpenHands Agent Canvas. Do not claim free self-hosting is unique; prove differentiation through integrated Project continuity and workflow outcomes.
 - Preserve the full 32-group functional scope. Implementation order may be staged; product scope may not be silently deleted.
+- **Current phase is personal-only (confirmed 2026-11-12):** one human Personal Owner; Agent/Runtime/Connector are execution actors. Do not design or implement Organization, members, invitations, team roles/RBAC, shared-team workspaces, team collaboration flows, or multi-tenancy in current contracts, 1.0–10.0 scope, or MRGs. Personal authorization, per-Project/per-Agent/tool scopes, human approval, audit, and recovery remain. Keep future team extension out of current implementation gates.
 - Project is durable. Task, Assignment, Run, and Session are different objects.
 - Human accountability and Agent execution are separate.
 - Direct Agent use and Coordinator-driven work both remain supported.
@@ -51,4 +74,3 @@ Read the root `README.md` and `docs/00-product-charter.md` (PRD) first. Before c
 - Read back external writes when supported.
 - If an external side effect has an unknown outcome, reconcile before retrying.
 - Update the owning documentation and `docs/14-open-decisions.md` when a material decision changes.
-

@@ -16,10 +16,12 @@ What problem or conflict requires a decision? Include current evidence and sourc
 ## Options considered
 
 ### Option A
+
 - Benefits:
 - Costs/risks:
 
 ### Option B
+
 - Benefits:
 - Costs/risks:
 
@@ -41,4 +43,3 @@ Links, tests, experiments, source versions, and observed results.
 ## Supersession
 
 If this decision replaces another, link it and explain why.
-

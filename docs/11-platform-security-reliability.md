@@ -147,7 +147,6 @@ Additional G2 classifications and evidence are in [22 — Mature-module Reuse As
 - Event/Run traces can reconstruct why a state transition occurred.
 - A full backup can be restored and verified.
 
-
 ## 12. Local Agent Session threat and failure model
 
 The Local Agent Session subsystem is a high-trust boundary because it can expose local files, terminals, credentials, and shell execution. It must:
@@ -163,8 +162,6 @@ The Local Agent Session subsystem is a high-trust boundary because it can expose
 - provide emergency stop for a Provider process and revoke remote pairing independently.
 
 Detailed behavior: [18 — Local Agent Session Subsystem](18-local-agent-session-subsystem.md).
-
-
 
 ## 13. Open-source and free self-hosted operating requirements
 
