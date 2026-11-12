@@ -26,14 +26,17 @@ Authority: product decisions from Notion 00–03 and `docs/14`; task identity fr
 ## Options considered
 
 ### Option A — Big-bang microservices + managed services
+
 - Benefits: independent scaling per module.
 - Costs/risks: premature distribution, violates modular-monolith decision, raises operational cost, conflicts with self-hosting and MRG boundaries.
 
 ### Option B — Modular monolith + ports/adapters (selected)
+
 - Benefits: one deployable Control Plane, clear module ownership, ports isolate conditional candidates, simpler self-hosting.
 - Costs/risks: modules must respect boundaries; shared contracts require single writers (docs/17).
 
 ### Option C — Adopt a single third-party platform as the product (Paseo/Activepieces/DSH)
+
 - Benefits: faster initial runtime.
 - Costs/risks: outsources canonical authority; violates Project OS ownership of domain/policy/Memory/Skill; excluded (`docs/22` §5).
 
@@ -42,114 +45,133 @@ Authority: product decisions from Notion 00–03 and `docs/14`; task identity fr
 The technology baseline below is accepted for planning and implementation baseline. Status legend: **Accepted** = accepted for planning and implementation baseline (subject to MRG/version evidence); **Conditional** = candidate behind a port, adoption gated by named validation; **Deferred** = explicitly later slice.
 
 ### 1. Language/runtime — TypeScript + Node.js 26 LTS
+
 - Status: Accepted
 - Reason: Single language across Control Plane, contracts, and tooling; Node 26 LTS is the primary runtime; Node 24 remains a temporary compatibility lane until the baseline is frozen (`docs/23` §2, `docs/14` P-022).
 - Boundary: No production dependency or code exists yet; runtime must be verified against the exact package matrix before implementation (`docs/44` criterion 4).
 - Evidence: `docs/14` §3.1; `docs/23` §2 (host Node 24.16.0 recorded as available, not frozen); `docs/26` (DBOS accepted on Node 24 host).
 
 ### 2. Package manager — pnpm 12.19.0
+
 - Status: Accepted
 - Reason: Deterministic installs and workspace support for the modular monolith; version pinned exactly.
 - Boundary: No `package.json`/lockfile exists yet; pinning is a planning decision until the build system lands.
 - Evidence: `docs/14` §3.1; `docs/44` (no build system at MRG review).
 
 ### 3. Architecture — Modular monolith + ports/adapters
+
 - Status: Accepted
 - Reason: 32 functional groups remain in scope as domain modules; avoids microservice-per-module and premature distribution (`docs/14` P-008, `docs/24`).
 - Boundary: Cross-module integration stays gated by accepted contracts and MRG; no new microservice per functional group.
 - Evidence: `docs/24`; `docs/19` §7; `docs/14` P-008.
 
 ### 4. Backend/API — Fastify 5.x + TypeBox + REST/OpenAPI
+
 - Status: Accepted
 - Reason: Schema-first REST/OpenAPI with TypeBox; aligns with command/event contracts and OpenAPI consumers.
 - Boundary: API boundaries must still be specified in module contracts; no implementation yet.
 - Evidence: `docs/14` §3.1; `docs/24` (module/API boundaries).
 
 ### 5. Web UI — React 19.3 + Vite 8.3.x + React Router 7 + TanStack Query v5
+
 - Status: Accepted
 - Reason: Mature React ecosystem; Vite for build/dev; TanStack Query for server-state; React Router for routing.
 - Boundary: Web is a client of the Control Plane; no SSR requirement (Next.js SSR is a non-decision).
 - Evidence: `docs/14` §3.1; `docs/09`.
 
 ### 6. UI components — Tailwind CSS 4 + shadcn/ui (Radix primitives)
+
 - Status: Accepted
 - Reason: Utility-first styling with accessible Radix-based components; supports a shared design system across Web/Desktop renderer.
 - Boundary: Component library choice does not grant permissions or define domain behavior.
 - Evidence: `docs/14` §3.1.
 
 ### 7. Database — PostgreSQL 18.6 (17.11 fallback) + Drizzle + pg
+
 - Status: Accepted
 - Reason: PostgreSQL is the canonical server-side store; Drizzle + node-postgres with explicit SQL migrations; host has PG 17.11 available as dev convenience (`docs/23` §2).
 - Boundary: SQLite is not a second authority; only a local client/runtime store/cache. pgvector is not adopted by default (see §18).
 - Evidence: `docs/14` P-021/P-022; `docs/22` §3 (primary data row); `docs/23` §2; `docs/26`/`docs/30` (DBOS requires PostgreSQL).
 
 ### 8. Durable workflow — DBOS 5.5.0 (conditional)
+
 - Status: Conditional
 - Reason: Best fit for TypeScript + PostgreSQL durable workflow steps, persisted communication/event waits, and crash recovery without a separate control plane; evidence shows happy path, crash recovery, idempotency, Outbox replay, version upgrade, and connection-pool behavior, with at-least-once step execution.
 - Boundary: Adopted only behind `DurableWorkflowPort`; DBOS owns execution checkpoints only; Project OS remains canonical authority for Project/Task/Run/Approval. Temporal remains the distributed fallback. Hatchet is not the default. Idempotent handlers, pool sizing, explicit versioning, and a real PG service-restart test are still required. `autoUpgrade` (Enterprise) must not be used on the OSS path.
 - Evidence: `docs/26`, `docs/30`; `docs/22` §4.2, §7 (DBOS row); `docs/14` P-014.
 
 ### 9. Local Agent runtime — LocalRuntimeNode + ACP v1 + Paseo (conditional)
+
 - Status: Conditional
 - Reason: Project OS owns `LocalRuntimeNode`; ACP v1 standardizes Provider session lifecycle for compatible Providers; Paseo's published daemon modules are the preferred reuse candidate for process supervision and event streaming. Native Provider adapters remain preferred where richer.
 - Boundary: Paseo is not a drop-in product; its Workspace/Agent records must not replace Project OS authority. Paseo npm tarballs lack license metadata (recorded as "Proprietary" by npm) and are pinned to a source commit pending license audit; plugin backend is trusted/unsandboxed and must not be the third-party marketplace model. Permission-reason propagation and daemon-restart durability are not fully closed.
 - Evidence: `docs/31`; `docs/22` §4.1, §5; `docs/14` P-015.
 
 ### 10. Connectors — Activepieces community Pieces (selective)
+
 - Status: Conditional
 - Reason: Community Pieces are self-contained bundles that can be reviewed and adapted individually; GitHub piece (`@activepieces/piece-github@0.11.1`) exposes 95 actions across READ/SEARCH/WRITE/DESTRUCTIVE with no built-in retry/rate-limit/dedup.
 - Boundary: Adapt selected pure API/auth code behind `ServiceConnector`; do not adopt the full Activepieces engine or let a Piece mutate canonical state. Vendor from a pinned commit with license notice; npm `license` field is missing (issue #16544). Retry, rate-limit, webhook signature/dedup, and OAuth must be supplied by our adapter. Composio Cloud is excluded from the free self-hosted core.
 - Evidence: `docs/32`; `docs/22` §4.4, §5; `docs/14` P-016.
 
 ### 11. Skills — Agent Skills `SKILL.md` interchange
+
 - Status: Accepted
 - Reason: Portable, client-neutral, Apache-2.0 format with a published spec and reference validator; fits Context Pack and Skill delivery.
 - Boundary: The format defines portable content/metadata only. Project OS owns extraction, provenance, evaluation, approval, versioning, scope, and rollback. `allowed-tools` is experimental metadata, never an authorization boundary.
 - Evidence: `docs/34`; `docs/22` §4.6, §3; `docs/14` P-019.
 
 ### 12. Offline sync — PowerSync (conditional)
+
 - Status: Conditional
 - Reason: Leading candidate for authorized Postgres → local SQLite read sync with client writes routed through the backend `uploadData()` path, preserving the single canonical writer.
 - Boundary: Not a core dependency until Desktop + Mobile SDK compatibility, authorization filters, schema migration, conflict behavior, and current checkpoint behavior pass a narrow test. Use PostgreSQL bucket storage; do not copy the dev `FOR ALL TABLES` publication example; Sync Streams and server-issued tokens enforce visibility. Session transcript/terminal streaming remains separate.
 - Evidence: `docs/33`; `docs/22` §4.5, §5; `docs/14` P-017; `docs/27` (authority unaffected).
 
 ### 13. Desktop — Electron
+
 - Status: Conditional
 - Reason: Selected direction: share the React renderer; main process supervises a separate Local Daemon; strict security model. Final shell choice remains gated on local process supervision, OS permissions, packaging, and mobile strategy validation (`docs/22` §3 row "Product UI and desktop shell").
 - Boundary: Desktop must create/open local Agent Sessions and continuously receive messages; Provider Session, RuntimeProcess, and client connection remain distinct. Not frozen until the G3 shell ADR.
 - Evidence: `docs/14` §3.1; `docs/22` §3, §5; `docs/18`.
 
 ### 14. Mobile — Expo SDK 58 / React Native 0.88 (later slice)
+
 - Status: Conditional
 - Reason: Mobile is a later vertical slice; Expo SDK 58 / RN 0.88 is the selected target when that slice starts.
 - Boundary: No mobile implementation in the first usable slice; mobile support is part of the PowerSync validation gate before offline sync can be accepted.
 - Evidence: `docs/14` §3.1; `docs/09`; `docs/33` (mobile SDK compatibility).
 
 ### 15. Realtime — SSE + WebSocket
+
 - Status: Accepted
 - Reason: SSE for Project/Task/event feeds; WebSocket for interactive Session/terminal/daemon channels.
 - Boundary: Continuous streaming requires backpressure, event cursors, reconnect/reconciliation, deduplication, and explicit gap handling; never claim a complete transcript if events were missed.
 - Evidence: `docs/14` §3.1; `docs/18`.
 
 ### 16. Testing — Vitest + Playwright
+
 - Status: Accepted
 - Reason: Vitest for unit/contract/integration (with real PostgreSQL CI service); Playwright for E2E.
 - Boundary: Tests must target real failure surfaces and user outcomes; MRG requires contract fixtures and negative/recovery cases. No production test pipeline exists yet.
 - Evidence: `docs/14` §3.1; `docs/44` criterion 4/6; `docs/23`.
 
 ### 17. Observability — Pino + OpenTelemetry
+
 - Status: Accepted
 - Reason: Structured logging (Pino) plus standard traces/metrics (OpenTelemetry) with correlation IDs across Project → Task → Assignment → Run → Session → Connector.
 - Boundary: Telemetry/privacy defaults for self-hosted remain an open platform question (`docs/14` §7).
 - Evidence: `docs/14` §3.1, P-021; `docs/22` §3 (observability row).
 
 ### 18. Search/Memory — PostgreSQL relational + JSONB + FTS; pgvector only if justified
+
 - Status: Accepted
 - Reason: PostgreSQL relational + JSONB + full-text search is sufficient initially; avoid a separate vector database and embedding vendor lock-in.
 - Boundary: pgvector is adopted only if a concrete justification (quality/cost) is evidenced. Canonical Memory remains Project OS-owned; third-party retrieval may only propose candidates.
 - Evidence: `docs/14` §3.1; `docs/22` §4.6, §5 (Mem0 excluded as canonical).
 
 ### 19. Artifact storage — Filesystem first; S3-compatible later
+
 - Status: Accepted
 - Reason: Filesystem adapter first for self-hosted simplicity; S3-compatible adapter behind a port when required.
 - Boundary: Large artifacts use immutable metadata/references; storage backend is swappable via port.
