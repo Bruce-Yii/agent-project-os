@@ -4,14 +4,20 @@ import { Pool } from "pg";
 import { migrate } from "./migrate.js";
 import { assertDisposableDb } from "../test-guard.js";
 
-const ADMIN_URL = process.env.DATABASE_URL ? process.env.DATABASE_URL.replace(/wp1a_test/, "postgres") : "postgresql://postgres:postgres@127.0.0.1:5432/postgres";
+function getDbUrl(): string {
+  const url = process.env.DATABASE_URL || process.env.WP1A_TEST_DB;
+  if (!url) throw new Error("DATABASE_URL or WP1A_TEST_DB must be set (no fallback credentials).");
+  return url;
+}
+const DB_URL = getDbUrl();
+const ADMIN_URL = DB_URL.replace(/wp1a_migrate_test|wp1a_test/, "postgres");
 const TEST_DB = "wp1a_migrate_test";
-const DB_URL = process.env.DATABASE_URL || process.env.WP1A_TEST_DB || `postgresql://postgres:postgres@127.0.0.1:5432/${TEST_DB}`;
 
 describe("WP1-A migrations", () => {
   let pool: Pool;
 
   before(async () => {
+    await assertDisposableDb(DB_URL);
     const adminPool = new Pool({ connectionString: ADMIN_URL });
     const { rows } = await adminPool.query("SELECT 1 FROM pg_database WHERE datname = $1", [TEST_DB]);
     if (rows.length === 0) {
