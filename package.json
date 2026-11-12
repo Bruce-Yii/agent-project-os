@@ -6,12 +6,18 @@
   "scripts": {
     "typecheck": "tsc --noEmit",
     "build": "tsc",
-    "test": "npm run build && node --test dist/tests/domain.test.js",
+    "test": "npm run build && node --test dist/tests/domain.test.js dist/persistence/persistence.test.js",
     "test:fixtures": "python ../../projects/agent-project-os/tests/wp1a/test_wp1a.py"
   },
   "license": "UNLICENSED (pending selection — Gate D0)",
   "devDependencies": {
     "@types/node": "^26.6.6",
+    "@types/pg": "^8.23.1",
+    "drizzle-kit": "^0.31.11",
     "typescript": "^7.0.2"
+  },
+  "dependencies": {
+    "drizzle-orm": "^0.45.4",
+    "pg": "^8.23.1"
   }
 }

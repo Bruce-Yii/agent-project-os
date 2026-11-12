@@ -1,0 +1,198 @@
+// Repository implementations (Drizzle + pg).
+// Tech stack: PROPOSED (P-021).
+
+import { eq } from "drizzle-orm";
+import type { Db } from "./db.js";
+import * as schema from "./schema.js";
+
+export class PersonalSpaceRepository {
+  constructor(private db: Db) {}
+
+  async save(space: { id: string; owner: string; version: number }): Promise<void> {
+    await this.db
+      .insert(schema.personalSpaces)
+      .values({ id: space.id, owner: space.owner, version: space.version })
+      .onConflictDoUpdate({
+        target: schema.personalSpaces.id,
+        set: { owner: space.owner, version: space.version },
+      });
+  }
+
+  async findById(id: string): Promise<typeof schema.personalSpaces.$inferSelect | null> {
+    const rows = await this.db
+      .select()
+      .from(schema.personalSpaces)
+      .where(eq(schema.personalSpaces.id, id));
+    return rows[0] ?? null;
+  }
+
+  async findByOwner(owner: string): Promise<typeof schema.personalSpaces.$inferSelect | null> {
+    const rows = await this.db
+      .select()
+      .from(schema.personalSpaces)
+      .where(eq(schema.personalSpaces.owner, owner));
+    return rows[0] ?? null;
+  }
+}
+
+export class ProjectRepository {
+  constructor(private db: Db) {}
+
+  async save(project: {
+    id: string;
+    spaceId: string;
+    name: string;
+    goal: string;
+    status: string;
+    currentState: string | null;
+    currentStateFreshness: string | null;
+    currentStateSource: string | null;
+    version: number;
+  }): Promise<void> {
+    await this.db
+      .insert(schema.projects)
+      .values({
+        id: project.id,
+        spaceId: project.spaceId,
+        name: project.name,
+        goal: project.goal,
+        status: project.status,
+        currentState: project.currentState,
+        currentStateFreshness: project.currentStateFreshness,
+        currentStateSource: project.currentStateSource,
+        version: project.version,
+      })
+      .onConflictDoUpdate({
+        target: schema.projects.id,
+        set: {
+          name: project.name,
+          goal: project.goal,
+          status: project.status,
+          currentState: project.currentState,
+          currentStateFreshness: project.currentStateFreshness,
+          currentStateSource: project.currentStateSource,
+          version: project.version,
+          updatedAt: new Date(),
+        },
+      });
+  }
+
+  async findById(id: string): Promise<typeof schema.projects.$inferSelect | null> {
+    const rows = await this.db
+      .select()
+      .from(schema.projects)
+      .where(eq(schema.projects.id, id));
+    return rows[0] ?? null;
+  }
+
+  async findBySpace(spaceId: string): Promise<(typeof schema.projects.$inferSelect)[]> {
+    return this.db
+      .select()
+      .from(schema.projects)
+      .where(eq(schema.projects.spaceId, spaceId));
+  }
+}
+
+export class TaskRepository {
+  constructor(private db: Db) {}
+
+  async save(task: {
+    id: string;
+    projectId: string;
+    title: string;
+    scope: string;
+    nonScope: string;
+    acceptanceCriteria: string;
+    parentId: string | null;
+    status: string;
+    version: number;
+  }): Promise<void> {
+    await this.db
+      .insert(schema.tasks)
+      .values({
+        id: task.id,
+        projectId: task.projectId,
+        title: task.title,
+        scope: task.scope,
+        nonScope: task.nonScope,
+        acceptanceCriteria: task.acceptanceCriteria,
+        parentId: task.parentId,
+        status: task.status,
+        version: task.version,
+      })
+      .onConflictDoUpdate({
+        target: schema.tasks.id,
+        set: {
+          title: task.title,
+          scope: task.scope,
+          nonScope: task.nonScope,
+          acceptanceCriteria: task.acceptanceCriteria,
+          parentId: task.parentId,
+          status: task.status,
+          version: task.version,
+          updatedAt: new Date(),
+        },
+      });
+  }
+
+  async findById(id: string): Promise<typeof schema.tasks.$inferSelect | null> {
+    const rows = await this.db
+      .select()
+      .from(schema.tasks)
+      .where(eq(schema.tasks.id, id));
+    return rows[0] ?? null;
+  }
+
+  async findByProject(projectId: string): Promise<(typeof schema.tasks.$inferSelect)[]> {
+    return this.db
+      .select()
+      .from(schema.tasks)
+      .where(eq(schema.tasks.projectId, projectId));
+  }
+}
+
+export class GoalRepository {
+  constructor(private db: Db) {}
+
+  async save(goal: { id: string; projectId: string; title: string; description: string }): Promise<void> {
+    await this.db
+      .insert(schema.goals)
+      .values({ id: goal.id, projectId: goal.projectId, title: goal.title, description: goal.description })
+      .onConflictDoUpdate({
+        target: schema.goals.id,
+        set: { title: goal.title, description: goal.description, updatedAt: new Date() },
+      });
+  }
+
+  async findByProject(projectId: string): Promise<(typeof schema.goals.$inferSelect)[]> {
+    return this.db
+      .select()
+      .from(schema.goals)
+      .where(eq(schema.goals.projectId, projectId));
+  }
+}
+
+export class DependencyRepository {
+  constructor(private db: Db) {}
+
+  async save(edge: { id: string; sourceTaskId: string; targetTaskId: string }): Promise<void> {
+    await this.db
+      .insert(schema.dependencyEdges)
+      .values({ id: edge.id, sourceTaskId: edge.sourceTaskId, targetTaskId: edge.targetTaskId })
+      .onConflictDoNothing();
+  }
+
+  async findByTarget(targetTaskId: string): Promise<(typeof schema.dependencyEdges.$inferSelect)[]> {
+    return this.db
+      .select()
+      .from(schema.dependencyEdges)
+      .where(eq(schema.dependencyEdges.targetTaskId, targetTaskId));
+  }
+
+  async findBySource(sourceTaskId: string): Promise<(typeof schema.dependencyEdges.$inferSelect)[]> {
+    return this.db
+      .select()
+      .from(schema.dependencyEdges)
+      .where(eq(schema.dependencyEdges.sourceTaskId, sourceTaskId));
+  }
+}
