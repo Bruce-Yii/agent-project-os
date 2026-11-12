@@ -4,7 +4,14 @@
   "private": true,
   "description": "WP1-A: Personal Project Foundation — experimental scaffold. Tech stack NOT frozen (P-021/P-022). No production dependencies.",
   "scripts": {
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "build": "tsc",
+    "test": "npm run build && node --test dist/tests/domain.test.js",
+    "test:fixtures": "python ../../projects/agent-project-os/tests/wp1a/test_wp1a.py"
   },
-  "license": "UNLICENSED (pending selection — Gate D0)"
+  "license": "UNLICENSED (pending selection — Gate D0)",
+  "devDependencies": {
+    "@types/node": "^26.6.6",
+    "typescript": "^7.0.2"
+  }
 }
