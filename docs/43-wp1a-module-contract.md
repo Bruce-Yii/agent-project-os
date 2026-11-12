@@ -2,7 +2,7 @@
 
 - **Module ID:** F01-subset / F03-subset / F04-subset / F05-subset / F06-subset / F07-subset / F26-subset (Owner-only)
 
-- **Status:** Proposed (v0.1, 2026-11-12). WP1-A contract slice accepted by W0 for WP1-A scope on 2026-11-12 (PC-1 invariant, PC-2 PersonalSpace/Project/Goal/Task cardinalities, PC-3 Project/Task state subset, minimal PC-4, Owner-only PC-5). PC-6 excluded. Global P0 contracts remain DRAFT pending independent review and acceptance. Reviewer: W0 (independent review by subagent 95823a9d, 2026-11-12).
+- **Status:** Proposed (v0.1, 2026-11-12). WP1-A contract slice reviewed by W0 and an independent reviewer (docs/44, 2026-11-12). Verdict: MRG NOT PASSED. Accepted for WP1-A scope pending resolution of blockers (license Gate D0, tech stack P-021/P-022). PC-6 excluded. Global P0 contracts remain DRAFT pending independent review and acceptance.
 
 - **Owner:** W1 (Project & Work Management), consuming W0 shared contracts and W5 Owner-only authorization port
 
