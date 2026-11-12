@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import { createDb, closeDb } from "./db.js";
 import { PersonalSpaceRepository, ProjectRepository, TaskRepository } from "./repositories.js";
 
-const DB_URL = "postgresql://postgres:123456@127.0.0.1:5432/wp1a_test";
+const DB_URL = process.env.DATABASE_URL || "postgresql://postgres:123456@127.0.0.1:5432/wp1a_test";
 
 // SQL to create tables (matches schema.ts)
 const CREATE_TABLES = `

@@ -32,12 +32,36 @@ jobs:
       - run: npm run build
 
   test:
-    name: Unit tests
+    name: Unit tests (with PostgreSQL)
     runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: wp1a_test
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+    env:
+      DATABASE_URL: postgresql://postgres:postgres@localhost:5432/wp1a_test
     steps:
       - uses: actions/checkout@v6
       - uses: actions/setup-node@v4
         with:
           node-version: 24
       - run: npm ci
+      - name: Create tables
+        env:
+          PGPASSWORD: postgres
+        run: |
+          psql -h localhost -U postgres -d wp1a_test -c "
+          CREATE TABLE IF NOT EXISTS personal_spaces (id TEXT PRIMARY KEY, owner TEXT NOT NULL, created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(), version INTEGER NOT NULL DEFAULT 1);
+          CREATE TABLE IF NOT EXISTS projects (id TEXT PRIMARY KEY, space_id TEXT NOT NULL REFERENCES personal_spaces(id), name TEXT NOT NULL, goal TEXT NOT NULL DEFAULT '', status TEXT NOT NULL DEFAULT 'draft', current_state TEXT, current_state_freshness TEXT, current_state_source TEXT, version INTEGER NOT NULL DEFAULT 1, created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(), updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW());
+          CREATE TABLE IF NOT EXISTS tasks (id TEXT PRIMARY KEY, project_id TEXT NOT NULL REFERENCES projects(id), title TEXT NOT NULL, scope TEXT NOT NULL DEFAULT '', non_scope TEXT NOT NULL DEFAULT '', acceptance_criteria TEXT NOT NULL DEFAULT '', parent_id TEXT, status TEXT NOT NULL DEFAULT 'backlog', version INTEGER NOT NULL DEFAULT 1, created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(), updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW());
+          "
       - run: npm test
