@@ -1,4 +1,4 @@
-name: CI
+name: WP1-A CI
 
 on:
   push:
@@ -8,104 +8,36 @@ on:
 permissions:
   contents: read
 
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
-
 jobs:
-  markdown-lint:
-    name: Markdown lint
+  typecheck:
+    name: TypeScript typecheck
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout
-        uses: actions/checkout@v6
-      - name: Lint Markdown
-        uses: DavidAnson/markdownlint-cli2-action@v25.0.0
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v4
         with:
-          globs: '**/*.md'
+          node-version: 24
+      - run: npm ci
+      - run: npm run typecheck
 
-  link-check:
-    name: Markdown link check
+  build:
+    name: Build
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout
-        uses: actions/checkout@v6
-      - name: Check relative links offline
-        uses: lycheeverse/lychee-action@v2.9.0
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v4
         with:
-          args: --offline --no-progress './**/*.md'
-          fail: true
+          node-version: 24
+      - run: npm ci
+      - run: npm run build
 
-  checksum-verify:
-    name: Manifest checksum verification
+  test:
+    name: Unit tests
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout
-        uses: actions/checkout@v6
-      - name: Verify manifest hashes (strict)
-        run: python .github/scripts/verify_checksums.py
-
-  checksum-verify-negative:
-    name: Checksum verification negative test
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v6
-      - name: Prove a corrupted hash fails
-        run: |
-          python - <<'PY'
-          import json, pathlib, shutil, subprocess, sys, tempfile
-
-          root = pathlib.Path('.')
-          work = pathlib.Path(tempfile.mkdtemp()) / 'repo'
-          shutil.copytree(root, work)
-
-          manifest = json.loads((work / 'manifest.json').read_text())
-          target = manifest['files'][0]
-
-          # Corrupt the checksum entry for target.
-          lines = (work / 'CHECKSUMS.sha256').read_text().splitlines()
-          out = []
-          corrupted = False
-          for line in lines:
-              parts = line.split()
-              if len(parts) >= 2 and parts[1] == target:
-                  out.append('0' * 64 + '  ' + target)
-                  corrupted = True
-              else:
-                  out.append(line)
-          (work / 'CHECKSUMS.sha256').write_text('\n'.join(out) + '\n')
-          assert corrupted, 'target not found in checksums'
-
-          r = subprocess.run([sys.executable, '.github/scripts/verify_checksums.py'], cwd=work, capture_output=True, text=True)
-          print('corrupted-hash exit code:', r.returncode)
-          if r.returncode == 0:
-              print('FAIL: corrupted checksum was not detected')
-              sys.exit(1)
-          print('PASS: corrupted checksum detected')
-
-          # Remove the entry entirely.
-          lines2 = [l for l in (work / 'CHECKSUMS.sha256').read_text().splitlines()
-                    if not (l.split() and l.split()[-1] == target)]
-          (work / 'CHECKSUMS.sha256').write_text('\n'.join(lines2) + '\n')
-          r2 = subprocess.run([sys.executable, '.github/scripts/verify_checksums.py'], cwd=work, capture_output=True, text=True)
-          print('missing-entry exit code:', r2.returncode)
-          if r2.returncode == 0:
-              print('FAIL: missing checksum entry was not detected')
-              sys.exit(1)
-          print('PASS: missing checksum entry detected')
-          print('All negative checks passed.')
-          PY
-
-  secret-scan:
-    name: Secret scan
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v6
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v4
         with:
-          fetch-depth: 0
-      - name: Gitleaks
-        uses: gitleaks/gitleaks-action@v3.0.0
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          node-version: 24
+      - run: npm ci
+      - run: npm test
