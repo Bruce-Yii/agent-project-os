@@ -215,8 +215,19 @@ Shared files/contracts: W0 sole writer. W1 owns module logic only.
 | 7 | Security/secret/license/side-effect boundaries explicit | PARTIAL | Personal auth + PC-1 defined; no external side effects in this slice. License selected: Apache-2.0 (LICENSE added to main repo, Gate D0 resolved per YU-392 decision pack 2026-11-12). No secret-scanning guard in worktree (to be added). |
 | 8 | Independent reviewer + stop/rollback conditions | MET | docs/44 is the independent review artifact. Rollback §13; stop conditions named. |
 
-**MRG: PASSED.** Independent review (docs/44, 2026-11-12) verdict: 8/8 MET. License: Apache-2.0 (LICENSE added, Gate D0 resolved per YU-392 decision pack). Tech stack: ADR-045 (Node 26 LTS, pnpm 12.18.0, TypeScript, Drizzle + pg, Fastify + TypeBox, Vitest + Playwright, Pino + OTel). Build system: pnpm + tsc + node:test (12/12 pass) + CI with PostgreSQL 17 (run 43143431100, 3/3 green). PersistencePort: implemented and tested (Drizzle + pg, 6 integration tests). Contract fixtures: 10 JSON + executable harness (10/10 pass). DAG: acyclic (exit 0). PC-6 is not required for this WP.
+**MRG: PASSED.** Independent review (docs/44, 2026-11-12) verdict: 8/8 MET. License: Apache-2.0 (LICENSE added, Gate D0 resolved per YU-392 decision pack). Tech stack: ADR-045 (Node 26 LTS, pnpm 12.18.0, TypeScript, Drizzle + pg, Fastify + TypeBox, Vitest + Playwright, Pino + OTel). Build system: pnpm + tsc + node:test (26/26 pass) + CI with PostgreSQL 17 (run 43248890516, 3/3 green). PersistencePort: implemented and tested (Drizzle + pg, 6 integration tests + restart recovery). Contract fixtures: 10 JSON + executable harness (10/10 pass). DAG: acyclic (exit 0). PC-6 is not required for this WP.
+
+### Coordinator review fixes verified (2026-11-12)
+
+- Idempotency records: DB-backed via `idempotency_records` table (migration 0002). `IdempotencyStore` class with `get/set/has` methods.
+- Receipts: DB-backed via `command_receipts` table (migration 0002). `ReceiptRecorder` class with `record/list/clear` methods.
+- CAS (compare-and-swap): `ProjectRepository.save` and `TaskRepository.save` now support `expectedVersion` parameter. Returns `{ok, reason}`. Uses `WHERE version = expectedVersion` in UPDATE.
+- Space ownership: `UpdateProject`, `transitionProject`, `UpdateProjectCurrentState`, `CreateTask`, `UpdateTask`, `TransitionTaskState` all check `project.spaceId !== cmdSpaceId` → "unauthorized".
+- Test safety: removed `DROP TABLE CASCADE` from contract.test.ts and persistence.test.ts. Uses `DELETE FROM` + `migrate()`. No hardcoded credentials (env-only DB_URL). Disposable DB guard.
+- CurrentState: no more `.catch(() => {})` swallowing errors. Errors propagate.
+- Restart test: separate process spawn/kill/read-back. Verifies data survival + idempotency replay.
+- Contract tests: 11 tests with exact rejection reasons, state-unchanged-after-rejection, cross-space, duplicate replay, lifecycle guards, etc.
 
 ### MRG passed — implementation authorized
 
-Per user instruction: "一旦 WP1-A 的 MRG 通过，立即创建独立 Worktree 和分支，开始真实编码。" MRG is now PASSED. The WP1-A implementation branch `feat/wp1a-personal-project-foundation` @ 309b291 already exists with real TypeScript code, Drizzle+pg persistence, 12/12 tests, and CI green. Formal implementation may now proceed.
+Per user instruction: "一旦 WP1-A 的 MRG 通过，立即创建独立 Worktree 和分支，开始真实编码。" MRG is now PASSED. The WP1-A implementation branch `feat/wp1a-personal-project-foundation` @ 309b291 already exists with real TypeScript code, Drizzle+pg persistence, 26/26 tests, and CI green. Formal implementation may now proceed.
