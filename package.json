@@ -1,0 +1,10 @@
+{
+  "name": "wp1a-personal-project-foundation",
+  "version": "0.0.0",
+  "private": true,
+  "description": "WP1-A: Personal Project Foundation — experimental scaffold. Tech stack NOT frozen (P-021/P-022). No production dependencies.",
+  "scripts": {
+    "typecheck": "tsc --noEmit"
+  },
+  "license": "UNLICENSED (pending selection — Gate D0)"
+}
