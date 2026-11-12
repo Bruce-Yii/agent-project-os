@@ -1,0 +1,14 @@
+{
+  "fixture": "WP1A-NEG-07",
+  "description": "Cross-PersonalSpace access is denied (fail-closed).",
+  "commands": [
+    { "intent": "CreateProject", "payload": { "space_id": "ps-1", "name": "Owner Project" }, "actor": "personal-owner-1", "expected": "OK", "assert_result": { "project_id": "proj-1" } },
+    { "intent": "UpdateProject", "payload": { "project_id": "proj-1", "name": "Hacked" }, "actor": "other-owner", "expected": "REJECTED", "assert_reason": "unauthorized" },
+    { "intent": "UpdateProject", "payload": { "project_id": "proj-1", "name": "Hacked" }, "actor": "", "expected": "REJECTED", "assert_reason": "unauthorized" }
+  ],
+  "assertions": [
+    "Other owner rejected",
+    "Empty actor rejected (fail-closed)",
+    "Project name unchanged"
+  ]
+}

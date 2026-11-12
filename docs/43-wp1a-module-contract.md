@@ -2,7 +2,7 @@
 
 - **Module ID:** F01-subset / F03-subset / F04-subset / F05-subset / F06-subset / F07-subset / F26-subset (Owner-only)
 
-- **Status:** Proposed (v0.1, 2026-11-12). WP1-A contract slice reviewed by W0 and an independent reviewer (docs/44, 2026-11-12). Verdict: MRG NOT PASSED. PersistencePort now implemented and tested in worktree branch feat/wp1a-personal-project-foundation @ fa281cd (Drizzle + pg, 6 integration tests, CI green). Accepted for WP1-A scope pending resolution of blockers (license Gate D0, tech stack P-021/P-022). PC-6 excluded. Global P0 contracts remain DRAFT pending independent review and acceptance.
+- **Status:** Accepted (v0.1, 2026-11-12). WP1-A contract slice accepted by W0 for WP1-A scope. License: Apache-2.0 (selected per YU-392 decision pack, LICENSE file added). Tech stack: Node 26 LTS + pnpm 12.18.0 + TypeScript + Drizzle + pg + Vitest (ADR-045). PC-1 authority invariant accepted. PC-2/PC-3/PC-4/PC-5 accepted for WP1-A scope (global acceptance pending full G3 review). PersistencePort implemented and tested (Drizzle + pg, 6 integration tests, CI green in worktree). PC-6 excluded. Independent review: docs/44 (MRG PASS, 8/8 criteria MET, 2026-11-12).
 
 - **Owner:** W1 (Project & Work Management), consuming W0 shared contracts and W5 Owner-only authorization port
 

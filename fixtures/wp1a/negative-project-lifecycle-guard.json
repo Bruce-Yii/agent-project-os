@@ -1,0 +1,17 @@
+{
+  "fixture": "WP1A-NEG-06",
+  "description": "Project lifecycle transitions enforce PC-3 guards (invalid transitions rejected).",
+  "commands": [
+    { "intent": "CreateProject", "payload": { "space_id": "ps-1", "name": "Lifecycle Test" }, "expected": "OK", "assert_result": { "project_id": "proj-1" } },
+    { "intent": "CloseProject", "payload": { "project_id": "proj-1" }, "expected": "REJECTED", "assert_reason": "invalid transition draft->closed" },
+    { "intent": "ActivateProject", "payload": { "project_id": "proj-1" }, "expected": "OK" },
+    { "intent": "CloseProject", "payload": { "project_id": "proj-1" }, "expected": "OK" },
+    { "intent": "ActivateProject", "payload": { "project_id": "proj-1" }, "expected": "REJECTED", "assert_reason": "invalid transition closed->active" }
+  ],
+  "assertions": [
+    "draft->closed rejected",
+    "draft->active accepted",
+    "active->closed accepted",
+    "closed->active rejected (terminal)"
+  ]
+}

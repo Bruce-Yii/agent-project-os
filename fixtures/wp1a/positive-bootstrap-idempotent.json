@@ -1,0 +1,13 @@
+{
+  "fixture": "WP1A-POS-02",
+  "description": "BootstrapPersonalSpace is idempotent: second call returns existing space, no duplicate.",
+  "commands": [
+    { "intent": "BootstrapPersonalSpace", "payload": { "owner": "personal-owner-1" }, "expected": "OK", "assert_result": { "space_id": "ps-1" } },
+    { "intent": "BootstrapPersonalSpace", "payload": { "owner": "personal-owner-1" }, "expected": "OK", "assert_result": { "space_id": "ps-1", "idempotent": true } }
+  ],
+  "assertions": [
+    "First bootstrap creates ps-1",
+    "Second bootstrap returns same ps-1 (no duplicate)",
+    "PersonalSpace count remains 1"
+  ]
+}
