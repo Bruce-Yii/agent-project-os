@@ -4,7 +4,12 @@ import { CommandExecutor } from "./executor.js";
 import { createDb, closeDb } from "../persistence/db.js";
 import { migrate } from "../persistence/migrate.js";
 
-const DB_URL = process.env.DATABASE_URL || "postgresql://postgres:123456@127.0.0.1:5432/wp1a_test";
+function getDbUrl(): string {
+  const url = process.env.DATABASE_URL || process.env.WP1A_TEST_DB;
+  if (!url) throw new Error("DATABASE_URL or WP1A_TEST_DB must be set (no default credentials).");
+  return url;
+}
+const DB_URL = getDbUrl();
 
 describe("WP1-A command contract (product code)", () => {
   let pool: any;
