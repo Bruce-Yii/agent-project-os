@@ -3,6 +3,7 @@ import assert from "node:assert/strict";
 import { CommandExecutor } from "../../src/commands/executor.js";
 import { createDb, closeDb } from "../../src/persistence/db.js";
 import { migrate } from "../../src/persistence/migrate.js";
+import { assertDisposableDb } from "../../src/test-guard.js";
 import { ProjectRepository, TaskRepository, PersonalSpaceRepository } from "../../src/persistence/repositories.js";
 
 function getDbUrl(): string {
@@ -24,6 +25,8 @@ describe("WP1-A command contract (product code)", () => {
   before(async () => {
     const { Pool } = await import("pg");
     pool = new Pool({ connectionString: DB_URL });
+    // Gate 0: disposable DB guard — fail closed on non-test databases
+    await assertDisposableDb(DB_URL);
     // Clean slate
     await pool.query("DELETE FROM project_current_states");
     await pool.query("DELETE FROM dependency_edges");

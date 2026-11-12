@@ -3,6 +3,7 @@ import assert from "node:assert/strict";
 import { createDb, closeDb } from "./db.js";
 import { PersonalSpaceRepository, ProjectRepository, TaskRepository, GoalRepository, DependencyRepository } from "./repositories.js";
 import { migrate } from "./migrate.js";
+import { assertDisposableDb } from "../test-guard.js";
 
 function getDbUrl(): string {
   const url = process.env.DATABASE_URL || process.env.WP1A_TEST_DB;
@@ -20,6 +21,7 @@ describe("WP1-A persistence (PostgreSQL)", () => {
   before(async () => {
     const { Pool } = await import("pg");
     pool = new Pool({ connectionString: DB_URL });
+    await assertDisposableDb(DB_URL);
     await pool.query("DELETE FROM project_current_states");
     await pool.query("DELETE FROM dependency_edges");
     await pool.query("DELETE FROM goals");

@@ -2,6 +2,7 @@ import { describe, it, before, after } from "node:test";
 import assert from "node:assert/strict";
 import { Pool } from "pg";
 import { migrate } from "./migrate.js";
+import { assertDisposableDb } from "../test-guard.js";
 
 const ADMIN_URL = process.env.DATABASE_URL ? process.env.DATABASE_URL.replace(/wp1a_test/, "postgres") : "postgresql://postgres:postgres@127.0.0.1:5432/postgres";
 const TEST_DB = "wp1a_migrate_test";
@@ -18,6 +19,7 @@ describe("WP1-A migrations", () => {
     }
     await adminPool.end();
     pool = new Pool({ connectionString: DB_URL });
+    await assertDisposableDb(DB_URL);
     await pool.query(`
       DROP TABLE IF EXISTS project_current_states CASCADE;
       DROP TABLE IF EXISTS dependency_edges CASCADE;
