@@ -48,8 +48,16 @@
 - PC-6 is not required for this WP.
 - Criterion 8 reviewer independence is asserted, not evidenced; recommend a separately archived review artifact.
 
-## Final verdict
+## Final verdict (updated 2026-11-12)
 
 **MRG NOT PASSED.**
 
 WP1-A satisfies 3 of 8 criteria as fully MET (criteria 1, 5, and 8), 3 as PARTIAL (criteria 2, 3, and 6), and 2 as NOT MET (criteria 4 and 7). It is blocked from `IMPLEMENTATION READY` status until at minimum: a build/test pipeline and frozen (or explicitly accepted) tech stack are established (criterion 4), and an open-source license is selected and published (criterion 7, Gate D0); and until the partials on contract acceptance (criterion 2), P0/port testability (criterion 3), and fixture/test fidelity (criterion 6) are closed. No implementation may start until these pass.
+
+### Update log (2026-11-12)
+
+- PersistencePort implemented: Drizzle + pg repositories, 6 integration tests (save/read/upsert/findByProject/restart recovery), CI green (run 43143431100).
+- Build system: tsc + node:test, 12/12 pass, CI with PostgreSQL 17 service container (run 43143431100).
+- Fixture command names aligned with docs/40 §7.1 (BootstrapPersonalSpace, UpdateProjectCurrentState, TransitionTaskState).
+- Worktree: feat/wp1a-personal-project-foundation @ 309b291 (pushed, CI green).
+- Still blocked: license (Gate D0) and tech stack (P-021/P-022) are product-owner decisions.

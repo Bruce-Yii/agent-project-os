@@ -2,7 +2,7 @@
 
 - **Module ID:** F01-subset / F03-subset / F04-subset / F05-subset / F06-subset / F07-subset / F26-subset (Owner-only)
 
-- **Status:** Proposed (v0.1, 2026-11-12). WP1-A contract slice reviewed by W0 and an independent reviewer (docs/44, 2026-11-12). Verdict: MRG NOT PASSED. Accepted for WP1-A scope pending resolution of blockers (license Gate D0, tech stack P-021/P-022). PC-6 excluded. Global P0 contracts remain DRAFT pending independent review and acceptance.
+- **Status:** Proposed (v0.1, 2026-11-12). WP1-A contract slice reviewed by W0 and an independent reviewer (docs/44, 2026-11-12). Verdict: MRG NOT PASSED. PersistencePort now implemented and tested in worktree branch feat/wp1a-personal-project-foundation @ fa281cd (Drizzle + pg, 6 integration tests, CI green). Accepted for WP1-A scope pending resolution of blockers (license Gate D0, tech stack P-021/P-022). PC-6 excluded. Global P0 contracts remain DRAFT pending independent review and acceptance.
 
 - **Owner:** W1 (Project & Work Management), consuming W0 shared contracts and W5 Owner-only authorization port
 
