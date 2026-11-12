@@ -25,17 +25,19 @@ describe("WP1-A command contract (product code)", () => {
     const { Pool } = await import("pg");
     pool = new Pool({ connectionString: DB_URL });
     // Clean slate
-    await pool.query("DROP TABLE IF EXISTS tasks CASCADE");
-    await pool.query("DROP TABLE IF EXISTS goals CASCADE");
-    await pool.query("DROP TABLE IF EXISTS dependency_edges CASCADE");
-    await pool.query("DROP TABLE IF EXISTS project_current_states CASCADE");
-    await pool.query("DROP TABLE IF EXISTS projects CASCADE");
-    await pool.query("DROP TABLE IF EXISTS personal_spaces CASCADE");
-    await pool.query("DROP TABLE IF EXISTS schema_migrations CASCADE");
+    await pool.query("DELETE FROM project_current_states");
+    await pool.query("DELETE FROM dependency_edges");
+    await pool.query("DELETE FROM goals");
+    await pool.query("DELETE FROM tasks");
+    await pool.query("DELETE FROM projects");
+    await pool.query("DELETE FROM personal_spaces");
+    await pool.query("DELETE FROM idempotency_records");
+    await pool.query("DELETE FROM command_receipts");
+    await pool.query("DELETE FROM schema_migrations");
     await migrate(DB_URL);
     const result = createDb(DB_URL);
     db = result.db;
-    executor = new CommandExecutor(db, { owner: OWNER });
+    executor = new CommandExecutor({ db, pool });
   });
 
   after(async () => {

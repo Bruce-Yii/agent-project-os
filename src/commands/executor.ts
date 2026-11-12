@@ -1,14 +1,15 @@
 // CommandExecutor — real typed command execution for WP1-A.
 //
 // - Authorization (Owner-only, fail-closed)
-// - expected_version optimistic concurrency
+// - expected_version optimistic concurrency (CAS)
 // - state-transition guards
 // - Drizzle transaction
-// - idempotency
-// - receipt recording
+// - idempotency (DB-backed via idempotency_records table)
+// - receipt recording (DB-backed via command_receipts table)
 
 import { randomUUID } from "node:crypto";
 import type { Db } from "../persistence/db.js";
+import type { Pool } from "pg";
 import type { Command, CommandEnvelope } from "./envelope.js";
 import { runInTransaction } from "../persistence/transaction.js";
 import {
@@ -16,6 +17,7 @@ import {
   createReceiptRecorder,
   type Receipt,
 } from "../persistence/receipts.js";
+import { IdempotencyStore, createIdempotencyStore } from "../persistence/idempotency.js";
 import * as handlers from "./handlers.js";
 
 export type CommandStatus = "OK" | "REJECTED";
@@ -28,9 +30,10 @@ export interface CommandResult {
 
 export interface CommandExecutorDeps {
   db: Db;
+  pool?: Pool;
   owner?: string;
-  idempotencyStore?: Map<string, CommandResult>;
   receiptRecorder?: ReceiptRecorder;
+  idempotencyStore?: IdempotencyStore;
 }
 
 function isDb(value: unknown): value is Db {
@@ -44,22 +47,25 @@ function isDb(value: unknown): value is Db {
 
 export class CommandExecutor {
   private readonly db: Db;
+  private readonly pool: Pool | null;
   private readonly owner: string;
-  private readonly idempotencyStore: Map<string, CommandResult>;
   private readonly receiptRecorder: ReceiptRecorder;
+  private readonly idempotencyStore: IdempotencyStore;
 
   constructor(dbOrDeps: Db | CommandExecutorDeps, options?: Partial<CommandExecutorDeps>) {
     if (isDb(dbOrDeps)) {
       this.db = dbOrDeps;
+      this.pool = options?.pool ?? null;
       this.owner = options?.owner ?? "personal-owner-1";
-      this.idempotencyStore = options?.idempotencyStore ?? new Map();
-      this.receiptRecorder = options?.receiptRecorder ?? createReceiptRecorder();
+      this.receiptRecorder = options?.receiptRecorder ?? createReceiptRecorder(this.pool ?? undefined);
+      this.idempotencyStore = options?.idempotencyStore ?? createIdempotencyStore(this.pool ?? undefined);
     } else {
       const deps = dbOrDeps as CommandExecutorDeps;
       this.db = deps.db;
+      this.pool = deps.pool ?? options?.pool ?? null;
       this.owner = deps.owner ?? options?.owner ?? "personal-owner-1";
-      this.idempotencyStore = deps.idempotencyStore ?? options?.idempotencyStore ?? new Map();
-      this.receiptRecorder = deps.receiptRecorder ?? options?.receiptRecorder ?? createReceiptRecorder();
+      this.receiptRecorder = deps.receiptRecorder ?? options?.receiptRecorder ?? createReceiptRecorder(this.pool ?? undefined);
+      this.idempotencyStore = deps.idempotencyStore ?? options?.idempotencyStore ?? createIdempotencyStore(this.pool ?? undefined);
     }
   }
 
@@ -68,22 +74,22 @@ export class CommandExecutor {
   }
 
   private idempotencyKey(command: Command): string {
-    return `${command.envelope.actor}\u0000${command.envelope.idempotencyKey}`;
+    return `${command.envelope.actor}::${command.envelope.idempotencyKey}`;
   }
 
   async execute(command: Command): Promise<CommandResult> {
     const ikey = this.idempotencyKey(command);
 
-    // Idempotency: return stored result without re-executing.
-    const stored = this.idempotencyStore.get(ikey);
+    // Idempotency: check DB-backed store first.
+    const stored = await this.idempotencyStore.get(ikey);
     if (stored) {
-      return { ...stored };
+      return { ...(stored as CommandResult) };
     }
 
     // Authorization: Owner-only, fail-closed.
     if (command.envelope.actor !== this.owner) {
       const result: CommandResult = { status: "REJECTED", reason: "unauthorized" };
-      this.idempotencyStore.set(ikey, result);
+      await this.idempotencyStore.set(ikey, command.envelope.actor, result);
       return result;
     }
 
@@ -99,7 +105,6 @@ export class CommandExecutor {
       });
     } catch (err) {
       const message = err instanceof Error ? err.message : String(err);
-      // Normalize known rejection reasons thrown by handlers.
       if (message === "STALE_VERSION") {
         result = { status: "REJECTED", reason: "STALE_VERSION" };
       } else if (message === "unauthorized") {
@@ -109,9 +114,9 @@ export class CommandExecutor {
       }
     }
 
-    // Receipt: record mutation on success.
-    if (result.status === "OK") {
-      const receipt = this.receiptRecorder.record({
+    // Receipt: record mutation on success (DB-backed).
+    if (result.status === "OK" && this.pool) {
+      const receipt = await this.receiptRecorder.record({
         commandId: command.envelope.commandId,
         idempotencyKey: command.envelope.idempotencyKey,
         actor: command.envelope.actor,
@@ -127,7 +132,9 @@ export class CommandExecutor {
       (result as Record<string, unknown>).receipt = receipt;
     }
 
-    this.idempotencyStore.set(ikey, result);
+    // Persist idempotency record (DB-backed).
+    await this.idempotencyStore.set(ikey, command.envelope.actor, result);
+
     return { ...result };
   }
 
@@ -150,8 +157,6 @@ export class CommandExecutor {
   }
 }
 
-// Dispatch table. Kept here (not in handlers.ts) to avoid circular import at module load?
-// handlers.ts imports CommandResult type only, so safe.
 function dispatchCommand(ctx: { db: Db; command: Command; executor: CommandExecutor }, command: Command): Promise<CommandResult> {
   const ns = handlers as unknown as Record<string, (c: typeof ctx) => Promise<CommandResult>>;
   const fn = ns[command.intent];

@@ -1,7 +1,7 @@
 // Repository implementations (Drizzle + pg).
 // Tech stack: PROPOSED (P-021).
 
-import { eq } from "drizzle-orm";
+import { eq, and } from "drizzle-orm";
 import type { Db } from "./db.js";
 import * as schema from "./schema.js";
 
@@ -48,7 +48,35 @@ export class ProjectRepository {
     currentStateFreshness: string | null;
     currentStateSource: string | null;
     version: number;
-  }): Promise<void> {
+    expectedVersion?: number;
+  }): Promise<{ ok: boolean; reason?: string }> {
+    // Atomic CAS: if expectedVersion is provided, only update if current version matches.
+    if (project.expectedVersion !== undefined && project.expectedVersion !== null) {
+      const result = await this.db
+        .update(schema.projects)
+        .set({
+          name: project.name,
+          goal: project.goal,
+          status: project.status,
+          currentState: project.currentState,
+          currentStateFreshness: project.currentStateFreshness,
+          currentStateSource: project.currentStateSource,
+          version: project.version,
+          updatedAt: new Date(),
+        })
+        .where(
+          and(
+            eq(schema.projects.id, project.id),
+            eq(schema.projects.version, project.expectedVersion),
+          ),
+        )
+        .returning({ id: schema.projects.id });
+      if (result.length === 0) {
+        return { ok: false, reason: "STALE_VERSION" };
+      }
+      return { ok: true };
+    }
+    // No version check (initial insert or forced update).
     await this.db
       .insert(schema.projects)
       .values({
@@ -75,6 +103,7 @@ export class ProjectRepository {
           updatedAt: new Date(),
         },
       });
+    return { ok: true };
   }
 
   async findById(id: string): Promise<typeof schema.projects.$inferSelect | null> {
@@ -106,7 +135,35 @@ export class TaskRepository {
     parentId: string | null;
     status: string;
     version: number;
-  }): Promise<void> {
+    expectedVersion?: number;
+  }): Promise<{ ok: boolean; reason?: string }> {
+    // Atomic CAS: if expectedVersion is provided, only update if current version matches.
+    if (task.expectedVersion !== undefined && task.expectedVersion !== null) {
+      const result = await this.db
+        .update(schema.tasks)
+        .set({
+          title: task.title,
+          scope: task.scope,
+          nonScope: task.nonScope,
+          acceptanceCriteria: task.acceptanceCriteria,
+          parentId: task.parentId,
+          status: task.status,
+          version: task.version,
+          updatedAt: new Date(),
+        })
+        .where(
+          and(
+            eq(schema.tasks.id, task.id),
+            eq(schema.tasks.version, task.expectedVersion),
+          ),
+        )
+        .returning({ id: schema.tasks.id });
+      if (result.length === 0) {
+        return { ok: false, reason: "STALE_VERSION" };
+      }
+      return { ok: true };
+    }
+    // No version check (initial insert or forced update).
     await this.db
       .insert(schema.tasks)
       .values({
@@ -133,6 +190,7 @@ export class TaskRepository {
           updatedAt: new Date(),
         },
       });
+    return { ok: true };
   }
 
   async findById(id: string): Promise<typeof schema.tasks.$inferSelect | null> {

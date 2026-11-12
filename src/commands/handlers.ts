@@ -178,12 +178,18 @@ export async function UpdateProject(...args: unknown[]): Promise<CommandResult> 
   const project = await repos.projects.findById(projectId);
   if (!project) return { status: "REJECTED", reason: "NOT_FOUND" };
 
+  // Space ownership check: project must belong to the command's personal space.
+  const cmdSpaceId = e.personalSpaceId;
+  if (cmdSpaceId && project.spaceId !== cmdSpaceId) {
+    return { status: "REJECTED", reason: "unauthorized" };
+  }
+
   checkVersion(project.version, num(e.expectedVersion));
 
   const name = str(p.name) ?? project.name;
   const goal = str(p.goal) ?? project.goal;
 
-  await repos.projects.save({
+  const saveResult = await repos.projects.save({
     id: project.id,
     spaceId: project.spaceId,
     name,
@@ -193,7 +199,13 @@ export async function UpdateProject(...args: unknown[]): Promise<CommandResult> 
     currentStateFreshness: project.currentStateFreshness,
     currentStateSource: project.currentStateSource,
     version: project.version + 1,
+    expectedVersion: project.version,
   });
+
+  if (!saveResult.ok) {
+    if (saveResult.reason === "STALE_VERSION") throw new Error("STALE_VERSION");
+    return { status: "REJECTED", reason: saveResult.reason ?? "SAVE_FAILED" };
+  }
 
   return { status: "OK", projectId, name, goal, version: project.version + 1 };
 }
@@ -208,18 +220,23 @@ async function transitionProject(ctx: HandlerContext, target: string): Promise<C
   if (!projectId) return { status: "REJECTED", reason: "MISSING_PROJECT_ID" };
   const project = await repos.projects.findById(projectId);
   if (!project) return { status: "REJECTED", reason: "NOT_FOUND" };
+
+  const cmdSpaceId = e.personalSpaceId;
+  if (cmdSpaceId && project.spaceId !== cmdSpaceId) {
+    return { status: "REJECTED", reason: "unauthorized" };
+  }
+
   checkVersion(project.version, num(e.expectedVersion));
   if (!canTransitionProject(project.status as any, target as any)) {
     return { status: "REJECTED", reason: "INVALID_TRANSITION" };
   }
-  // assert (may throw) - convert
   try {
     assertProjectTransition(project.status as any, target as any);
   } catch {
     return { status: "REJECTED", reason: "INVALID_TRANSITION" };
   }
 
-  await repos.projects.save({
+  const saveResult = await repos.projects.save({
     id: project.id,
     spaceId: project.spaceId,
     name: project.name,
@@ -229,7 +246,13 @@ async function transitionProject(ctx: HandlerContext, target: string): Promise<C
     currentStateFreshness: project.currentStateFreshness,
     currentStateSource: project.currentStateSource,
     version: project.version + 1,
+    expectedVersion: project.version,
   });
+
+  if (!saveResult.ok) {
+    if (saveResult.reason === "STALE_VERSION") throw new Error("STALE_VERSION");
+    return { status: "REJECTED", reason: saveResult.reason ?? "SAVE_FAILED" };
+  }
 
   return { status: "OK", projectId, from: project.status, to: target, version: project.version + 1 };
 }
@@ -266,13 +289,19 @@ export async function UpdateProjectCurrentState(...args: unknown[]): Promise<Com
   if (!projectId) return { status: "REJECTED", reason: "MISSING_PROJECT_ID" };
   const project = await repos.projects.findById(projectId);
   if (!project) return { status: "REJECTED", reason: "NOT_FOUND" };
+
+  const cmdSpaceId = e.personalSpaceId;
+  if (cmdSpaceId && project.spaceId !== cmdSpaceId) {
+    return { status: "REJECTED", reason: "unauthorized" };
+  }
+
   checkVersion(project.version, num(e.expectedVersion));
 
   const summary = str(p.summary) ?? str(p.currentState) ?? "";
   const freshness = str(p.freshness) ?? new Date().toISOString();
   const source = (str(p.source) as "owner" | "derived") ?? "owner";
 
-  await repos.projects.save({
+  const saveResult = await repos.projects.save({
     id: project.id,
     spaceId: project.spaceId,
     name: project.name,
@@ -282,9 +311,15 @@ export async function UpdateProjectCurrentState(...args: unknown[]): Promise<Com
     currentStateFreshness: freshness,
     currentStateSource: source,
     version: project.version + 1,
+    expectedVersion: project.version,
   });
 
-  // also upsert project_current_states table (best-effort, within same tx)
+  if (!saveResult.ok) {
+    if (saveResult.reason === "STALE_VERSION") throw new Error("STALE_VERSION");
+    return { status: "REJECTED", reason: saveResult.reason ?? "SAVE_FAILED" };
+  }
+
+  // Upsert project_current_states table (within same tx, no error swallowing)
   await db
     .insert(schema.projectCurrentStates)
     .values({
@@ -297,9 +332,6 @@ export async function UpdateProjectCurrentState(...args: unknown[]): Promise<Com
     .onConflictDoUpdate({
       target: schema.projectCurrentStates.projectId,
       set: { summary, freshness, source, version: sql`${schema.projectCurrentStates.version} + 1` },
-    })
-    .catch(() => {
-      // ignore; table may not exist in some test setups
     });
 
   return { status: "OK", projectId, summary, freshness, source, version: project.version + 1 };
@@ -423,6 +455,14 @@ export async function UpdateTask(...args: unknown[]): Promise<CommandResult> {
   if (!taskId) return { status: "REJECTED", reason: "MISSING_TASK_ID" };
   const task = await repos.tasks.findById(taskId);
   if (!task) return { status: "REJECTED", reason: "NOT_FOUND" };
+
+  const project = await repos.projects.findById(task.projectId);
+  if (!project) return { status: "REJECTED", reason: "NOT_FOUND" };
+  const cmdSpaceId = e.personalSpaceId;
+  if (cmdSpaceId && project.spaceId !== cmdSpaceId) {
+    return { status: "REJECTED", reason: "unauthorized" };
+  }
+
   checkVersion(task.version, num(e.expectedVersion));
 
   const parentId =
@@ -432,7 +472,7 @@ export async function UpdateTask(...args: unknown[]): Promise<CommandResult> {
       ? null
       : str(p.parentId) ?? task.parentId;
 
-  await repos.tasks.save({
+  const saveResult = await repos.tasks.save({
     id: task.id,
     projectId: task.projectId,
     title: str(p.title) ?? task.title,
@@ -442,7 +482,13 @@ export async function UpdateTask(...args: unknown[]): Promise<CommandResult> {
     parentId,
     status: task.status,
     version: task.version + 1,
+    expectedVersion: task.version,
   });
+
+  if (!saveResult.ok) {
+    if (saveResult.reason === "STALE_VERSION") throw new Error("STALE_VERSION");
+    return { status: "REJECTED", reason: saveResult.reason ?? "SAVE_FAILED" };
+  }
 
   return { status: "OK", taskId, version: task.version + 1 };
 }
@@ -587,6 +633,14 @@ export async function TransitionTaskState(...args: unknown[]): Promise<CommandRe
   if (!taskId) return { status: "REJECTED", reason: "MISSING_TASK_ID" };
   const task = await repos.tasks.findById(taskId);
   if (!task) return { status: "REJECTED", reason: "NOT_FOUND" };
+
+  const project = await repos.projects.findById(task.projectId);
+  if (!project) return { status: "REJECTED", reason: "NOT_FOUND" };
+  const cmdSpaceId = e.personalSpaceId;
+  if (cmdSpaceId && project.spaceId !== cmdSpaceId) {
+    return { status: "REJECTED", reason: "unauthorized" };
+  }
+
   checkVersion(task.version, num(e.expectedVersion));
 
   const toStatus = str(p.toStatus) ?? str(p.status) ?? str(p.to);
@@ -601,7 +655,7 @@ export async function TransitionTaskState(...args: unknown[]): Promise<CommandRe
     return { status: "REJECTED", reason: "INVALID_TRANSITION" };
   }
 
-  await repos.tasks.save({
+  const saveResult = await repos.tasks.save({
     id: task.id,
     projectId: task.projectId,
     title: task.title,
@@ -611,7 +665,13 @@ export async function TransitionTaskState(...args: unknown[]): Promise<CommandRe
     parentId: task.parentId,
     status: toStatus,
     version: task.version + 1,
+    expectedVersion: task.version,
   });
+
+  if (!saveResult.ok) {
+    if (saveResult.reason === "STALE_VERSION") throw new Error("STALE_VERSION");
+    return { status: "REJECTED", reason: saveResult.reason ?? "SAVE_FAILED" };
+  }
 
   return { status: "OK", taskId, from: task.status, to: toStatus, version: task.version + 1 };
 }

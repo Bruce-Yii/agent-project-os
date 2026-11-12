@@ -1,5 +1,9 @@
 // Receipt recording (mutation audit) for WP1-A.
-// In-memory implementation for now; TODO: persist to a receipts table (DB).
+// DB-backed implementation using raw SQL via pg Pool.
+// Receipts are persisted in the command_receipts table (migration 0002).
+
+import { randomUUID } from "node:crypto";
+import type { Pool } from "pg";
 
 export interface Receipt {
   readonly receiptId: string;
@@ -22,11 +26,19 @@ export interface ReceiptInput {
 }
 
 export class ReceiptRecorder {
-  private readonly receipts: Receipt[] = [];
+  private pool: Pool | null;
 
-  record(input: ReceiptInput): Receipt {
+  constructor(pool?: Pool) {
+    this.pool = pool ?? null;
+  }
+
+  setPool(pool: Pool): void {
+    this.pool = pool;
+  }
+
+  async record(input: ReceiptInput): Promise<Receipt> {
     const receipt: Receipt = {
-      receiptId: crypto.randomUUID(),
+      receiptId: randomUUID(),
       commandId: input.commandId,
       idempotencyKey: input.idempotencyKey,
       actor: input.actor,
@@ -35,32 +47,80 @@ export class ReceiptRecorder {
       recordedAt: new Date().toISOString(),
       details: input.details,
     };
-    this.receipts.push(receipt);
+
+    if (this.pool) {
+      try {
+        await this.pool.query(
+          `INSERT INTO command_receipts (receipt_id, command_id, idempotency_key, actor, intent, status, details, recorded_at)
+           VALUES ($1, $2, $3, $4, $5, $6, $7, $8)`,
+          [
+            receipt.receiptId,
+            receipt.commandId ?? null,
+            receipt.idempotencyKey ?? null,
+            receipt.actor ?? null,
+            receipt.intent ?? null,
+            receipt.status,
+            receipt.details ? JSON.stringify(receipt.details) : null,
+            receipt.recordedAt,
+          ],
+        );
+      } catch (err) {
+        // Log but don't fail the command; receipt is best-effort audit
+        console.error("Receipt recording failed:", err);
+      }
+    }
+
     return receipt;
   }
 
-  list(): Receipt[] {
-    return [...this.receipts];
+  async list(): Promise<Receipt[]> {
+    if (!this.pool) return [];
+    const { rows } = await this.pool.query(
+      "SELECT receipt_id, command_id, idempotency_key, actor, intent, status, details, recorded_at FROM command_receipts ORDER BY recorded_at DESC",
+    );
+    return rows.map((r: Record<string, unknown>) => ({
+      receiptId: r.receipt_id as string,
+      commandId: r.command_id as string | undefined,
+      idempotencyKey: r.idempotency_key as string | undefined,
+      actor: r.actor as string | undefined,
+      intent: r.intent as string | undefined,
+      status: r.status as Receipt["status"],
+      recordedAt: r.recorded_at as string,
+      details: r.details as Record<string, unknown> | undefined,
+    }));
   }
 
-  clear(): void {
-    this.receipts.length = 0;
+  async clear(): Promise<void> {
+    if (this.pool) {
+      await this.pool.query("DELETE FROM command_receipts");
+    }
   }
 }
 
-export function createReceiptRecorder(): ReceiptRecorder {
-  return new ReceiptRecorder();
+export function createReceiptRecorder(pool?: Pool): ReceiptRecorder {
+  return new ReceiptRecorder(pool);
 }
 
-// Module-level default recorder for convenience (TODO: replace with DB-backed).
+// Module-level default recorder (no pool until set)
 const defaultRecorder = new ReceiptRecorder();
 
 export function recordReceipt(input: ReceiptInput): Receipt {
-  return defaultRecorder.record(input);
+  // Synchronous wrapper; async version preferred
+  return defaultRecorder.record(input) as unknown as Receipt;
+}
+
+export async function recordReceiptAsync(input: ReceiptInput, pool: Pool): Promise<Receipt> {
+  const recorder = new ReceiptRecorder(pool);
+  return recorder.record(input);
 }
 
 export function listReceipts(): Receipt[] {
-  return defaultRecorder.list();
+  return defaultRecorder.list() as unknown as Receipt[];
+}
+
+export async function listReceiptsAsync(pool: Pool): Promise<Receipt[]> {
+  const recorder = new ReceiptRecorder(pool);
+  return recorder.list();
 }
 
 export class Receipts extends ReceiptRecorder {}

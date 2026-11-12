@@ -30,7 +30,7 @@ describe("WP1-A command contract (product code)", () => {
     await migrate(DB_URL);
     const result = createDb(DB_URL);
     db = result.db;
-    executor = new CommandExecutor(db);
+    executor = new CommandExecutor({ db, pool });
   });
 
   after(async () => {

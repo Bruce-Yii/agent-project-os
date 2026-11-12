@@ -55,7 +55,7 @@ describe("WP1-A migrations", () => {
       assert.ok(names.includes(t), `missing table ${t}`);
     }
     const mig = await pool.query("SELECT version FROM schema_migrations");
-    assert.equal(mig.rows.length, 1);
+    assert.equal(mig.rows.length, 2);
   });
 
   it("is idempotent", async () => {
