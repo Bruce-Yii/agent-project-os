@@ -14,25 +14,33 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 12.19.0
       - uses: actions/setup-node@v4
         with:
-          node-version: 24
-      - run: npm ci
-      - run: npm run typecheck
+          node-version: 26
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm typecheck
 
   build:
     name: Build
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 12.19.0
       - uses: actions/setup-node@v4
         with:
-          node-version: 24
-      - run: npm ci
-      - run: npm run build
+          node-version: 26
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm build
 
   test:
-    name: Unit tests (with PostgreSQL)
+    name: Unit + integration tests (PostgreSQL 17)
     runs-on: ubuntu-latest
     services:
       postgres:
@@ -51,10 +59,14 @@ jobs:
       DATABASE_URL: postgresql://postgres:postgres@localhost:5432/wp1a_test
     steps:
       - uses: actions/checkout@v6
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 12.19.0
       - uses: actions/setup-node@v4
         with:
-          node-version: 24
-      - run: npm ci
+          node-version: 26
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
       - name: Create tables
         env:
           PGPASSWORD: postgres
@@ -64,4 +76,4 @@ jobs:
           CREATE TABLE IF NOT EXISTS projects (id TEXT PRIMARY KEY, space_id TEXT NOT NULL REFERENCES personal_spaces(id), name TEXT NOT NULL, goal TEXT NOT NULL DEFAULT '', status TEXT NOT NULL DEFAULT 'draft', current_state TEXT, current_state_freshness TEXT, current_state_source TEXT, version INTEGER NOT NULL DEFAULT 1, created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(), updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW());
           CREATE TABLE IF NOT EXISTS tasks (id TEXT PRIMARY KEY, project_id TEXT NOT NULL REFERENCES projects(id), title TEXT NOT NULL, scope TEXT NOT NULL DEFAULT '', non_scope TEXT NOT NULL DEFAULT '', acceptance_criteria TEXT NOT NULL DEFAULT '', parent_id TEXT, status TEXT NOT NULL DEFAULT 'backlog', version INTEGER NOT NULL DEFAULT 1, created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(), updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW());
           "
-      - run: npm test
+      - run: pnpm test
