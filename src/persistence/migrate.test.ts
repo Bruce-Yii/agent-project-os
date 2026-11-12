@@ -3,9 +3,9 @@ import assert from "node:assert/strict";
 import { Pool } from "pg";
 import { migrate } from "./migrate.js";
 
-const ADMIN_URL = "postgresql://postgres:123456@127.0.0.1:5432/postgres";
+const ADMIN_URL = process.env.DATABASE_URL ? process.env.DATABASE_URL.replace(/wp1a_test/, "postgres") : "postgresql://postgres:postgres@127.0.0.1:5432/postgres";
 const TEST_DB = "wp1a_migrate_test";
-const DB_URL = process.env.DATABASE_URL || process.env.WP1A_TEST_DB || `postgresql://postgres:123456@127.0.0.1:5432/${TEST_DB}`;
+const DB_URL = process.env.DATABASE_URL || process.env.WP1A_TEST_DB || `postgresql://postgres:postgres@127.0.0.1:5432/${TEST_DB}`;
 
 describe("WP1-A migrations", () => {
   let pool: Pool;
