@@ -22,7 +22,8 @@ Every work package must state:
 - hard constraints;
 - interfaces consumed and produced;
 - data/state ownership;
-- acceptance criteria;
+- acceptance criteria and acceptance-contract version;
+- acceptance evidence requirements (remote-first, SHA citation, claim-to-evidence matrix, independent reviewer) per `docs/46-acceptance-and-remote-evidence-contract.md`;
 - tests and verification commands;
 - external side effects and approval requirements;
 - dependencies and handoff format.
@@ -65,7 +66,18 @@ Every Agent handoff must include:
 6. external side effects and current external truth;
 7. known risks, incomplete items, and next action.
 
-## 6. Prohibited shortcuts
+## 6. Acceptance evidence requirements (remote-first)
+
+Acceptance is governed by `docs/46-acceptance-and-remote-evidence-contract.md`; this section summarizes the integration points. Do not duplicate the full contract.
+
+- **Remote-first.** Anything requiring independent review must first be available on a reviewer-accessible remote (commit + push to the authorized branch); cite the exact full commit SHA, branch, repository path and PR. A local path, screenshot, pasted summary, or "tests passed" is not sufficient delivery evidence.
+- **SHA citation.** The reviewer must inspect the exact remote artifact; the CI run head SHA must equal the submitted candidate. Report base and head SHAs, changed paths, and whether uncommitted/untracked changes remain.
+- **Claim-to-evidence matrix.** Every acceptance claim maps to acceptance ID → expected observation → actual observation → remote file/line/log/CI → independent reviewer verdict (docs/46 §6.5).
+- **Independent review.** Developer/worker completion or its own tests do not equal acceptance. A reviewer independent of the implementation checks the promised outcome and important counterexamples; W0 reviews the reviewer and integration; ChatGPT independently accepts material module/integration/release claims. No self-certification.
+- **Gates.** Use the distinct gates in docs/46 §2 (MRG / Task / Module / Integration / Release). Passing a prior gate is necessary but never sufficient for a later gate; readiness (MRG) is not completion.
+- **Verdicts.** ACCEPTED / PARTIAL / REJECTED / NOT VERIFIED / N/A per docs/46 §7. A changed implementation SHA invalidates the previous overall acceptance unless the reviewer checks the delta and carries the verdict forward.
+
+## 7. Prohibited shortcuts
 
 - Do not claim tests passed without running them.
 - Do not claim external operations succeeded without reading back the result.
@@ -75,7 +87,7 @@ Every Agent handoff must include:
 - Do not introduce secrets into code, docs, logs, or Agent prompts.
 - Do not treat a design proposal as a confirmed product decision.
 
-## 7. Review checklist
+## 8. Review checklist
 
 - Does the implementation match the module contract?
 - Did it change only owned files and interfaces?

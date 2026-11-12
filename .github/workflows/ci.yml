@@ -127,3 +127,26 @@ jobs:
         uses: gitleaks/gitleaks-action@v3.0.0
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+
+  acceptance-contract-check:
+    name: Acceptance contract (docs/46) presence
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+      - name: Check docs/46 exists and is in manifest
+        run: |
+          python - <<'PY'
+          import json, pathlib, sys
+          doc = pathlib.Path('docs/46-acceptance-and-remote-evidence-contract.md')
+          if not doc.is_file():
+              print('FAIL: docs/46-acceptance-and-remote-evidence-contract.md is missing')
+              sys.exit(1)
+          manifest = json.loads(pathlib.Path('manifest.json').read_text())
+          files = manifest.get('files', [])
+          if 'docs/46-acceptance-and-remote-evidence-contract.md' not in files:
+              print('FAIL: docs/46-acceptance-and-remote-evidence-contract.md is not listed in manifest.json')
+              sys.exit(1)
+          print('PASS: docs/46 present and included in manifest')
+          PY

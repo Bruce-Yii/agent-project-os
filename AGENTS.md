@@ -10,6 +10,7 @@
 6. `docs/17-agent-development-contract.md`
 7. `docs/18-local-agent-session-subsystem.md` (when touching Provider adapters, Session, Daemon, message streaming, terminal, or cross-device Session control)
 8. `docs/23-local-development-and-agent-operations.md` (new; local dev foundation, YU-399)
+9. `docs/46-acceptance-and-remote-evidence-contract.md` (acceptance and remote evidence contract)
 
 Before changing product behavior or shared contracts, also read the module-specific design document you are changing.
 
@@ -74,3 +75,12 @@ Full contract (do not duplicate here): `docs/17-agent-development-contract.md`.
 - Read back external writes when supported.
 - If an external side effect has an unknown outcome, reconcile before retrying.
 - Update the owning documentation and `docs/14-open-decisions.md` when a material decision changes.
+
+## Remote evidence and acceptance
+
+- Acceptance and remote evidence rules are defined in `docs/46-acceptance-and-remote-evidence-contract.md`. Read it before any acceptance/handoff claim.
+- Anything requiring independent review must first be available on a reviewer-accessible remote (commit + push, cite full SHA, branch, path, PR). Local paths, screenshots, pasted summaries, or "tests passed" are not sufficient.
+- A reviewer must inspect the exact remote artifact at the submitted SHA; CI run head SHA must equal the candidate. No self-certification.
+- Readiness (MRG) is not completion; later gates need their own evidence. Use the gates in docs/46 §2 (MRG / Task / Module / Integration / Release).
+- Handoffs must include the reviewable remote evidence packet (docs/46 §6): outcome, SHAs, changed paths, CI run, claim-to-evidence matrix, reviewer independence, risks/rollback.
+- If safe remote evidence cannot be supplied, mark NOT VERIFIED and identify the blocker; never advance an unsupported verdict.

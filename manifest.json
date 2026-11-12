@@ -50,6 +50,7 @@
     "docs/37-pc4-command-event-outbox.md",
     "docs/38-pc5-authorization-mandate-approval.md",
     "docs/39-pc6-local-session-provider-runtime.md",
+    "docs/46-acceptance-and-remote-evidence-contract.md",
     "docs/templates/ADR.md",
     "docs/templates/module-contract.md",
     "docs/templates/work-package.md",
