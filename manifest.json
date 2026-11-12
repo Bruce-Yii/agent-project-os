@@ -1,7 +1,7 @@
 {
   "name": "agent-project-os",
   "version": "0.4",
-  "snapshot_date": "2026-11-12",
+  "snapshot_date": "2026-11-13",
   "files": [
     "AGENTS.md",
     "CHANGELOG.md",
@@ -55,6 +55,7 @@
     "docs/templates/ADR.md",
     "docs/templates/module-contract.md",
     "docs/templates/work-package.md",
+    "docs/47-predevelopment-to-wp1a-implementation-retrospective-2026-11-13.md",
     "manifest.json"
   ]
 }
