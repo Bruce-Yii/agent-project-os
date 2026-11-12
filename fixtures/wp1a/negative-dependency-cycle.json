@@ -2,10 +2,11 @@
   "fixture": "WP1A-NEG-04",
   "description": "Task dependency cycle must be rejected at creation.",
   "commands": [
-    { "intent": "CreateTask", "payload": { "project_id": "proj-1", "title": "Task D" }, "expected": "OK" },
-    { "intent": "CreateTask", "payload": { "project_id": "proj-1", "title": "Task E" }, "expected": "OK" },
+    { "intent": "CreateProject", "payload": { "space_id": "ps-1", "name": "Dep Test Project" }, "expected": "OK", "assert_result": { "project_id": "proj-1" } },
+    { "intent": "CreateTask", "payload": { "project_id": "proj-1", "title": "Task D" }, "expected": "OK", "assert_result": { "task_id": "task-1" } },
+    { "intent": "CreateTask", "payload": { "project_id": "proj-1", "title": "Task E" }, "expected": "OK", "assert_result": { "task_id": "task-2" } },
     { "intent": "AddDependency", "payload": { "source": "task-1", "target": "task-2" }, "expected": "OK" },
-    { "intent": "AddDependency", "payload": { "source": "task-2", "target": "task-1" }, "expected": "REJECTED (cycle detected)" }
+    { "intent": "AddDependency", "payload": { "source": "task-2", "target": "task-1" }, "expected": "REJECTED", "assert_reason": "cycle detected" }
   ],
   "assertions": [
     "Cycle rejected",

@@ -2,8 +2,8 @@
   "fixture": "WP1A-NEG-05",
   "description": "Unauthorized actor cannot write to another owner's Project.",
   "commands": [
-    { "intent": "CreateProject", "payload": { "space_id": "ps-1", "name": "Project X" }, "actor": "personal-owner-1", "expected": "OK" },
-    { "intent": "UpdateProject", "payload": { "project_id": "proj-x", "name": "Hacked" }, "actor": "agent-1", "expected": "REJECTED (unauthorized)" }
+    { "intent": "CreateProject", "payload": { "space_id": "ps-1", "name": "Project X" }, "actor": "personal-owner-1", "expected": "OK", "assert_result": { "project_id": "proj-1" } },
+    { "intent": "UpdateProject", "payload": { "project_id": "proj-1", "name": "Hacked" }, "actor": "agent-1", "expected": "REJECTED", "assert_reason": "unauthorized" }
   ],
   "assertions": [
     "Write rejected",

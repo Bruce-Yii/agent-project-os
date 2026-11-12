@@ -1,9 +1,10 @@
 {
   "fixture": "WP1A-NEG-03",
-  "description": "Invalid state transition must be rejected.",
+  "description": "Invalid state transition must be rejected with exact reason.",
   "commands": [
-    { "intent": "CreateTask", "payload": { "project_id": "proj-1", "title": "Task C" }, "expected": "OK (status: backlog)" },
-    { "intent": "TransitionTaskState", "payload": { "task_id": "task-c", "to": "accepted" }, "expected": "REJECTED (invalid transition backlog->accepted)" }
+    { "intent": "CreateProject", "payload": { "space_id": "ps-1", "name": "State Test Project" }, "expected": "OK", "assert_result": { "project_id": "proj-1" } },
+    { "intent": "CreateTask", "payload": { "project_id": "proj-1", "title": "Task C" }, "expected": "OK", "assert_result": { "task_id": "task-1" } },
+    { "intent": "TransitionTaskState", "payload": { "task_id": "task-1", "to": "accepted" }, "expected": "REJECTED", "assert_reason": "invalid transition backlog->accepted" }
   ],
   "assertions": [
     "Transition rejected",

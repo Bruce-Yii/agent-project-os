@@ -2,6 +2,7 @@
   "fixture": "WP1A-NEG-01",
   "description": "Duplicate command with same idempotency key must return stored result without re-executing.",
   "commands": [
+    { "intent": "CreateProject", "payload": { "space_id": "ps-1", "name": "Dup Test Project" }, "expected": "OK", "assert_result": { "project_id": "proj-1" } },
     { "intent": "CreateTask", "payload": { "project_id": "proj-1", "title": "Task B" }, "idempotency_key": "key-001", "expected": "OK" },
     { "intent": "CreateTask", "payload": { "project_id": "proj-1", "title": "Task B" }, "idempotency_key": "key-001", "expected": "OK (idempotent, no duplicate)" }
   ],

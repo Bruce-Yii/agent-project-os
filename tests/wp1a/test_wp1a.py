@@ -84,7 +84,7 @@ class Store:
         self.tasks[tid] = {"id": tid, "project_id": project_id, "title": title, "parent_id": parent_id, "status": "backlog", "version": 1}
         self.versions[tid] = 1
         self.deps[tid] = set()
-        return {"status": "OK", "task_id": tid}
+        return {"status": "OK", "task_id": tid, "project_id": project_id}
 
     def reparent_task(self, task_id, new_parent_id):
         if task_id not in self.tasks:
@@ -222,16 +222,26 @@ def run_fixture(path):
     with open(path) as f:
         fx = json.load(f)
     store = Store()
-    # bootstrap a space for tests
+    # bootstrap a space for tests (idempotent)
     store.bootstrap_space("personal-owner-1")
-    # create a project for task tests if needed
-    store.create_project("ps-1", "Test Project", "personal-owner-1")
     results = []
     for cmd in fx.get("commands", []):
         r = store.execute(cmd)
         expected = cmd.get("expected", "")
-        # simple match: status in expected
+        # status match
         ok = r.get("status", "") in expected or expected.startswith(r.get("status", ""))
+        # assert_result: check result fields match
+        ar = cmd.get("assert_result")
+        if ar and ok:
+            for k, v in ar.items():
+                if r.get(k) != v:
+                    ok = False
+                    break
+        # assert_reason: check reason contains expected
+        areason = cmd.get("assert_reason")
+        if areason and ok:
+            if areason not in str(r.get("reason", "")):
+                ok = False
         results.append({"cmd": cmd["intent"], "result": r, "expected": expected, "pass": ok})
     # check assertions (count-based)
     passed = all(r["pass"] for r in results)

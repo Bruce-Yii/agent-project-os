@@ -45,6 +45,15 @@ jobs:
       - name: Validate DAG (no cycles)
         run: python scripts/validate_dag.py
 
+  wp1a-fixture-test:
+    name: WP1-A fixture validation
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+      - name: Run WP1-A fixture harness
+        run: python tests/wp1a/test_wp1a.py
+
   checksum-verify:
     name: Manifest checksum verification
     runs-on: ubuntu-latest
