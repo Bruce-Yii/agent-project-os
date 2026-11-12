@@ -38,19 +38,19 @@ Verified on the development host (2026-11-12):
 
 | Tool | Required | Available | Notes |
 |---|---|---|---|
-| Node.js | 24.x (PROPOSED baseline) | 24.16.0 | Runtime for future code; exact framework not frozen (P-022). |
+| Node.js | 26.x LTS (primary) | 24.16.0 on this host | Runtime for future code; technology stack accepted 2026-11-12 (P-022). Node 24 remains a temporary compatibility lane until all G3 packages pass Node 26. |
+| pnpm | 12.19.0 (pinned exactly) | not verified on host | Package manager for the monorepo; install when scaffold lands. |
+| PostgreSQL | 18.6 target (17.11 fallback) | 17.11 on this host (`D:\12412\PostgreSQL`, service `postgresql-x64-17`) | Canonical store (P-021, ACCEPTED 2026-11-12). G3 must run DBOS + integration tests against 18.6 before freezing; if a reproducible blocker appears, use 17.11 for the first usable slice and record the blocker. |
 | Python | 3.12.x | 3.12.9 | Used for doc/tooling scripts; not yet a runtime dependency. |
 | Git | 2.5x | 2.54.0 | Required for branches/worktrees. |
 | PowerShell | 7.x | 7.6.6 | Windows-first operations; scripts under `scripts/` are PowerShell. |
 
 Additional prerequisites expected later (VALIDATION REQUIRED):
 
-- A database engine. PostgreSQL 17.11 is installed on this host at `D:\12412\PostgreSQL` and running as service `postgresql-x64-17` (verified 2026-11-12). Candidate for product storage: PostgreSQL (P-021, PROPOSED), with SQLite for local cache. Product storage choice remains PROPOSED/unfrozen; the host instance is a dev convenience, not a product decision.
-- A desktop shell runtime. Candidate: Tauri or Electron (P-022, PROPOSED); not frozen.
-- A durable workflow engine. Candidate: DBOS over PostgreSQL (P-014, PROPOSED).
-- A local Agent runtime. Candidate: Paseo server subpaths + ACP (P-015, PROPOSED).
-
-No production dependency may be added without an ADR (docs/17 §6, docs/14). Tech stack is **not frozen** (docs/12 §6, docs/14 P-008/P-021/P-022).
+- A desktop shell runtime. Electron selected (decision pack 2026-11-12); strict security model required. Not yet installed.
+- A durable workflow engine. DBOS TypeScript SDK 5.5.0 primary candidate behind `DurableWorkflowPort` (P-014, conditional).
+- A local Agent runtime. Paseo selected daemon modules + ACP v1 stable + native adapters (P-015, conditional; license audit pending).
+- Tech stack is now ACCEPTED (P-022, 2026-11-12). No production dependency may be added without an ADR (docs/17 §6, docs/14).
 
 ## 3. Repository layout
 
@@ -275,8 +275,8 @@ Recovery principles:
 
 | # | Criterion | Status | Evidence required |
 |---|---|---|---|
-| 1 | License selected and published (Gate D0) | NOT DONE | ADR + `LICENSE` file + dependency audit |
-| 2 | Technology stack frozen via ADR | NOT DONE | ADR(s) for DB, shell, workflow engine (P-014/P-021/P-022) |
+| 1 | License selected and published (Gate D0) | DONE (2026-11-12) | ADR + `LICENSE` (Apache-2.0) published; dependency audit pending |
+| 2 | Technology stack frozen via ADR | DONE (2026-11-12) | ADR: Node 26 LTS + pnpm 12.19.0 + Drizzle + pg + PostgreSQL 18.6/17.11 (P-021/P-022 ACCEPTED) |
 | 3 | G3 engineering decomposition complete | NOT STARTED | Module ownership map, contracts, Work Packages, DAG (docs/19 §7) |
 | 4 | G4 staged release roadmap complete | NOT STARTED | Independently usable stage map (docs/19 §8) |
 | 5 | G5 documentation handoff complete | NOT STARTED | Consistent package + manifest/changelog/checksums (docs/19 §9) |

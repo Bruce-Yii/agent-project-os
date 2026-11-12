@@ -23,7 +23,7 @@ This document separates product-owner decisions from design proposals and valida
 | C-007 | Autonomous execution is a sub-capability; the Personal Execution Skill is a supporting dependency/method input, not a separate product | CONFIRMED |
 | C-008 | Humans should operate at the Project level, not be forced to manage every Agent chat manually | CONFIRMED |
 | C-009 | Desktop must be able to create/open Sessions with local Agents and continuously receive newly arriving messages | CONFIRMED (minimum product requirement) |
-| C-010 | Product is open source: source code is public and inspectable/modifiable under a published open-source license | CONFIRMED; exact license not selected |
+| C-010 | Product is open source: source code is public and inspectable/modifiable under a published open-source license | RESOLVED — Apache License 2.0 selected (2026-11-12); LICENSE published |
 | C-011 | Complete core product is free to self-host for personal/team use; no mandatory subscription or artificial feature wall for core Project OS capabilities | CONFIRMED; optional hosted services remain open |
 | C-012 | Product differentiation must come from a unified Project-centered domain/lifecycle/context/permission/attention model, not merely aggregating separate tool UIs | CONFIRMED product principle; market advantage requires validation |
 | C-013 | Product design lineage is AWRP + our Linear operating model + DeepSeek DSH, synthesized into a new product rather than a direct port | CONFIRMED |
@@ -53,8 +53,39 @@ This document separates product-owner decisions from design proposals and valida
 | P-018 | Canonical Memory | Project OS owns facts, decisions, provenance, freshness, and supersession; third-party retrieval may only propose candidates | PROPOSED; Mem0 is not canonical due mutable-fact/stale-retrieval risk |
 | P-019 | Skill interchange | Adopt the Agent Skills `SKILL.md` format for import/export; Project OS owns extraction, evaluation, approval, version, scope, and rollback | PROPOSED; optional `allowed-tools` metadata is not an authorization boundary |
 | P-020 | Authorization and plugin trust | Build the Project OS capability/approval model; require explicit scopes and isolation for untrusted plugins | PROPOSED; defer OPA/OpenFGA until relationship-policy complexity justifies them |
-| P-021 | Data and observability | PostgreSQL canonical store, SQLite local store/cache, object storage for large artifacts, OpenTelemetry-compatible instrumentation | PROPOSED; deployment topology remains open |
-| P-022 | Product UI and desktop shell | Build the Project-first UX; reuse established terminal/editor/diff components; choose Tauri/Electron only after runtime/OS constraints are clear | PROPOSED; G3 shell ADR required |
+| P-021 | Data and observability | PostgreSQL canonical store, SQLite local store/cache, object storage for large artifacts, OpenTelemetry-compatible instrumentation | ACCEPTED (2026-11-12): PostgreSQL 18.6 target, 17.11 fallback; deployment topology to be confirmed by ADR |
+| P-022 | Technology stack (runtime, API, data, UI, desktop) | Node 26 LTS, pnpm 12.19.0, TypeScript, Fastify+TypeBox, Drizzle+pg, Vitest, Playwright, Pino+OTel (full stack in "Technology decisions (2026-11-12)" section) | ACCEPTED (2026-11-12) |
+
+## 3.1 Technology decisions (2026-11-12)
+
+Accepted architecture/technology decisions from the YU-392 decision pack (2026-11-12). These are recorded as ACCEPTED for planning and implementation baseline; individual third-party package adoption remains subject to exact version, license, security, compatibility, and module MRG evidence. See `docs/23` §2/§10 and `docs/24` for module impact.
+
+| Layer | Decision | Status |
+|---|---|---|
+| License | Apache License 2.0 (`LICENSE`) | RESOLVED / ACCEPTED |
+| Language/runtime | TypeScript end-to-end; Node.js 26 LTS primary (Node 24 temporary compatibility lane) | ACCEPTED |
+| Package manager | pnpm 12.19.0, pinned exactly | ACCEPTED |
+| Architecture | Modular monolith + ports/adapters (32 groups are domain modules, not microservices) | ACCEPTED |
+| Backend/API | Fastify 5.x + TypeBox schemas + REST/OpenAPI | ACCEPTED |
+| Web UI | React 19.3 + Vite 8.3.x + React Router 7 + TanStack Query v5 | ACCEPTED |
+| UI components | Tailwind CSS 4 + shadcn/ui (Radix primitives) | ACCEPTED |
+| Primary database | PostgreSQL 18.6 target; PostgreSQL 17.11 compatibility fallback | ACCEPTED (P-021) |
+| Data access/migrations | Drizzle ORM + node-postgres (pg); explicit SQL migrations | ACCEPTED (P-022) |
+| Local storage | SQLite only for Local Runtime cache/event spool/offline projection | ACCEPTED |
+| Durable workflow | DBOS TypeScript SDK 5.5.0 primary candidate behind `DurableWorkflowPort` (Temporal fallback) | CONDITIONAL |
+| Local Agent runtime | Project OS `LocalRuntimeNode` + ACP v1 stable + native Provider adapters; Paseo selected daemon modules preferred (pinned source commit only, license audit pending) | CONDITIONAL |
+| Connectors | Selectively adapt Activepieces community Pieces behind `ServiceConnector` | CONDITIONAL |
+| Skills | Agent Skills `SKILL.md` as interchange format; Project OS owns governance | ACCEPTED |
+| Offline sync | PowerSync Open Edition conditional future adapter, not a core dependency | CONDITIONAL |
+| Desktop | Electron, sharing the React renderer; main process supervises separate Local Daemon; strict security model | ACCEPTED |
+| Mobile | Expo SDK 58 / React Native 0.88 in a later vertical slice | ACCEPTED (deferred) |
+| Realtime | SSE for Project/Task/event feed; WebSocket for interactive Session/terminal/daemon channels | ACCEPTED |
+| Testing | Vitest unit/contract/integration + real PostgreSQL CI service; Playwright E2E | ACCEPTED |
+| Observability | Pino structured logs + OpenTelemetry traces/metrics | ACCEPTED |
+| Search/Memory | PostgreSQL relational + JSONB + full-text search initially; pgvector only if justified | ACCEPTED |
+| Artifact storage | Filesystem adapter first; S3-compatible adapter behind a port when required | ACCEPTED |
+
+Explicit non-decisions (do not introduce in first usable slice): NestJS, Next.js SSR, GraphQL, tRPC, microservice-per-module, Kubernetes, Redis/RabbitMQ, Temporal (default), OPA/OpenFGA, separate vector database, Composio Cloud, full Activepieces Engine, second ORM, AWRP/agent-relay source copying, Paseo npm tarballs (license metadata missing), PowerSync (until conditional tests pass).
 
 ## 4. Open product questions
 

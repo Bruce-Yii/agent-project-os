@@ -15,6 +15,7 @@ This repository contains the canonical product requirements (PRD), domain model,
 - **Design lineage:** AWRP execution reliability + our Linear Project/Current State operating model + DeepSeek DSH event-driven orchestration ideas. This is a new synthesis, not a port.
 - **Unification:** one canonical domain, lifecycle, context, permission, attention, and audit model across people, Agents, Sessions, Runs, knowledge, and external systems.
 - **Distribution:** open source and free to self-host for personal/team use. The complete core product is not split behind a mandatory subscription. Users bring their own model/provider credentials and pay their chosen inference, hosting, hardware, and third-party service costs.
+- **License:** Apache License 2.0 (see [`LICENSE`](LICENSE)).
 - **Competitive honesty:** Paperclip, Paseo, and OpenHands Agent Canvas already offer meaningful open-source/self-hosted capabilities. Our differentiation is the quality and breadth of the unified Project-centered lifecycle, not the claim that no free alternatives exist.
 
 Read the full [Product Requirements Document](docs/00-product-charter.md) before changing scope or positioning.
@@ -22,11 +23,11 @@ Read the full [Product Requirements Document](docs/00-product-charter.md) before
 ## Current status
 
 - Product direction: **confirmed; design-stage decision: GO — worth developing**.
-- Current phase: **Pre-development readiness**; G0 design baseline, G1 architecture review, and G2 reuse assessment are complete on PR #1's branch (Draft, merge pending); G3 engineering decomposition is in progress (YU-392 active); local development foundation (YU-399) is in progress. Repository Foundation Gate (RFG): **PARTIAL**.
+- Current phase: **Pre-development readiness**; G0 design baseline, G1 architecture review, and G2 reuse assessment are complete on PR #1's branch (Draft, merge pending); G3 engineering decomposition is in progress (YU-392 active); local development foundation (YU-399) is in progress. License resolved (Apache-2.0, 2026-11-12); technology stack accepted (Node 26 LTS, pnpm 12.19.0, PostgreSQL 18.6/17.11, Fastify+TypeBox, Drizzle+pg; P-021/P-022). Repository Foundation Gate (RFG): **PARTIAL**.
 - Local development foundation: **in progress (YU-399)** — see [`docs/23-local-development-and-agent-operations.md`](docs/23-local-development-and-agent-operations.md) (new) for bootstrap, workspace layout, Agent operation, testing, and recovery.
 - Full capability scope: **preserved**; implementation may be staged, but the product scope is not reduced to an Agent client or execution relay.
 - Domain model: **design proposal; requires review before schema freeze**.
-- Architecture: **design proposal; technology choices are not frozen**.
+- Architecture: **design proposal; technology stack accepted 2026-11-12 (Node 26 LTS, pnpm 12.19.0, PostgreSQL 18.6/17.11, Fastify+TypeBox, Drizzle+pg, Vitest, Playwright, Pino+OTel); individual packages still subject to MRG evidence**.
 - Code: **not started in this repository** (bootstrap/scaffold pending accepted stack decisions).
 - Release / production evidence: **none**.
 - PR #1 remains **Draft** and unmerged; no product code or production dependency has been added.
