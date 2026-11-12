@@ -57,6 +57,7 @@ jobs:
           - 5432:5432
     env:
       DATABASE_URL: postgresql://postgres:postgres@localhost:5432/wp1a_test
+      WP1A_TEST_OPT_IN: "true"
     steps:
       - uses: actions/checkout@v6
       - uses: pnpm/action-setup@v4
