@@ -51,6 +51,7 @@
     "docs/38-pc5-authorization-mandate-approval.md",
     "docs/39-pc6-local-session-provider-runtime.md",
     "docs/46-acceptance-and-remote-evidence-contract.md",
+    "docs/48-engineering-retrospective.md",
     "docs/templates/ADR.md",
     "docs/templates/module-contract.md",
     "docs/templates/work-package.md",
