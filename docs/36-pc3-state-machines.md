@@ -1,6 +1,6 @@
 # 36 — PC-3 Core State Machines (Draft)
 
-**Status:** DRAFT (PROPOSED). Not accepted.
+**Status:** ACCEPTED FOR WP1-A SCOPE (2026-11-12) — Project/Task state subset (backlog/ready/blocked/cancelled + Project lifecycle). Global status remains DRAFT/PROPOSED.
 **Issue:** YU-392 (P0-3). **Owner:** W0 (sole writer).
 **Personal-only:** single human Personal Owner.
 
@@ -154,6 +154,8 @@ States: `pending` → `submitted` → `acknowledged` | `unknown` | `failed` | `r
 - Terminal: `acknowledged`, `reconciled`, `failed`.
 
 ## 10. Personal-only note
+
+Naming: `PersonalSpace` is canonical; `Workspace`/`workspace_id` is accepted as a compatibility alias during the personal phase. No Organization semantics.
 
 Single Personal Owner; no multi-owner contention. Approval gates remain for high-risk external effects (public writes, destructive actions, merges) even in personal mode.
 

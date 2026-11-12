@@ -1,0 +1,13 @@
+{
+  "fixture": "WP1A-NEG-03",
+  "description": "Invalid state transition must be rejected.",
+  "commands": [
+    { "intent": "CreateTask", "payload": { "project_id": "proj-1", "title": "Task C" }, "expected": "OK (status: backlog)" },
+    { "intent": "TransitionTaskState", "payload": { "task_id": "task-c", "to": "accepted" }, "expected": "REJECTED (invalid transition backlog->accepted)" }
+  ],
+  "assertions": [
+    "Transition rejected",
+    "Task status remains 'backlog'",
+    "No state change persisted"
+  ]
+}

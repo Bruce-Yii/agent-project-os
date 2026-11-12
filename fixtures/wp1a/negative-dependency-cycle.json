@@ -1,0 +1,15 @@
+{
+  "fixture": "WP1A-NEG-04",
+  "description": "Task dependency cycle must be rejected at creation.",
+  "commands": [
+    { "intent": "CreateTask", "payload": { "project_id": "proj-1", "title": "Task D" }, "expected": "OK" },
+    { "intent": "CreateTask", "payload": { "project_id": "proj-1", "title": "Task E" }, "expected": "OK" },
+    { "intent": "AddDependency", "payload": { "source": "task-1", "target": "task-2" }, "expected": "OK" },
+    { "intent": "AddDependency", "payload": { "source": "task-2", "target": "task-1" }, "expected": "REJECTED (cycle detected)" }
+  ],
+  "assertions": [
+    "Cycle rejected",
+    "Only first dependency persisted",
+    "No partial state"
+  ]
+}

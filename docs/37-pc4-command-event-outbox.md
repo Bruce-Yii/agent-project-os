@@ -1,12 +1,12 @@
 # 37 — PC-4 Command / Event / Outbox / Inbox / Receipt (Draft)
 
-**Status:** DRAFT (PROPOSED). Not accepted.
+**Status:** ACCEPTED FOR WP1-A SCOPE (2026-11-12) — minimal command envelope, idempotency, expected version, command/event append. Outbox/Inbox deferred (no external effects in WP1-A). Global status remains DRAFT/PROPOSED.
 **Issue:** YU-392 (P0-4). **Owner:** W0 (sole writer).
 **Personal-only:** single human Personal Owner.
 
 ## 1. Command envelope
 
-Every command carries: `command_id` (UUID), `idempotency_key` (client-generated, scoped to actor+intent), `actor` (Owner/Agent/Runtime), `workspace_id`, `project_id?`, `task_id?`, `intent` (typed enum), `payload`, `expected_version` (optimistic concurrency), `requested_effects` (list of external effect descriptors), `created_at`, `correlation_id`, `causation_id`.
+Every command carries: `command_id` (UUID), `idempotency_key` (client-generated, scoped to actor+intent), `actor` (Owner/Agent/Runtime), `personal_space_id` (alias `workspace_id`), `project_id?`, `task_id?`, `intent` (typed enum), `payload`, `expected_version` (optimistic concurrency), `requested_effects` (list of external effect descriptors), `created_at`, `correlation_id`, `causation_id`.
 
 ## 2. Idempotency
 
@@ -63,6 +63,8 @@ Every domain event carries: `event_id` (UUID), `event_type`, `aggregate_type`, `
 ## 11. Personal-only note
 
 Single Personal Owner; no multi-actor contention on the same aggregate except Agent/Runtime execution actors, which operate via Commands with the Owner's authorization.
+
+Naming: `PersonalSpace` is canonical; `Workspace`/`workspace_id` is accepted as a compatibility alias during the personal phase. No Organization semantics.
 
 ## 12. Evidence
 

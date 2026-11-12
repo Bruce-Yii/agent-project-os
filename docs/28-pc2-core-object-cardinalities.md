@@ -1,6 +1,6 @@
 # 28 — PC-2 Core Object Cardinalities (Draft)
 
-**Status:** DRAFT (PROPOSED). Not accepted.
+**Status:** ACCEPTED FOR WP1-A SCOPE (2026-11-12) — PersonalSpace/Project/Goal/Task cardinalities. Global status remains DRAFT/PROPOSED.
 **Issue:** YU-392 (P0-2). **Owner:** W0 (sole writer).
 **Personal-only:** single human Personal Owner.
 
@@ -10,10 +10,10 @@
 
 ## 2. Cardinalities
 
-### 2.1 Workspace → Project
+### 2.1 PersonalSpace → Project
 
-- One Workspace (personal) owns 0..N Projects.
-- Project belongs to exactly one Workspace. Cross-workspace Project sharing is out of scope (personal phase).
+- One PersonalSpace (personal) owns 0..N Projects.
+- Project belongs to exactly one PersonalSpace. Cross-PersonalSpace Project sharing is out of scope (personal phase).
 
 ### 2.2 Project → Task
 
@@ -89,6 +89,8 @@ Example C — Session reuse across Tasks (allowed only with explicit binding):
 ## 5. Personal-only note
 
 Single Personal Owner means no multi-owner contention, but owner/executor separation still applies (Owner is human, Executor may be Agent). No team membership tables in this phase.
+
+Naming: `PersonalSpace` is canonical; `Workspace`/`workspace_id` is accepted as a compatibility alias during the personal phase. No Organization semantics.
 
 ## 6. Evidence
 

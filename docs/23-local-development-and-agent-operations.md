@@ -1,7 +1,7 @@
 # 23 — Local Development and Agent Operations
 
 **Status:** PROPOSED (new; owns local development operations).  
-**Snapshot:** 2026-11-10 (repository baseline v0.7).  
+**Snapshot:** 2026-11-12 (repository baseline v0.4 manifest; CI green runs `43118229261` / `43118233835`).  
 **Authority:** This document owns local development operations for the Agent Project OS repository: environment, install, start, commands, directory structure, debugging, testing, troubleshooting, and recovery. It does not own product behavior, agent contracts, or the stage roadmap.
 
 ## 1. Purpose and scope
@@ -64,14 +64,20 @@ agent-project-os/
 ├── CHANGELOG.md
 ├── CHECKSUMS.sha256
 ├── manifest.json
+├── .env.example
+├── .github/
+│   ├── workflows/ci.yml
+│   ├── scripts/verify_checksums.py
+│   ├── ISSUE_TEMPLATE/
+│   └── PULL_REQUEST_TEMPLATE.md
 ├── docs/
-│   ├── 00-product-charter.md … 22-mature-module-reuse-assessment.md
+│   ├── 00-product-charter.md … 39-pc6-local-session-provider-runtime.md
 │   ├── 23-local-development-and-agent-operations.md   (this file)
 │   └── templates/   (ADR.md, module-contract.md, work-package.md)
 └── .git/
 ```
 
-There is **no `src/`, `tests/`, `scripts/`, or `packages/` yet**. Implementation has not started (STATUS.md). The repository is a documentation baseline.
+There is **no `src/`, `tests/`, `scripts/`, or `packages/` yet**. Implementation has not started (STATUS.md). The repository is a documentation baseline. `.env.example`, CI (`.github/workflows/ci.yml`), and checksum verification scripts exist (YU-399).
 
 ### 3.2 Proposed future layout (PROPOSED, not yet created)
 
@@ -85,8 +91,8 @@ Created only after G3 engineering decomposition and an accepted ADR define modul
 | `scripts/` | Dev/ops scripts (PowerShell + cross-platform) | PROPOSED |
 | `docs/adr/` | Accepted ADRs (or keep in docs/) | PROPOSED |
 | `deploy/` | Self-hosted deployment manifests | PROPOSED (G4/D2) |
-| `.env.example` | Environment variable template (no secrets) | PROPOSED |
-| `.github/workflows/` | CI definitions | PROPOSED |
+| `.env.example` | Environment variable template (no secrets) | CONFIRMED (YU-399) |
+| `.github/workflows/` | CI definitions | CONFIRMED (YU-399) |
 
 Rule: one owner per shared contract/schema file during parallel work (docs/17 §3). Module boundaries come from G3, not from this document.
 
@@ -118,7 +124,7 @@ Per `AGENTS.md` and README reading order: `README.md` → `docs/00-product-chart
 
 ## 5. Environment variables
 
-No `.env.example` exists yet (PROPOSED). When code is introduced, create `.env.example` with **names only, no values**, and add `.env` (and variants) to `.gitignore`. Never commit secrets (docs/17 §6; AGENTS.md "Never place secrets").
+`.env.example` exists (CONFIRMED, YU-399) with names only and empty placeholder values; `.env` (and variants) is gitignored. Never commit secrets (docs/17 §6; AGENTS.md "Never place secrets"). The example currently exposes `DATABASE_URL`, provider keys, `GITHUB_TOKEN`, `PORT`, `LOG_LEVEL`, `NODE_ENV`.
 
 Planned variable groups (PROPOSED, names subject to G3):
 
@@ -209,12 +215,12 @@ Rules:
 
 ## 10. CI (GitHub Actions)
 
-**Current state: CI workflow exists** (`.github/workflows/ci.yml`, added in YU-399) with five jobs: `markdown-lint`, `link-check` (lychee offline), `checksum-verify` (strict: missing entry or mismatch fails), `checksum-verify-negative` (proves the verifier detects corruption), and `secret-scan` (gitleaks). PR #2 (stacked on PR #1) runs completed successfully: push `43111138220` (all 5 jobs green, 5m13s) and pull_request `43111145675` (all 5 jobs green, 23s). PR #1 has no CI runs. RFG-5 (CI green with real runs) is now **satisfied for the PR branch**; RFG-7 (green on default branch) still requires merge to `main` (not authorized). **RFG remains PARTIAL** overall (criteria 1-6, 8-10 not done).
+**Current state: CI workflow exists** (`.github/workflows/ci.yml`, added in YU-399) with five jobs: `markdown-lint`, `link-check` (lychee offline), `checksum-verify` (strict: missing entry or mismatch fails), `checksum-verify-negative` (proves the verifier detects corruption), and `secret-scan` (gitleaks). PR #2 (stacked on PR #1) runs completed successfully: push `43118229261` (all 5 jobs green) and pull_request `43118233835` (all 5 jobs green). PR #1 has no CI runs. RFG-5 (CI green with real runs) is now **satisfied for the PR branch**; RFG-7 (green on default branch) still requires merge to `main` (not authorized). **RFG remains PARTIAL** overall (criteria 1-6, 8-10 not done).
 
 Local verification already performed (not CI evidence):
 
-- `markdownlint-cli2` 0 errors / 39 files.
-- `CHECKSUMS.sha256` 37/37 match, 0 problems.
+- `markdownlint-cli2` 0 errors / 42 files.
+- `CHECKSUMS.sha256` 50/50 match, 0 problems.
 - CI YAML parses with PyYAML.
 
 Planned jobs (PROPOSED, to be added when code lands):
@@ -275,7 +281,7 @@ Recovery principles:
 | 4 | G4 staged release roadmap complete | NOT STARTED | Independently usable stage map (docs/19 §8) |
 | 5 | G5 documentation handoff complete | NOT STARTED | Consistent package + manifest/changelog/checksums (docs/19 §9) |
 | 6 | Code implementation begun | NOT STARTED | First Work Package with tests |
-| 7 | CI green on default branch | PARTIAL | Real runs of all 5 jobs green on PR #2 branch (push `43111138220`, PR `43111145675`); default-branch green pending merge (not authorized) |
+| 7 | CI green on default branch | PARTIAL | Real runs of all 5 jobs green on PR #2 branch (push `43118229261`, PR `43118233835`); default-branch green pending merge (not authorized) |
 | 8 | Self-hosted install path (Gate D1) | NOT DONE | Documented install + one reviewed Work Package end-to-end |
 | 9 | Backup/restore + export (Gate D5) | NOT DONE | Recovery drill evidence |
 | 10 | Security review + threat model | PARTIAL | docs/11 §12 covers Session threat model; full review pending |

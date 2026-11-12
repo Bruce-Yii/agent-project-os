@@ -36,6 +36,15 @@ jobs:
           args: --offline --no-progress './**/*.md'
           fail: true
 
+  dag-validate:
+    name: Dependency DAG cycle check
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+      - name: Validate DAG (no cycles)
+        run: python scripts/validate_dag.py
+
   checksum-verify:
     name: Manifest checksum verification
     runs-on: ubuntu-latest

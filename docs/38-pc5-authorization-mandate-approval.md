@@ -1,6 +1,6 @@
 # 38 — PC-5 Authorization, Mandate, and Approval (Draft)
 
-**Status:** DRAFT (PROPOSED). Not accepted.
+**Status:** ACCEPTED FOR WP1-A SCOPE (2026-11-12) — Owner-only authorization, fail-closed. Mandate/Approval/risk tiers for high-risk deferred to WP1-C. Global status remains DRAFT/PROPOSED.
 **Issue:** YU-392 (P0-5). **Owner:** W0 (sole writer).
 **Personal-only:** single human Personal Owner.
 

@@ -1,0 +1,13 @@
+{
+  "fixture": "WP1A-REC-01",
+  "description": "Crash during Task creation must not leave partial state or duplicate on retry.",
+  "commands": [
+    { "intent": "CreateTask", "payload": { "project_id": "proj-1", "title": "Task F" }, "idempotency_key": "key-rec-001", "simulate_crash_after": "db_write", "expected": "CRASH" },
+    { "intent": "CreateTask", "payload": { "project_id": "proj-1", "title": "Task F" }, "idempotency_key": "key-rec-001", "expected": "OK (idempotent, returns stored result)" }
+  ],
+  "assertions": [
+    "No duplicate Task created",
+    "Task state is consistent (not partial)",
+    "Idempotency key deduplicates"
+  ]
+}

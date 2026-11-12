@@ -6,6 +6,8 @@
 
 **Personal-only phase (confirmed 2026-11-12):** current contracts, 1.0–10.0 scope, and MRGs are single-person. No Organization, members, invitations, team roles/RBAC, shared-team workspaces, team collaboration flows, or multi-tenancy in this phase. F01 (Workspace and Organization) is implemented as a single Personal Owner workspace in this phase; team features are deferred beyond 10.0/current gates. Personal authorization, per-Project/per-Agent/tool scopes, human approval, audit, and recovery remain.
 
+**Naming (personal phase):** `PersonalSpace` is canonical; `Workspace`/`workspace_id` is accepted as a compatibility alias during the personal phase. No Organization semantics.
+
 ---
 
 ## 1. Purpose and status
@@ -35,6 +37,10 @@ It is deliberately honest about what is still open: **the six P0 shared contract
 5. `docs/14-open-decisions.md` — confirmed vs. proposed decisions.
 6. `docs/19-pre-development-readiness.md` — G0–G5 gates and W0/S1–S5 structure.
 7. Notion: Agent Project OS 00–03 (product decisions), §14.3 (workstreams), §14.4 (MRG).
+
+### 1.3 Naming (personal phase)
+
+Naming: `PersonalSpace` is canonical; `Workspace`/`workspace_id` is accepted as an alias during the personal phase. No Organization semantics.
 
 ---
 
@@ -88,19 +94,19 @@ Module names are **proposed** (PROPOSED) and will be frozen by W0 only after dir
 | F01 | Workspace and Organization | W1 | `workspace-org` | PC-1, PC-2, PC-5 | RESEARCH READY | **Personal-only phase:** single Personal Owner workspace (no org/members/invitations/team roles/RBAC/multi-tenancy). Access/ownership boundary for one owner + Agent/Runtime/Connector actors; workspace policies; shared Agent/Plugin registry. Team features deferred beyond current gates. |
 | F02 | Project Portfolio and Initiative Management | W1 | `project-portfolio` | F01, F03, F04, F05, PC-2 | RESEARCH READY | Cross-project dependencies, capacity/resource views, calendar, portfolio health |
 | F03 | Project Lifecycle | W1 | `project-lifecycle` | F01, F04, PC-2, PC-3 | RESEARCH READY | Create/edit/pause/resume/archive/restore/close; templates; bootstrap bundles with reviewed inherited permissions |
-| F04 | Project Structure | W1 | `project-structure` | F03, PC-2 | RESEARCH READY | Project/Subproject/Goal/Milestone/phase/area; docs/resources/repos/environments; multiple workstreams per Project; Current State link |
+| F04 | Project Structure | W1 | `project-structure` | PC-2 | RESEARCH READY | Project/Subproject/Goal/Milestone/phase/area; docs/resources/repos/environments; multiple workstreams per Project; Current State link. **Port provider:** F03 (Project Lifecycle) consumes F04's ProjectStructurePort; F04 does not depend on F03. |
 | F05 | Task and Work Package Management | W1 | `task-work-package` | F03, F04, F09, PC-2, PC-3, PC-5 | RESEARCH READY | Task/Subtask, scope/non-scope, acceptance criteria, templates, comments/attachments, activity history |
 | F06 | Task Relationships and Dependency Graph | W1 | `task-dependency-graph` | F05, PC-2, PC-3 | RESEARCH READY | Parent/child, blocking/blocked-by, related, duplicate, supersedes, cross-project; DAG validation, cycle detection, ready-work, critical path |
 | F07 | Task Lifecycle and Current State | W1 | `task-lifecycle-state` | F05, F06, PC-3, PC-4 | RESEARCH READY | Lifecycle semantics; waiting vs blocked vs awaiting review; state-transition history/actor; Project Current State snapshot; stale-active/review detection |
-| F08 | Intake, Triage, and Deduplication | W1 | `intake-triage` | F05, F06, F17, PC-4 | RESEARCH READY | Inbox, external-event intake, classify/enrich/prioritize/accept/decline/snooze/merge, candidate pool before durable Task, duplicate detection, intake policies per Source |
-| F09 | Human and Agent Participants | W1 | `participants` | F01, F11, PC-2, PC-5 | RESEARCH READY | **Personal-only:** one human Personal Owner plus Agent/Runtime/Connector execution actors as distinct participant types; owner (accountable) vs executor separation. No team membership/invitations. Agent can join multiple Projects without fixed membership. |
+| F08 | Intake, Triage, and Deduplication | W1 | `intake-triage` | F05, F06, PC-4 | RESEARCH READY | Inbox, external-event intake, classify/enrich/prioritize/accept/decline/snooze/merge, candidate pool before durable Task, duplicate detection, intake policies per Source. **F17 (Workflow) depends on F08 for trigger intake, not vice versa.** |
+| F09 | Human and Agent Participants | W1 | `participants` | F01, PC-2, PC-5 | RESEARCH READY | **Personal-only:** one human Personal Owner plus Agent/Runtime/Connector execution actors as distinct participant types; owner (accountable) vs executor separation. No team membership/invitations. Agent can join multiple Projects without fixed membership. **F11 (Agent Registry) depends on F09, not vice versa.** |
 | F10 | Collaboration and Communication | W1 | `collaboration-comms` | F03, F05, F09, PC-4 | RESEARCH READY | **Personal-only:** Owner↔Agent and Agent↔Agent communication (comments, mentions, replies, attachments, threaded conversations, decisions linked to Tasks, messages with provenance). No human-team collaboration flows in this phase. |
-| F11 | Agent Registry and Capability Management | W2 | `agent-registry` | F16, F23, PC-2, PC-5, PC-6 | PROTOTYPE READY | Register local/remote/cloud/custom Agents; provider/model/version/runtime/capability/cost/health; capability negotiation matrix (native/emulated/unsupported/unknown); discover locally installed Agents; user-defined profiles |
+| F11 | Agent Registry and Capability Management | W2 | `agent-registry` | F09, PC-2, PC-5, PC-6 | PROTOTYPE READY | Register local/remote/cloud/custom Agents; provider/model/version/runtime/capability/cost/health; capability negotiation matrix (native/emulated/unsupported/unknown); discover locally installed Agents; user-defined profiles. **Depends on F09 (participant identity). F23 (Plugin/Connector) depends on F11, not vice versa. RuntimeNodePort provides node health.** |
 | F12 | Agent Session Workbench (incl. Local Agent Sessions) | W2 | `agent-session-workbench` | F11, F15, F16, F21, PC-2, PC-4, PC-5, PC-6 | PROTOTYPE READY | Core Desktop capability: discover/create/attach/resume Sessions; continuous bidirectional interaction; stream messages/turns/tool calls/approvals; tabs/panes/fork/archive; cross-Provider Context Handoff; reconnect/replay/reconcile; multi-client observation/control; inspect Context Pack at launch. Contract: `docs/18-local-agent-session-subsystem.md` |
 | F13 | Agent Delegation and Assignment | W3 | `assignment-delegation` | F05, F09, F11, PC-2, PC-3, PC-5 | RESEARCH READY | User- or Coordinator-selected assignment; accountable human vs executing Agent; reassign/handoff/retry/replace/terminate; explicit scope/permissions/acceptance criteria; parallel independent assignments |
 | F14 | Multi-Agent Coordination | W3 | `multi-agent-coordination` | F06, F13, F15, F25, PC-3, PC-4 | RESEARCH READY | Coordinator/Worker roles; decomposition, fan-out/serial/merge; specialists, cross-review; context handoff; conflict detection, workspace isolation, merge/reconciliation; human intervention/override/re-planning |
-| F15 | Run, Event, and Execution Lifecycle | W2 | `run-event-lifecycle` | F13, F16, F24, PC-2, PC-3, PC-4 | PROTOTYPE READY | Durable Assignment/Run records; attempts, state, idempotency, start/end, executor identity, trace; ACK, checkpoint, input request, handoff, failure, interruption, cancel, reconcile; append-only events + replayable projections; artifact/verification/side-effect records |
-| F16 | Execution Environments and Runtime Nodes | W2 | `runtime-node` | F11, F26, PC-1, PC-6 | PROTOTYPE READY | Local Daemon, remote host, cloud worker, sandboxed node; Provider process supervision, attach/reconnect, session discovery, sleep/wake/crash recovery; workspace/checkout/worktree/container/terminal/PTY/browser/preview; per-Run isolation; secure pairing; host online/offline truth |
+| F15 | Run, Event, and Execution Lifecycle | W2 | `run-event-lifecycle` | F13, F16, PC-2, PC-3, PC-4 | PROTOTYPE READY | Durable Assignment/Run records; attempts, state, idempotency, start/end, executor identity, trace; ACK, checkpoint, input request, handoff, failure, interruption, cancel, reconcile; append-only events + replayable projections; artifact/verification/side-effect records. **F24 (Deliverables) depends on F15, not vice versa.** |
+| F16 | Execution Environments and Runtime Nodes | W2 | `runtime-node` | F11, F26, PC-1, PC-6 | PROTOTYPE READY | Local Daemon, remote host, cloud worker, sandboxed node; Provider process supervision, attach/reconnect, session discovery, sleep/wake/crash recovery; workspace/checkout/worktree/container/terminal/PTY/browser/preview; per-Run isolation; secure pairing; host online/offline truth. **Depends on F11 (registry) and F26 (permission); provides RuntimeNodePort to F11.** |
 | F17 | Workflow and Event Automation | W3 | `workflow-automation` | F08, F15, F26, PC-4, PC-5 | RESEARCH READY | Schedule/time triggers; GitHub/Notion/Feishu/calendar/webhook/app event triggers; conditional routing, correlation, subscriptions, dedup; templates, versioning, history, retries, pause/resume; action execution through permission/approval controls |
 | F18 | Intelligent Planning and Assistance | W3 | `intelligent-planning` | F04, F05, F21, PC-5 | RESEARCH READY | Understand intent → Project; create/update goals/tasks/dependencies/acceptance; recommend split/Agent/priority/risks/next actions; summarize Project health/changes; propose plans for human confirmation |
 | F19 | Autonomous Execution (sub-capability) | W3 | `autonomous-execution` | F13, F14, F17, F22, PC-3, PC-4, PC-5 | RESEARCH READY | Continue authorized work after a completed step/trigger; select eligible next work and route; bounded retries/recovery; stop and request attention at authority/safety/product-decision boundary; report progress/deliverables/blockers/decisions. Personal Execution Skill is a supporting method input, not a state engine or permission grant |
@@ -224,6 +230,21 @@ A module may enter implementation only when **all** of the following hold:
 **Current status (as of this draft):** every F group is `RESEARCH READY` or `PROTOTYPE READY` (see §4). **No module is `IMPLEMENTATION READY`**, because each depends on at least one P0 contract that is still `IN PROGRESS` and not frozen (§5), and no Module Contract has yet been accepted. A module that has not passed MRG may only research, specify, or build isolated prototypes; it must not add production dependencies, run database migrations, implement product APIs, deploy, or publish.
 
 ---
+
+## 7.5 DAG cycle fixes (2026-11-12, per Coordinator independent review)
+
+Four cycles identified in the Coordinator independent review were resolved by establishing correct ownership direction and narrow Ports:
+
+| Cycle | Fix | Port introduced |
+|---|---|---|
+| F03 ↔ F04 | F04 (Project Structure) is foundational; F03 (Project Lifecycle) depends on F04. Removed F03 from F04's deps. | `ProjectStructurePort` |
+| F11 ↔ F16 | F11 (Agent Registry) depends on F09 (participant identity), not F16. F16 (Runtime) depends on F11. Removed F16 from F11's deps. | `RuntimeNodePort` |
+| F15 ↔ F24 | F24 (Deliverables) depends on F15 (Run produces artifacts). F15 does not depend on F24. Removed F24 from F15's deps. | `ArtifactPort` |
+| F09 → F11 → F16 → F26 → F09 | F09 depends on F01/PC-2/PC-5 (removed F11). F11 depends on F09. F16 depends on F11+F26. F26 depends on F09. No cycle. | `RuntimeNodePort`, `PermissionPort` |
+| F08 ↔ F17 | F08 (Intake) does not depend on F17 (Workflow). F17 depends on F08 (intake produces triggers). Removed F17 from F08's deps. | `TriggerPort` |
+| F11 ↔ F23 | F11 does not depend on F23 (Plugin/Connector). F23 depends on F11. Removed F23 from F11's deps. | `PluginHostPort` |
+
+**Automated validation:** `python scripts/validate_dag.py` (exit 0 = acyclic, exit 1 = cycles found). CI should run this as a check.
 
 ## 8. Known gaps and open questions
 

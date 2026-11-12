@@ -1,0 +1,14 @@
+{
+  "fixture": "WP1A-NEG-02",
+  "description": "Command with stale expected_version must be rejected with STALE_VERSION.",
+  "commands": [
+    { "intent": "CreateTask", "payload": { "project_id": "proj-1", "title": "Versioned Task" }, "expected": "OK" },
+    { "intent": "UpdateTask", "payload": { "task_id": "task-1", "title": "Updated" }, "expected_version": 1, "expected": "OK (version becomes 2)" },
+    { "intent": "UpdateTask", "payload": { "task_id": "task-1", "title": "Stale update" }, "expected_version": 1, "expected": "REJECTED (STALE_VERSION)" }
+  ],
+  "assertions": [
+    "Second command rejected",
+    "Task title unchanged by stale command",
+    "No partial write"
+  ]
+}

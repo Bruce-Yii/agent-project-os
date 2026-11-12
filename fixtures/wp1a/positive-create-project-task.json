@@ -1,0 +1,15 @@
+{
+  "fixture": "WP1A-POS-01",
+  "description": "Create a PersonalSpace, Project, and Task with valid data. All commands should succeed.",
+  "commands": [
+    { "intent": "BootstrapPersonalSpace", "payload": { "owner": "personal-owner-1" }, "expected": "OK" },
+    { "intent": "CreateProject", "payload": { "space_id": "ps-1", "name": "Project Alpha", "goal": "Ship v1" }, "expected": "OK" },
+    { "intent": "CreateTask", "payload": { "project_id": "proj-1", "title": "Task A", "scope": "Do X", "acceptance_criteria": "X done" }, "expected": "OK" },
+    { "intent": "UpdateProjectCurrentState", "payload": { "project_id": "proj-1", "current_state": "Task A in progress" }, "expected": "OK" }
+  ],
+  "assertions": [
+    "Project exists with name 'Project Alpha'",
+    "Task exists with status 'backlog' or 'ready'",
+    "Project current_state updated"
+  ]
+}
