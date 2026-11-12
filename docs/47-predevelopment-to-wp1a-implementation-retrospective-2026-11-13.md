@@ -7,6 +7,8 @@
 - **执行位置：**既有 Linear YU-392 / YU-399 及相关工作包；禁止为本复盘另建平行 Issue。
 - **实时代码基线：**WP1-A 分支 feat/wp1a-personal-project-foundation @ 0b8a0abe0f14b6558a62cf2cdefcf93b01aca8b2；文档 Draft PR #2 @ 63eeffca68a840d4a1e33fae92c47ec34e516297（本文入库前）。分支间状态不可混用。
 
+**第二大脑长期错误复盘：**[🧯 Failure Ledger｜Agent Project OS G2→WP1-A](https://app.notion.com/p/4161e795caee81a291d1fa24410c6092)。两处保留同一复盘；Notion 持久化经验，GitHub 保留工程证据。
+
 ## 0. 执行摘要
 
 **结论：开发前置工作真实发生且具有保留价值，失败发生在“复用评估 → 可执行模块设计 → 编码约束 → 独立验收”这一转换链，而不是用户未说明目标或项目整体不可行。**
@@ -120,7 +122,7 @@ F-01 至 F-05 是对给定 SHA 的实际代码/CI 观察；F-06 是文件内部�
 
 | 检查点 | 证据拥有者 | 通过证据 | 当前 |
 | --- | --- | --- | --- |
-| 复盘入 GitHub + 第二大脑 Failure Ledger | Coordinator | 两处可读、相互链接、无历史状态冒充实时事实 | 本文创建中 |
+| 复盘入 GitHub + 第二大脑 Failure Ledger | Coordinator | 两处可读、相互链接、无历史状态冒充实时事实 | 已同步，整改尚未验收 |
 | Gate 0 独立安全修复 | 安全 Worker + 独立 Reviewer，W0 集成 | 新 SHA、完整危险入口、负向/隔离 CI 证据、明确 verdict | **未通过** |
 | A1–A6 Module Acceptance | W0 + 独立 Reviewer | docs/46 每项观察值、原始证据与 verdict | **禁止提前声明** |
 | 成熟模块采用核对 | 每个 Work Package Owner，Coordinator 审核 | 精确上游/模块/License/接口及自研例外理由 | **待执行** |
