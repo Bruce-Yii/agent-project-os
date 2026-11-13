@@ -70,7 +70,6 @@ jobs:
           manifest = json.loads((work / 'manifest.json').read_text())
           target = manifest['files'][0]
 
-          # Corrupt the checksum entry for target.
           lines = (work / 'CHECKSUMS.sha256').read_text().splitlines()
           out = []
           corrupted = False
@@ -91,7 +90,6 @@ jobs:
               sys.exit(1)
           print('PASS: corrupted checksum detected')
 
-          # Remove the entry entirely.
           lines2 = [l for l in (work / 'CHECKSUMS.sha256').read_text().splitlines()
                     if not (l.split() and l.split()[-1] == target)]
           (work / 'CHECKSUMS.sha256').write_text('\n'.join(lines2) + '\n')
@@ -117,9 +115,8 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-
   wp1a-build-test:
-    name: WP1-A build + typecheck + tests
+    name: WP1-A build + typecheck + domain tests
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -136,11 +133,9 @@ jobs:
         run: npm run build
       - name: Domain tests (no DB)
         run: npm run test
-      - name: DB tests (Testcontainers, requires Docker)
-        run: npm run test:db
-        env:
-          # No ambient DATABASE_URL/ADMIN_URL — container provides connection
-          WP1A_TEST_OPT_IN: 'true'
+
+  acceptance-contract-check:
+    name: Acceptance contract (docs/46) presence
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -160,3 +155,21 @@ jobs:
               sys.exit(1)
           print('PASS: docs/46 present and included in manifest')
           PY
+
+  wp1a-db-test-gated:
+    name: WP1-A DB integration tests (GATED — disabled until Coordinator approval)
+    runs-on: ubuntu-latest
+    if: false
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+      - name: Setup Node 24
+        uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - name: Install dependencies
+        run: npm ci
+      - name: DB tests (Testcontainers, requires Docker)
+        run: npm run test:db
+        env:
+          WP1A_TEST_OPT_IN: 'true'
