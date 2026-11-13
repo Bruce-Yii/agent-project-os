@@ -9,6 +9,7 @@ import { randomUUID } from "node:crypto";
 describe("WP1-A persistence (PostgreSQL)", () => {
   let pg: DisposablePg;
   let pool: any;
+  let dbPool: any; // separate pool from createDb()
   let db: any;
 
   before(async () => {
@@ -19,10 +20,18 @@ describe("WP1-A persistence (PostgreSQL)", () => {
     await migrate(pg.connectionUri);
     const result = createDb(pg.connectionUri);
     db = result.db;
+    dbPool = result.pool; // store the second pool for cleanup
   });
 
   after(async () => {
+    // Close ALL pools before stopping container
     try { await closeDb(pool); } catch { /* already closed */ }
+    try { await closeDb(dbPool); } catch { /* already closed */ }
+    // Explicit container stop (not relying on Ryuk alone)
+    await new Promise((r) => setTimeout(r, 500));
+    await pg.stop().catch((e: any) => {
+      if (!String(e?.message || e).includes("terminating connection")) throw e;
+    });
   });
 
   it("save and read PersonalSpace", async () => {

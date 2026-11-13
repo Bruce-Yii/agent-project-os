@@ -7,12 +7,12 @@ import { createDb, closeDb } from "../../src/persistence/db.js";
 import { ProjectRepository, TaskRepository, PersonalSpaceRepository } from "../../src/persistence/repositories.js";
 import { CommandExecutor } from "../../src/commands/executor.js";
 import { startDisposablePg, type DisposablePg } from "../../src/persistence/disposable-pg.js";
+import { migrate } from "../../src/persistence/migrate.js";
 
 describe("WP1-A restart recovery (separate process)", () => {
   let pg: DisposablePg;
 
   it("spawns child that writes Project+Task via CommandExecutor, kills it, parent reads back + verifies idempotency replay", async () => {
-    // Container created exclusively by test process; connection URI from container only.
     pg = await startDisposablePg();
     const dbUrl = pg.connectionUri;
     const root = process.cwd();
@@ -25,8 +25,8 @@ import { CommandExecutor } from "./dist/src/commands/executor.js";
 
 const url = process.env.WP1A_TEST_DB_URL;
 await migrate(url);
-const { db } = createDb(url);
-const executor = new CommandExecutor(db);
+const { db, pool } = createDb(url);
+const executor = new CommandExecutor(db, { pool });
 const r1 = await executor.execute({
   envelope: { commandId: "rc-1", idempotencyKey: "rk-restart", actor: "personal-owner-1", personalSpaceId: "restart-ps", createdAt: new Date().toISOString(), correlationId: "rcorr", causationId: "rcause" },
   intent: "BootstrapPersonalSpace",
@@ -51,12 +51,16 @@ await new Promise((r) => setTimeout(r, 60000));
     writeFileSync(childPath, childScript, "utf8");
 
     const env = { ...process.env, WP1A_TEST_DB_URL: dbUrl };
-    spawnSync(process.execPath, [childPath], {
+    const result = spawnSync(process.execPath, [childPath], {
       cwd: root,
       env,
       timeout: 3000,
       stdio: "ignore",
     });
+
+    // Verify child was terminated by timeout (expected) or completed
+    assert.ok(result.signal === "SIGTERM" || result.status === null || result.status !== 0,
+      `child should have been terminated by timeout, got status=${result.status} signal=${result.signal}`);
 
     try { unlinkSync(childPath); } catch { /* ignore */ }
 
@@ -77,19 +81,27 @@ await new Promise((r) => setTimeout(r, 60000));
       assert.ok(restartTask, "Restart Task should survive process restart");
       assert.equal(restartTask!.status, "backlog");
 
-      // Verify idempotency replay
-      const executor = new CommandExecutor(db);
+      // Verify idempotency replay: re-executing same idempotency key returns stored result
+      const executor = new CommandExecutor(db, { pool });
       const replay = await executor.execute({
         envelope: { commandId: "rc-replay", idempotencyKey: "rk-proj", actor: "personal-owner-1", personalSpaceId: "restart-ps", createdAt: new Date().toISOString(), correlationId: "rcorr-replay", causationId: "rcause-replay" },
         intent: "CreateProject",
         payload: { space_id: "restart-ps", name: "Restart Project", goal: "g" },
       });
       assert.equal(replay.status, "OK", "idempotency replay should return OK");
+      assert.equal(replay.projectId, restartProj!.id, "replay must return same projectId (persisted idempotency)");
+
+      // Verify exactly one project row (no duplicate from replay)
+      const projectsAfter = await projRepo.findBySpace("restart-ps");
+      const restartProjects = projectsAfter.filter((p: any) => p.name === "Restart Project");
+      assert.equal(restartProjects.length, 1, "replay must not create duplicate Project");
     } finally {
       await closeDb(pool);
-      // Allow lingering connections to close before stopping container
-      await pool?.end?.().catch(() => {});
-      // Container cleanup delegated to Testcontainers Ryuk reaper (CI ephemeral).
+      await new Promise((r) => setTimeout(r, 500));
     }
+  });
+
+  after(async () => {
+    if (pg) await pg.stop().catch(() => {});
   });
 });

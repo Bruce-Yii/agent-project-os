@@ -8,6 +8,7 @@ import { startDisposablePg, type DisposablePg } from "../persistence/disposable-
 describe("WP1-A command contract (product code)", () => {
   let pg: DisposablePg;
   let pool: any;
+  let dbPool: any;
   let db: any;
   let executor: CommandExecutor;
 
@@ -19,11 +20,17 @@ describe("WP1-A command contract (product code)", () => {
     await migrate(pg.connectionUri);
     const result = createDb(pg.connectionUri);
     db = result.db;
+    dbPool = result.pool;
     executor = new CommandExecutor({ db, pool });
   });
 
   after(async () => {
     try { await closeDb(pool); } catch { /* already closed */ }
+    try { await closeDb(dbPool); } catch { /* already closed */ }
+    await new Promise((r) => setTimeout(r, 500));
+    await pg.stop().catch((e: any) => {
+      if (!String(e?.message || e).includes("terminating connection")) throw e;
+    });
   });
 
   it("bootstrap PersonalSpace is idempotent", async () => {

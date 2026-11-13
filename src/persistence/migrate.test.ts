@@ -17,6 +17,10 @@ describe("WP1-A migrations", () => {
 
   after(async () => {
     await pool.end().catch(() => {});
+    await new Promise((r) => setTimeout(r, 500));
+    await pg.stop().catch((e: any) => {
+      if (!String(e?.message || e).includes("terminating connection")) throw e;
+    });
   });
 
   it("applies from empty DB", async () => {
