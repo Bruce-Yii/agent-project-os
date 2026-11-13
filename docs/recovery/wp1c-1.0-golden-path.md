@@ -27,6 +27,7 @@ Consequence: every scenario below is an oracle to execute after gates pass. None
 **Evidence minimum (all scenarios):** the docs/46 §6 packet — repo + full head/base SHA, changed paths, CI run whose head SHA equals the candidate, command receipts, event ids/cursors, read-back rows, independent reviewer verdict. Screenshots are supplementary only.
 
 ### GP-01 — Create PersonalSpace/Project/Goal/Task (positive)
+
 - **Trigger:** fresh install with no PersonalSpace; Owner creates the first Project.
 - **Actors:** Owner, CP.
 - **Steps:** `BootstrapPersonalSpace` twice with the same idempotency key → `CreateProject` → `ActivateProject` → `CreateGoal` → `CreateTask` T1 with acceptance criteria → `CreateTask` T2 → read back Project, Goal, Tasks.
@@ -34,6 +35,7 @@ Consequence: every scenario below is an oracle to execute after gates pass. None
 - **Evidence:** two bootstrap receipts equal; Project/Task rows with versions; event sequence from cursor 0; restart read-back.
 
 ### GP-02 — Dependency and ready-work (positive)
+
 - **Trigger:** T2 must not start until T1 is done.
 - **Actors:** Owner, CP.
 - **Steps:** `AddDependency(T1 blocks T2)` → attempt `AddDependency(T2 blocks T1)` → query ready work → later accept T1 (GP-06) → re-query.
@@ -41,6 +43,7 @@ Consequence: every scenario below is an oracle to execute after gates pass. None
 - **Evidence:** edge row; cycle rejection reason plus unchanged edge/version counts; ready-work query before/after; ordered events.
 
 ### GP-03 — Agent Session created and explicitly bound (positive)
+
 - **Trigger:** T2 `ready`; Owner delegates it.
 - **Actors:** Owner, Daemon, Provider, CP.
 - **Steps:** `DiscoverProviders` → `GetProviderCapabilities` → `CreateSession` (direct, zero bindings) → `CreateAssignment(T2, Agent, RuntimeNode)` → `DispatchAssignment` (Assignment `dispatched`, Run `created`) → `BindSessionToRun(session, task, run)` → `DispatchRun` → Agent ACK (`Run started`).
@@ -48,6 +51,7 @@ Consequence: every scenario below is an oracle to execute after gates pass. None
 - **Evidence:** capability matrix with native/emulated/unsupported/unknown; session/binding/assignment rows; `SessionBound`; proof Run `created` precedes bind and `started` follows ACK.
 
 ### GP-04 — Run execution, checkpoints, handoff (positive)
+
 - **Trigger:** Assignment dispatched and session bound.
 - **Actors:** Agent, Daemon, Provider, CP.
 - **Steps:** stream `MessageDelta`/`ToolCallStarted`/`PermissionRequested` over WS → `RespondToPermissionRequest` → `RecordCheckpoint` (≥1) → Agent finishes → `RecordHandoff` → read Run, Assignment, Task.
@@ -55,6 +59,7 @@ Consequence: every scenario below is an oracle to execute after gates pass. None
 - **Evidence:** cursor-ordered events with provider provenance; checkpoint rows; handoff payload + verification; state read-back; exactly one Run per attempt key.
 
 ### GP-05 — Artifact registration and evidence chain (positive)
+
 - **Trigger:** Run handoff references an output (commit SHA / report / patch).
 - **Actors:** Agent, CP, Owner (read).
 - **Steps:** `CreateArtifactRef` with immutable ref + lineage → `RefreshArtifact` read-back of external truth → attach evidence checklist to the candidate Review → Task moves to `in_review`.
@@ -62,6 +67,7 @@ Consequence: every scenario below is an oracle to execute after gates pass. None
 - **Evidence:** artifact row/hash; read-back result; `ArtifactCreated`/`ArtifactRefreshed`; Task version bump; no mutable copy of an external fact.
 
 ### GP-06 — Human review → accepted → dependency unblock → Current State (positive)
+
 - **Trigger:** Task `in_review` with Artifact + evidence.
 - **Actors:** Owner (reviewer), CP; Agent cannot self-approve.
 - **Steps:** `SubmitReview` (`pending`→`in_progress`) → verify acceptance criteria, artifact hash, external CI/PR → `AcceptTask` → if risk tier is public_write/merge/destructive: `RequestApproval`→`GrantApproval`→`ConsumeApproval` → acceptance-driven `UpdateProjectCurrentState`.
@@ -69,6 +75,7 @@ Consequence: every scenario below is an oracle to execute after gates pass. None
 - **Evidence:** Review bound to the exact Run/Artifact; approval bound to (action, target, artifact hash, policy version) and consumed once; before/after Current State; event order; read-back.
 
 ### GP-07 — Persist and process restart (positive/recovery)
+
 - **Trigger:** GP-06 done; Owner closes the app and the Control Plane is killed.
 - **Actors:** Owner, CP, Daemon.
 - **Steps:** record cursor + versions → `SIGKILL` CP (variant A; variant B also kills the Daemon) → restart CP → client reconnects from cursor → read all entities → replay events.
@@ -76,6 +83,7 @@ Consequence: every scenario below is an oracle to execute after gates pass. None
 - **Evidence:** pre/post dumps (ids, versions, counts); exact PIDs and timestamps of what was restarted; empty replay diff; receipt/idempotency tables.
 
 ### GP-N1 — Stale version rejected (negative)
+
 - **Trigger:** two clients hold Task version V; client A writes first.
 - **Actors:** Owner (two connections), CP.
 - **Steps:** both load V → A `UpdateTask(expected_version=V)` → B `UpdateTask(expected_version=V)` → B refreshes and retries at V+1.
@@ -83,6 +91,7 @@ Consequence: every scenario below is an oracle to execute after gates pass. None
 - **Evidence:** B receipt reason; row hash/event count unchanged after B; retry receipt.
 
 ### GP-N2 — Cross-space access rejected (negative)
+
 - **Trigger:** fixture creates a second PersonalSpace S2; a command targets S1's Project/Task while declaring S2.
 - **Actors:** Owner, CP.
 - **Steps:** attempt `UpdateProject`, `CreateTask`, `TransitionTaskState`, `UpdateProjectCurrentState`, and a read by id with `personal_space_id=S2` against S1 objects.
@@ -90,6 +99,7 @@ Consequence: every scenario below is an oracle to execute after gates pass. None
 - **Evidence:** receipts; audit rows; unchanged S1 state hash; read denial.
 
 ### GP-N3 — Idempotency replay and conflict (negative)
+
 - **Trigger:** at-least-once delivery duplicates a command.
 - **Actors:** Owner, CP.
 - **Steps:** `CreateTask` key K/payload P → resend identical → resend key K with different payload P'.
@@ -97,6 +107,7 @@ Consequence: every scenario below is an oracle to execute after gates pass. None
 - **Evidence:** equal receipt/result; Task count 1; version unchanged; conflict rejection.
 
 ### GP-N4 — Run completion is not acceptance (negative)
+
 - **Trigger:** Run `completed` with handoff; Owner tries to shortcut review.
 - **Actors:** Owner, Agent, CP.
 - **Steps:** `AcceptTask` while Task `in_progress` → `AcceptTask` from `in_review` with no Review/evidence → `SubmitReview` by actor `Agent` → `AcceptTask` by `Agent`.
@@ -104,6 +115,7 @@ Consequence: every scenario below is an oracle to execute after gates pass. None
 - **Evidence:** four rejection receipts; unchanged state; audit.
 
 ### GP-N5 — Approval binding, invalidation, single use (negative)
+
 - **Trigger:** artifact is high-risk (public write/merge/destructive), or the artifact changes after approval.
 - **Actors:** Owner, Agent, CP.
 - **Steps:** `RequestApproval` for (action, target, hash) → replace artifact (new hash) → `GrantApproval` old hash → attempt execution → `ConsumeApproval` twice.
@@ -111,6 +123,7 @@ Consequence: every scenario below is an oracle to execute after gates pass. None
 - **Evidence:** approval rows/status; hash comparison; blocked execution receipt; invalidation event.
 
 ### GP-R1 — Crash mid-Run and reconciliation (recovery)
+
 - **Trigger:** Provider process dies after `Run started`, before handoff.
 - **Actors:** Owner, Daemon, CP.
 - **Steps:** kill the Provider process → reconnect/reconcile → inspect Run/Assignment/Session → `RetryRun` or `CancelRun`.
@@ -118,6 +131,7 @@ Consequence: every scenario below is an oracle to execute after gates pass. None
 - **Evidence:** process exit record; Run transition history; one active Run; new Run id on retry; host offline/online truth.
 
 ### GP-R2 — Stream gap marked explicit (recovery)
+
 - **Trigger:** WS drops mid-stream; Provider history is volatile.
 - **Actors:** Owner, Daemon, Provider, CP.
 - **Steps:** disconnect → reconnect with last cursor → `ReconcileHistory(cursor)` → compare transcript and state.
@@ -131,6 +145,7 @@ Baseline: Fastify 5 + TypeBox REST/OpenAPI; SSE for Project/Task/Run/Review feed
 **Write path (single):** `POST /v1/commands` — every write is a PC-4 command. Body is the docs/37 §1 envelope: `command_id`, `idempotency_key` (scoped actor+intent), `actor`, `personal_space_id` (alias `workspace_id`), `project_id?`, `task_id?`, `intent`, `payload`, `expected_version`, `requested_effects`, `created_at`, `correlation_id`, `causation_id`. Response is a receipt: `{command_id, status, reason?, aggregate_version, event_ids[], result}`.
 
 **Read paths (proposed canonical shape; become binding in WP1-C module contract v0.1):**
+
 - `GET /v1/personal-space`, `/v1/projects`, `/v1/projects/{id}`, `/v1/projects/{id}/goals`, `/v1/projects/{id}/tasks`, `/v1/projects/{id}/current-state`, `/v1/projects/{id}/events?cursor=`
 - `GET /v1/tasks/{id}`, `/v1/tasks/{id}/graph`
 - `GET /v1/assignments/{id}`, `/v1/runs/{id}`, `/v1/runs/{id}/events?cursor=`
@@ -139,11 +154,13 @@ Baseline: Fastify 5 + TypeBox REST/OpenAPI; SSE for Project/Task/Run/Review feed
 - `GET /v1/projects/{id}/events` = SSE; `WS /v1/sessions/{id}/stream` = interactive session channel.
 
 **Commands — required exact set, by owner contract:**
+
 - WP1-A (docs/40 §7.1): `BootstrapPersonalSpace`, `CreateProject`, `UpdateProject`, `ActivateProject`, `PauseProject`, `ResumeProject`, `ArchiveProject`, `RestoreProject`, `CloseProject`, `UpdateProjectCurrentState`, `CreateGoal`, `UpdateGoal`, `DeleteGoal`, `CreateTask`, `UpdateTask`, `ReparentTask`, `AddDependency`, `RemoveDependency`, `TransitionTaskState`, `ResolveDependency`.
 - WP1-B (docs/41 §7.1): `DiscoverProviders`, `GetProviderCapabilities`, `CreateSession`, `AttachSession`, `ResumeSession`, `SendMessage`, `SteerActiveTurn`, `QueueFollowUp`, `InterruptTurn`, `CancelSession`, `CloseSession`, `SubscribeEvents`, `ReconcileHistory`, `AcquireControllerLease`, `ReleaseControllerLease`, `RespondToPermissionRequest`.
 - WP1-C (docs/42 §7.1): `CreateAssignment`, `DispatchAssignment`, `CancelAssignment`, `ReassignTask`, `DispatchRun`, `CancelRun`, `RecordCheckpoint`, `RecordHandoff`, `RetryRun`, `CreateArtifactRef`, `RefreshArtifact`, `SubmitReview`, `AcceptTask`, `RejectTask`, `RequestChanges`, `RequestApproval`, `GrantApproval`, `DenyApproval`, `ConsumeApproval`, `BindSessionToRun`, `UnbindSession` (+ `UpdateProjectCurrentState`, `ResolveDependency` reused from A, emitted on acceptance).
 
 **Events — required exact set:**
+
 - WP1-A (docs/40 §7.2): `PersonalSpaceBootstrapped`, `ProjectCreated`, `ProjectUpdated`, `ProjectStateChanged`, `ProjectCurrentStateUpdated`, `GoalCreated`, `GoalUpdated`, `GoalDeleted`, `TaskCreated`, `TaskUpdated`, `TaskReparented`, `TaskStateChanged`, `DependencyAdded`, `DependencyRemoved`, `DependencyResolved`.
 - WP1-B (docs/41 §7.2): `SessionCreated`, `SessionAttached`, `SessionResumed`, `SessionStateChanged`, `SessionClosed`, `HostOffline`, `MessageDelta`, `MessageFinalized`, `TurnStarted`, `TurnCompleted`, `Interrupted`, `Failed`, `ToolCallStarted`, `ToolCallResult`, `PermissionRequested`, `PermissionResolved`, `Checkpoint`, `Heartbeat`, `EventGap`, `Reconciled`.
 - WP1-C (docs/42 §7.2): `AssignmentCreated`, `AssignmentStateChanged`, `RunStarted`, `RunCheckpointed`, `RunCompleted`, `RunFailed`, `RunInterrupted`, `RunCancelled`, `ArtifactCreated`, `ArtifactRefreshed`, `ReviewSubmitted`, `TaskAccepted`, `TaskRejected`, `ChangesRequested`, `ApprovalRequested`, `ApprovalGranted`, `ApprovalDenied`, `ApprovalConsumed`, `ApprovalInvalidated`, `SessionBound`, `SessionUnbound`, `ProjectCurrentStateUpdated`, `DependencyResolved`.
@@ -191,6 +208,7 @@ Ordering: GP-01/02 → GP-03 → GP-04 → GP-05 → GP-06 → GP-07; negatives 
 **Can be demonstrated today (2026-11-13):** documentation and contracts only — 32-group scope, domain/state models, WP1-A/B/C boundaries, acceptance/evidence policy. No part of the 1.0 loop can be run: recovery base `8f2b507` has no `package.json`, `src/`, `tests/`, or migrations (docs/23 §3). WP1-A code at `b6b828a` is quarantined and Gate 0 REJECTED (asset ledger §C; docs/47 §3); it must not be presented as a working slice.
 
 **Blocked, with the exact blocker:**
+
 - Any WP1-A demo: Gate 0 (destructive-test isolation, complete CI test set, negative preflight) not passed; no Module Acceptance.
 - Any Session/Run demo: WP1-B MRG not passed; PC-6 DRAFT; no real Provider E2E; no license-clean adapter.
 - Any review/Current State demo: WP1-C has no accepted module contract, no implementation, MRG NOT PASSED.
