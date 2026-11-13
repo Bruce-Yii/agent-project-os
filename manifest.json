@@ -1,11 +1,10 @@
 {
   "name": "agent-project-os",
-  "version": "0.7",
-  "snapshot_date": "2026-11-10",
+  "version": "0.8",
+  "snapshot_date": "2026-11-13",
   "files": [
     "AGENTS.md",
     "CHANGELOG.md",
-    "CHECKSUMS.sha256",
     "docs/00-product-charter.md",
     "docs/01-functional-catalog.md",
     "docs/02-domain-model.md",
@@ -34,6 +33,16 @@
     "docs/templates/work-package.md",
     "manifest.json",
     "README.md",
-    "STATUS.md"
+    "STATUS.md",
+    "LICENSE",
+    "docs/45-technology-architecture-adr.md",
+    "docs/46-acceptance-and-remote-evidence-contract.md",
+    "docs/recovery/asset-adoption-ledger.md",
+    "docs/recovery/wp1a-safety-reuse-map.md",
+    "docs/recovery/wp1b-runtime-reuse-map.md",
+    "docs/recovery/wp1c-1.0-golden-path.md",
+    ".github/workflows/ci.yml",
+    ".github/scripts/verify_checksums.py",
+    ".markdownlint.json"
   ]
 }
