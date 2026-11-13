@@ -178,3 +178,26 @@ API key verification:
 - OPENCODE_GO_API_KEY -> 405 Method Not Allowed (wrong endpoint) / Insufficient balance (via CLI)
 
 ALL providers blocked. Real turn completion requires user action.
+## V4e: Final API key verification (2026-11-14, all keys tested)
+
+Tested all available API keys against their respective endpoints:
+
+| API Key | Endpoint | Result | Error |
+|---|---|---|---|
+| DEEPSEEK_API_KEY (sk-c698...) | https://api.deepseek.com/v1/chat/completions | 402 Payment Required | No credits |
+| XIAOMI_API_KEY (sk-cjwu...) | https://api.xiaomi.com/v1/chat/completions | SSL error | Wrong endpoint or network |
+| OPENCODE_GO_API_KEY (oc_sk_...) | https://opencode.ai/api/v1/chat/completions | 405 Method Not Allowed | Wrong endpoint |
+| OPENCODE_GO_API_KEY (oc_sk_...) | OpenCode CLI (opencode run) | Insufficient balance | Account has no credits |
+
+OpenCode CLI with free models (goat/deepseek/deepseek-v4-flash, goat/google/gemini-3.7-flash):
+- opencode run --model opencode/gemini-4-hydrogen -> Insufficient balance
+- opencode run --model goat/deepseek/deepseek-v4-flash -> API key expired
+
+**FINAL CONCLUSION: No provider can complete a real LLM turn without user interaction.**
+- All 3 installed providers (Claude, Codex, Pi) require interactive OAuth/login
+- OpenCode account has no credits (free models still require credits)
+- DeepSeek API key has no credits (402)
+- Xiaomi API key fails (SSL/network)
+- DSH and Hermes are not Paseo providers
+
+Real turn completion requires user action: interactive login for Claude/Codex/Pi, or adding credits to OpenCode/DeepSeek account.
