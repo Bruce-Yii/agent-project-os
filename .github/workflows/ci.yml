@@ -118,8 +118,29 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
 
-  acceptance-contract-check:
-    name: Acceptance contract (docs/46) presence
+  wp1a-build-test:
+    name: WP1-A build + typecheck + tests
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+      - name: Setup Node 24
+        uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - name: Install dependencies
+        run: npm ci
+      - name: Typecheck
+        run: npm run typecheck
+      - name: Build
+        run: npm run build
+      - name: Domain tests (no DB)
+        run: npm run test
+      - name: DB tests (Testcontainers, requires Docker)
+        run: npm run test:db
+        env:
+          # No ambient DATABASE_URL/ADMIN_URL — container provides connection
+          WP1A_TEST_OPT_IN: 'true'
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
