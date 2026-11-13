@@ -55,11 +55,8 @@ await new Promise((r) => setTimeout(r, 60000));
       cwd: root,
       env,
       timeout: 3000,
-      stdio: "pipe",
+      stdio: "ignore",
     });
-    console.log("CHILD STDOUT:", result.stdout?.toString());
-    console.log("CHILD STDERR:", result.stderr?.toString());
-    console.log("CHILD STATUS:", result.status, "SIGNAL:", result.signal, "ERROR:", result.error);
 
     // Verify child was terminated by timeout (expected) or completed normally.
     // Reject spawn errors (other than the expected ETIMEDOUT from spawnSync),
