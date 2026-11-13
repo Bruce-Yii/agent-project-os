@@ -128,6 +128,7 @@ Rejected: `pg-mem` (in-memory emulation; cannot oracle `CASCADE`, `WITH (FORCE)`
 | 38 | `src/persistence/receipts.ts:95` | `DELETE FROM command_receipts` (no `WHERE`) | product code, `clear()` | n/a |
 
 Notes that matter for Gate 0:
+
 - The **admin connection string is derived by regex substitution and never guarded**. If `DATABASE_URL` does not contain `wp1a_test`, the replace returns the input unchanged, so `ADMIN_URL === DB_URL` and `DROP DATABASE ... WITH (FORCE)` runs against whatever server that URL names. Line 20's guard validates `DB_URL` only; line 42 opens a fresh pool the guard never sees.
 - `src/commands/contract.test.ts` is unguarded *and* unreachable via `npm test`, yet `dist/src/commands/contract.test.js` exists — it is a loaded gun on the shelf, not a discharged one. Deleting it is part of the fix.
 - Guard coverage is partial: `assertDisposableDb` is imported by 3 of 7 test files. No test file tests the guard itself — the "negative tests prove refusal" comment at `test-guard.ts:9` has **no corresponding test in the tree**. The rejection was correct.
