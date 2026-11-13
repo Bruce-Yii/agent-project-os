@@ -6,7 +6,9 @@
   "scripts": {
     "dev:api": "node src/server.mjs",
     "dev:web": "vite",
-    "build:web": "vite build"
+    "build": "vite build",
+    "build:web": "vite build",
+    "typecheck": "node --check src/server.mjs && node --check src/api.js"
   },
   "dependencies": {
     "fastify": "^5.0.0",
