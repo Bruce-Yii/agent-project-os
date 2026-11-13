@@ -1,3 +1,11 @@
+> [!CAUTION]
+> **ARCHIVED / QUARANTINED LEGACY WP1-A — DO NOT CONTINUE DEVELOPMENT (2026-11-13).**
+> This branch `feat/wp1a-personal-project-foundation` is an **unaccepted, unsafe historical implementation source**, not the active project workspace. Old W0 has been retired. It is retained for **read-only inspection and selective file-level migration** by the **new W0-RECOVERY** after independent checks, never wholesale merge/cherry-pick, never inheriting MRG 8/8 PASS as Module Acceptance.
+> **Gate 0 = REJECTED; Gate 1/2 = STOP; WP1-A Module Acceptance = NOT ACCEPTED.** In particular, `src/commands/contract.test.ts` contains unguarded `DROP TABLE ... CASCADE`; `src/persistence/migrate.test.ts` uses admin DB deletion; and `src/test-guard.ts` uses unproven name-prefix/optional nonce matching. **Do not execute destructive tests or migrations from this old branch.** Do not push further implementation or rewrite historical evidence here.
+> **New execution authority:** [Linear YU-392 recovery order](https://linear.app/yi383775/issue/YU-392/g3-w0engineering-decomposition-and-shared-contracts), comment `b3b8f356-e8e9-49b8-9321-5e068a32cf5b`. Canonical design source: PR #1 G0–G2 `8f2b50707fef30b47294ebbcd07fc17583abcb11`. Old docs PR #2 has been **closed/frozen**, source only. New W0 owns a separate recovery worktree and remote branch. This banner is an archival marker; do not confuse it with a safety fix or Gate PASS.
+
+---
+
 # Agent Project OS
 
 > **Product requirements and development documentation · v0.7 · 2026-11-10**  
