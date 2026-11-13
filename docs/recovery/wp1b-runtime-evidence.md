@@ -148,3 +148,18 @@ WP1-B MRG: 2 PARTIAL, 0 PASS (criteria from docs/24 §7 / Notion §14.4 not avai
 - OPENCODE_GO_API_KEY (oc_sk_...) — OpenCode Go, account has no credits
 
 **Conclusion:** No provider can complete a real turn without user interaction (interactive login or adding credits). The infrastructure (daemon start, session create, message send, persist) is verified. Real turn completion requires user action. DSH and Hermes are not Paseo providers — they would require a custom ACP adapter.
+## V4c: API key verification (2026-11-14, final)
+
+Tested all available API keys against their respective endpoints:
+
+- DEEPSEEK_API_KEY -> https://api.deepseek.com/v1/chat/completions -> 402 Payment Required (no credits)
+- XIAOMI_API_KEY -> https://api.xiaomi.com/v1/chat/completions -> SSL error (wrong endpoint or network)
+- OPENCODE_GO_API_KEY -> https://opencode.ai/api/v1/chat/completions -> 405 Method Not Allowed (wrong endpoint)
+
+Conclusion: No available API key can complete a real LLM turn. All providers either need interactive auth or have no credits.
+
+Providers that can be tried by user:
+1. Claude: run claude login in local terminal (OAuth)
+2. Codex: run codex login in local terminal (OAuth)
+3. OpenCode: add credits at https://opencode.ai/console
+4. Pi: run pi then /login to configure a provider
