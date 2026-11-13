@@ -134,6 +134,7 @@ describe("WP1-A command contract (product code)", () => {
       intent: "AddDependency",
       payload: { sourceTaskId: t1.taskId as string, targetTaskId: t2.taskId as string },
     });
+    console.log("DEBUG dep1:", JSON.stringify(dep1));
     const dep2 = await executor.execute({
       envelope: { commandId: "c15", idempotencyKey: "k15", actor: "personal-owner-1", personalSpaceId: "ps-1", createdAt: new Date().toISOString(), correlationId: "corr15", causationId: "cause15" },
       intent: "AddDependency",
