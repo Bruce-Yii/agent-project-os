@@ -239,3 +239,48 @@ Real turn completion requires user action: interactive login for Claude/Codex/Pi
 | Hermes | N/A | Not installed |
 
 **Real turn evidence:** Response "Hello, and welcome!" from deepseek-v4.1-flash via OpenCode Go API. 97 tokens, .00004245 cost.
+---
+
+## V6: Paseo Daemon Native Verification (2026-11-14)
+
+### Infrastructure verified
+
+| Check | Result | Evidence |
+|---|---|---|
+| Daemon start (isolated PASEO_HOME) | ✅ PASS | Daemon v0.15.4 started, pid 17412, no user config touched |
+| Provider discovery | ✅ PASS | 7 providers: claude, codex, copilot, opencode, pi (available); antigravity, muse (unavailable) |
+| Session creation | ✅ PASS | Agent ID returned, status idle, capabilities: streaming, persistence, dynamic modes, MCP, reasoning, tools, rewind |
+| Native session resume (fetchAgent after reconnect) | ✅ PASS | Agent ID matches after disconnect/reconnect via fetchAgent |
+| Two-client attach | ✅ PASS | Client B connected, fetched agent, subscribed to timeline, received 3 events from Client A's message |
+| Event streaming | ✅ PASS | turn_started, user_message, assistant_message, turn_failed all received via subscribeAgentTimeline |
+| Reconnect backfill | ⚠️ PARTIAL | Events received after reconnect; full backfill of missed events not independently verified |
+
+### Native turn verification
+
+| Provider | Result | Details |
+|---|---|---|
+| opencode (via Paseo) | ❌ FAILED | "Insufficient balance" — opencode account needs credits. Paseo infrastructure works (session created, message sent, events streamed). Failure is provider auth/credits, not Paseo. |
+| claude (via Paseo) | ❌ FAILED | OAuth required (needs claude login). Paseo correctly reports provider available but turn fails at auth. |
+| Direct OpenCode Go API | ✅ PASS | deepseek-v4.1-flash returned "Hello, and welcome!" (97 tokens). Different endpoint (inference/go/openai/v1) + x-opencode-session header. |
+
+### Conclusion
+
+Paseo Daemon infrastructure is verified for: start, provider discovery, session creation, native resume (fetchAgent), two-client attach, event streaming. Native LLM turn through Paseo is blocked by provider auth/credits (opencode account insufficient balance; claude needs OAuth). The direct OpenCode Go API turn (V5) proves the LLM capability exists but uses a different code path than Paseo's provider adapter.
+
+### Native session resume details
+- Created agent via client A
+- Disconnected client A
+- Reconnected with client B
+- fetchAgent(agentId) returned correct agent with matching ID
+- getAgent() returned undefined (API naming difference, not functional gap)
+
+### Two-client attach details
+- Client A created agent, sent message
+- Client B connected, fetched same agent by ID
+- Client B subscribed to timeline, received 3 events: turn_started, user_message, assistant_message (turn_failed)
+- Events correctly streamed to secondary client
+
+### Not yet verified
+- Reconnect backfill of missed events (partial)
+- Native turn through Paseo with a working provider (blocked by auth/credits)
+- Project OS Runtime Adapter wrapping Paseo as LocalRuntimeNode (not started)
