@@ -20,7 +20,7 @@
 | Package | `@testcontainers/postgresql` | registry.npmjs.org |
 | Current stable | **12.2.1** (`dist-tags.latest`) | `registry.npmjs.org/@testcontainers/postgresql/latest` |
 | License (SPDX) | **MIT** | npm `license` field + GitHub API `license.spdx_id` |
-| Source repo | https://github.com/testcontainers/testcontainers-node | npm `repository` |
+| Source repo | <https://github.com/testcontainers/testcontainers-node> | npm `repository` |
 | Published | package 12.2.1; release **v12.2.1 published 2026-10-13T09:46Z** | GitHub Releases API |
 | Maintenance | repo pushed **2026-11-11**, not archived, 94 open issues | GitHub Repos API |
 | Adoption signal | **2,641 stars / 286 forks** | GitHub Repos API |
@@ -95,10 +95,11 @@ Adoption is additive at the dependency level and deletive at the test level, in 
 
 ### 5.1 CONFIRMED blocker on this host (not on CI)
 
-```
+```powershell
 docker version  → failed to connect ... npipe:////./pipe/dockerDesktopLinuxEngine
 Get-Service com.docker.service → Status: Stopped
 ```
+
 Docker CLI present (`D:\Docker\resources\bin\docker.exe`), context `desktop-linux` configured, engine not running. **Consequence: Testcontainers cannot be executed on this workstation until Docker Desktop is started.** CI (`ubuntu-latest`) ships Docker — `INFERRED`, not fetched from GitHub docs. Cheap way to make it CONFIRMED: add `docker version` as a CI step before the test job.
 
 Reproducer for the fallback path, to be run by whoever has Docker: start the daemon, then
