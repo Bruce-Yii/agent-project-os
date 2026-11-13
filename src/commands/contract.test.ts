@@ -126,15 +126,14 @@ describe("WP1-A command contract (product code)", () => {
       intent: "CreateTask",
       payload: { projectId: projId, title: "Task B" } as any as any,
     });
-    process.stderr.write("DEBUG t1=" + JSON.stringify(t1) + " t2=" + JSON.stringify(t2) + "\n");
     const dep1 = await executor.execute({
       envelope: { commandId: "c14", idempotencyKey: "k14", actor: "personal-owner-1", personalSpaceId: "ps-1", createdAt: new Date().toISOString(), correlationId: "corr14", causationId: "cause14" },
       intent: "AddDependency",
       payload: { sourceTaskId: t1.taskId as string, targetTaskId: t2.taskId as string },
     });
+    assert.equal(dep1.status, "OK");
     const dep2 = await executor.execute({
       envelope: { commandId: "c15", idempotencyKey: "k15", actor: "personal-owner-1", personalSpaceId: "ps-1", createdAt: new Date().toISOString(), correlationId: "corr15", causationId: "cause15" },
-    assert.equal(dep1.status, "OK");
       intent: "AddDependency",
       payload: { sourceTaskId: t2.taskId as string, targetTaskId: t1.taskId as string },
     });
