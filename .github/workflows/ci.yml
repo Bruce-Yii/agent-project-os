@@ -22,9 +22,8 @@ jobs:
       - name: Lint Markdown
         uses: DavidAnson/markdownlint-cli2-action@v25.0.0
         with:
-          # G0–G2 historical docs are read-only and have legacy Markdown style.
-          # Enforce lint on newly authored recovery docs, not on frozen history.
-          globs: 'docs/recovery/*.md'
+          globs: '**/*.md'
+          config: .markdownlint.json
 
   link-check:
     name: Markdown link check
@@ -37,11 +36,6 @@ jobs:
         with:
           args: --offline --no-progress './**/*.md'
           fail: true
-
-  # The historical docs/24 DAG is ADAPT/PENDING and not in this clean base.
-  # The legacy in-memory WP1-A fixture harness is QUARANTINED (weak oracle).
-  # Do not run checks whose source is absent or rejected. Real WP1-A tests
-  # belong to the stacked implementation PR and must use the real module.
 
   checksum-verify:
     name: Manifest checksum verification
@@ -156,10 +150,9 @@ jobs:
           print('PASS: docs/46 present and included in manifest')
           PY
 
-  wp1a-db-test-gated:
-    name: WP1-A DB integration tests (GATED — disabled until Coordinator approval)
+  wp1a-db-test:
+    name: WP1-A DB integration tests (Testcontainers, GitHub-hosted only)
     runs-on: ubuntu-latest
-    if: false
     steps:
       - name: Checkout
         uses: actions/checkout@v6
@@ -169,7 +162,7 @@ jobs:
           node-version: '24'
       - name: Install dependencies
         run: npm ci
-      - name: DB tests (Testcontainers, requires Docker)
+      - name: Verify Docker available
+        run: docker version
+      - name: DB tests (Testcontainers, isolated containers only)
         run: npm run test:db
-        env:
-          WP1A_TEST_OPT_IN: 'true'
