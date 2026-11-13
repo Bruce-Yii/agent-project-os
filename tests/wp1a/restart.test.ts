@@ -89,7 +89,8 @@ await new Promise((r) => setTimeout(r, 60000));
       await closeDb(pool);
       // Allow lingering connections to close before stopping container
       await new Promise((r) => setTimeout(r, 2000));
-      await pool?.end?.().catch(() => {});\n      // Container cleanup delegated to Testcontainers Ryuk reaper (CI ephemeral).
+      await pool?.end?.().catch(() => {});
+      // Container cleanup delegated to Testcontainers Ryuk reaper (CI ephemeral).
     }
   });
 });
