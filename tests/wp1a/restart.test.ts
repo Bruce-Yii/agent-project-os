@@ -59,8 +59,8 @@ await new Promise((r) => setTimeout(r, 60000));
     });
 
     // Verify child was terminated by timeout (expected) or completed
-    assert.ok(result.signal === "SIGTERM" || result.status === null || result.status !== 0,
-      `child should have been terminated by timeout, got status=${result.status} signal=${result.signal}`);
+    assert.ok(result.signal === "SIGTERM" || result.status === 0,
+      `child should have been terminated by timeout (SIGTERM) or completed (0), got status=${result.status} signal=${result.signal}`);
 
     try { unlinkSync(childPath); } catch { /* ignore */ }
 
@@ -102,6 +102,6 @@ await new Promise((r) => setTimeout(r, 60000));
   });
 
   after(async () => {
-    if (pg) await pg.stop().catch(() => {});
+    if (pg) { await new Promise((r) => setTimeout(r, 2000)); await pg.stop(); }
   });
 });

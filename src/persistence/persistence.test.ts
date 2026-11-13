@@ -28,7 +28,7 @@ describe("WP1-A persistence (PostgreSQL)", () => {
     try { await closeDb(pool); } catch { /* already closed */ }
     try { await closeDb(dbPool); } catch { /* already closed */ }
     // Explicit container stop (not relying on Ryuk alone)
-    await new Promise((r) => setTimeout(r, 500));
+    await new Promise((r) => setTimeout(r, 2000));
     await pg.stop().catch((e: any) => {
       if (!String(e?.message || e).includes("terminating connection")) throw e;
     });
