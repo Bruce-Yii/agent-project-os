@@ -128,3 +128,23 @@ WP1-B MRG: 2 PARTIAL, 0 PASS (criteria from docs/24 §7 / Notion §14.4 not avai
 - Daemon log: captured in terminal output (not persisted to file)
 - Session file: `.paseo-home/agents/.../afde8558-62bb-482b-abdf-237e9dfb3455.json`
 - PASEO_HOME: `D:\12412\DshWorktrees\agent-project-os\wp1b-runtime\.paseo-home` (isolated, no user config touched)
+## V4b: Provider availability summary (2026-11-14, updated)
+
+| Provider | Installed | Auth Status | Can Complete Turn? |
+|---|---|---|---|
+| Claude (2.1.220) | Yes | Needs interactive OAuth login | No (hangs) |
+| Codex (0.146.0) | Yes | refresh_token_reused (401) | No (needs re-login) |
+| Copilot | Yes | Not tested (requires GitHub Copilot subscription) | Unknown |
+| OpenCode (2.3.0) | Yes | Insufficient balance (needs credits) | No (account has no credits) |
+| Pi (1.0.4) | Yes | "No API key found" | No (needs /login) |
+| Antigravity | No | CLI not found | No |
+| Muse | No | Not installed | No |
+| DSH (DeepSeek Harness) | N/A | Not a Paseo provider | N/A |
+| Hermes | N/A | Not a Paseo provider | N/A |
+
+**Available API keys in user environment:**
+- DEEPSEEK_API_KEY — DeepSeek, not a Paseo provider
+- XIAOMI_API_KEY — Xiaomi, not a Paseo provider
+- OPENCODE_GO_API_KEY (oc_sk_...) — OpenCode Go, account has no credits
+
+**Conclusion:** No provider can complete a real turn without user interaction (interactive login or adding credits). The infrastructure (daemon start, session create, message send, persist) is verified. Real turn completion requires user action. DSH and Hermes are not Paseo providers — they would require a custom ACP adapter.
