@@ -6,18 +6,15 @@ import path from "node:path";
 import { createDb, closeDb } from "../../src/persistence/db.js";
 import { ProjectRepository, TaskRepository, PersonalSpaceRepository } from "../../src/persistence/repositories.js";
 import { CommandExecutor } from "../../src/commands/executor.js";
-
-function getDbUrl(): string {
-  const url = process.env.DATABASE_URL || process.env.WP1A_TEST_DB;
-  if (!url) {
-    throw new Error("DATABASE_URL or WP1A_TEST_DB must be set (no default credentials).");
-  }
-  return url;
-}
+import { startDisposablePg, type DisposablePg } from "../../src/persistence/disposable-pg.js";
 
 describe("WP1-A restart recovery (separate process)", () => {
+  let pg: DisposablePg;
+
   it("spawns child that writes Project+Task via CommandExecutor, kills it, parent reads back + verifies idempotency replay", async () => {
-    const dbUrl = getDbUrl();
+    // Container created exclusively by test process; connection URI from container only.
+    pg = await startDisposablePg();
+    const dbUrl = pg.connectionUri;
     const root = process.cwd();
     const childPath = path.join(root, "restart_child_tmp.mjs");
 
@@ -26,7 +23,7 @@ import { createDb } from "./dist/src/persistence/db.js";
 import { migrate } from "./dist/src/persistence/migrate.js";
 import { CommandExecutor } from "./dist/src/commands/executor.js";
 
-const url = process.env.DATABASE_URL || process.env.WP1A_TEST_DB;
+const url = process.env.WP1A_TEST_DB_URL;
 await migrate(url);
 const { db } = createDb(url);
 const executor = new CommandExecutor(db);
@@ -53,7 +50,7 @@ await new Promise((r) => setTimeout(r, 60000));
 
     writeFileSync(childPath, childScript, "utf8");
 
-    const env = { ...process.env, DATABASE_URL: dbUrl, WP1A_TEST_DB: dbUrl };
+    const env = { ...process.env, WP1A_TEST_DB_URL: dbUrl };
     spawnSync(process.execPath, [childPath], {
       cwd: root,
       env,
@@ -68,14 +65,6 @@ await new Promise((r) => setTimeout(r, 60000));
     try {
       const projRepo = new ProjectRepository(db);
       const taskRepo = new TaskRepository(db);
-      const proj = await projRepo.findById("restart-proj");
-      const task = await taskRepo.findById("restart-task");
-
-      // Note: project/task IDs are generated (proj-*, task-*), not "restart-proj"/"restart-task"
-      // The child uses CommandExecutor which generates IDs. We verify by listing.
-      // Actually, the child creates with generated IDs. Let's check what was created.
-      // Re-read: the child logs PROJECT/TASK but we can't capture stdout (stdio: ignore).
-      // So we verify by checking that at least one project with name "Restart Project" exists.
       const projects = await projRepo.findBySpace("restart-ps");
       assert.ok(projects.length >= 1, "At least one Project should survive process restart");
       const restartProj = projects.find((p: any) => p.name === "Restart Project");
@@ -88,18 +77,17 @@ await new Promise((r) => setTimeout(r, 60000));
       assert.ok(restartTask, "Restart Task should survive process restart");
       assert.equal(restartTask!.status, "backlog");
 
-      // Verify idempotency replay: re-executing same idempotency key returns stored result
+      // Verify idempotency replay
       const executor = new CommandExecutor(db);
-      // Re-bootstrap (idempotent) should return same space
       const replay = await executor.execute({
         envelope: { commandId: "rc-replay", idempotencyKey: "rk-proj", actor: "personal-owner-1", personalSpaceId: "restart-ps", createdAt: new Date().toISOString(), correlationId: "rcorr-replay", causationId: "rcause-replay" },
         intent: "CreateProject",
         payload: { space_id: "restart-ps", name: "Restart Project", goal: "g" },
       });
-      // The idempotency store should return the stored result (same projectId)
       assert.equal(replay.status, "OK", "idempotency replay should return OK");
     } finally {
       await closeDb(pool);
+      await pg.stop().catch(() => {});
     }
   });
 });
