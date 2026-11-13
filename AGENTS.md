@@ -1,3 +1,11 @@
+> [!CAUTION]
+> **FROZEN LEGACY W0 / CLOSED PR #2 — ARCHIVAL SOURCE ONLY (2026-11-13).**
+> The old W0 execution owner is retired; GitHub PR #2 was **CLOSED WITHOUT MERGE** and is marked **[FROZEN / SUPERSEDED]**. This branch `feat/yu-399-local-dev-foundation` MUST NOT receive new implementation, new Gate PASS assertions, PR reopening or merge. Retain historical documents and spikes for **read-only evaluation/selective verified migration** only. The old PR text, docs/40/44 MRG PASS claims, dated SHAs and green docs CI are **not active WP1-A implementation acceptance**. Source snapshot **before archival banners**: `c7ed525ce9b2a7c9cbb270078045a51eedd4524f`.
+> **Do not freeze the valid design baseline:** GitHub PR #1 (`docs/pre-development-readiness-2026-11-10` @ `8f2b50707fef30b47294ebbcd07fc17583abcb11`) remains Draft/unmerged and is the G0–G2 source for new execution. Old WP1-A branch is separately quarantined; Gate 0 REJECTED / Module NOT ACCEPTED, unsafe database test paths.
+> **New authoritative owner:** W0-RECOVERY, via [existing Linear YU-392 takeover contract](https://linear.app/yi383775/issue/YU-392/g3-w0engineering-decomposition-and-shared-contracts) (comment `b3b8f356-e8e9-49b8-9321-5e068a32cf5b`). Only its NEW clean worktree/branch/Draft PR may advance implementation, subject to independent safety Gates. Do not launch old instructions in this branch.
+
+---
+
 # Agent Instructions — Agent Project OS
 
 ## Read order
