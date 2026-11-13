@@ -1,0 +1,15 @@
+{
+  "name": "wp1c-1-0-shell",
+  "version": "0.0.0",
+  "private": true,
+  "description": "WP1-C: Minimal 1.0 Web/API shell — non-destructive, mock-labeled where needed",
+  "scripts": {
+    "dev": "node src/server.mjs",
+    "start": "node src/server.mjs"
+  },
+  "dependencies": {
+    "fastify": "^5.0.0"
+  },
+  "license": "Apache-2.0",
+  "type": "module"
+}
