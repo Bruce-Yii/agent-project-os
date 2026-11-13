@@ -35,11 +35,31 @@
 - Available modes: plan, default, acceptEdits, auto, bypassPermissions
 - Workspace ID: wks_ee711cb6a879d295
 
-## V4: Message send ⚠️ PARTIAL
-- Method: `client.sendAgentMessage(agentId, 'Say hello in one sentence.', {})`
-- Result: `{}` (empty — response delivered via streaming events, not return value)
-- Agent status after message: not captured (getAgent returned undefined)
-- **Unknown:** Whether the message was fully processed and a response received. The daemon log shows the agent was created but no turn completion event was observed in the 5-second wait window.
+## V4: Message send + turn completion ❌ BLOCKED — No provider authentication
+
+**Attempted providers:**
+1. **Claude** (claude 2.1.220): CLI installed at `D:\12412\npm-global\claude.ps1`. `claude -p "say hello"` hangs (likely needs interactive OAuth login). No `ANTHROPIC_API_KEY` in environment.
+2. **Codex** (codex-cli 0.146.0): CLI installed. `codex exec "say hello"` fails with `refresh_token_reused` (401 Unauthorized). Token expired, needs re-login.
+3. **Pi** (1.0.4): CLI installed. `pi` reports "No API key found for the selected model." Needs `/login` or API key.
+4. **OpenCode**: Not installed (package `@opencode/cli` 2.3.0 exists on npm but not locally installed).
+5. **Copilot**: Listed as available but not tested (requires GitHub Copilot subscription).
+6. **Antigravity**: CLI not found.
+7. **Muse**: Not installed.
+
+**Available API keys in user environment:**
+- `DEEPSEEK_API_KEY` (sk-c698...ede4)
+- `XIAOMI_API_KEY` (sk-cjwu...9ug)
+- `OPENCODE_GO_API_KEY` (sk-pPzj...vRq0)
+
+**None of these match Paseo's supported providers** (claude, codex, copilot, pi, opencode, antigravity, muse).
+
+**Alternative paths:**
+1. Install OpenCode CLI (`npm install -g @opencode/cli`) and configure with `OPENCODE_GO_API_KEY` — may work if OpenCode supports OpenAI-compatible endpoints.
+2. Re-authenticate Claude Code (`claude login`) or Codex (`codex login`) — requires interactive browser OAuth.
+3. Configure Paseo to use a custom ACP provider pointing to a DeepSeek-compatible endpoint — requires ACP provider configuration research.
+4. Use a mock/echo provider for pipeline testing — does not constitute real Agent evidence.
+
+**Conclusion:** Paseo daemon infrastructure (start, session create, persist, provider list) is verified. Real Agent turn completion is BLOCKED by provider authentication, not by Paseo itself. This is a concrete, reproducible blocker with specific failure logs.
 
 ## V5: Session persistence across daemon restart ✅ PASS
 - Killed daemon process (Stop-Process -Force)
