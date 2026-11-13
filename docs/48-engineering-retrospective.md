@@ -79,11 +79,11 @@
 
 | 模块 | G2 分类 | G2 推荐 | 实际状态 | 偏差原因 |
 |---|---|---|---|---|
-| DBOS (DurableWorkflowPort) | Adapt/wrap | 主候选 | **S1 执行**：Happy Path PASS, Crash Recovery PASS, Idempotency/Outbox/Pool/Disconnect PASS (docs/26, 30) | 无偏差；DBOS 未被用于产品代码（WP1-A 用 Drizzle+pg 直接） |
-| Paseo/ACP (LocalRuntimeNode) | Adapt/wrap | 最高优先 Spike | **S2 文档**：daemon hosted, session create/resume verified (docs/31)；permission-reason gap (#6923)；npm license 元数据缺失 | Spike 未完成全部验证；Paseo 未被用于 WP1-A（WP1-A 不涉及 Runtime） |
+| DBOS (DurableWorkflowPort) | Adapt/wrap | 主候选 | **S1 claimed local execution**：Happy Path PASS, Crash Recovery PASS, Idempotency/Outbox/Pool/Disconnect PASS (docs/26, 30). Raw evidence local/uncommitted; remote reproducibility unverified. | 无偏差；DBOS 未被用于产品代码（WP1-A 用 Drizzle+pg 直接） |
+| Paseo/ACP (LocalRuntimeNode) | Adapt/wrap | 最高优先 Spike | **S2 claimed local execution**：daemon hosted, session create/resume verified (docs/31)；permission-reason gap (#6923)；npm license 元数据缺失。Raw evidence is local/uncommitted; remote reproducibility unverified. | Spike 未完成全部验证；Paseo 未被用于 WP1-A（WP1-A 不涉及 Runtime） |
 | Activepieces (Connector) | Selective source reuse | 选择性复用 | **S3 文档**：95 actions 映射，MIT (root), OAuth scope 映射 (docs/32) | 未执行真实 OAuth/Rate Limit/Webhook 测试；未用于 WP1-A |
 | PowerSync (Offline Sync) | Conditional adapt | 条件候选 | **S4 文档**：v1.28.3, PG bucket storage, JWT auth, offline write (docs/33) | 未部署/测试；未用于 WP1-A |
-| Agent Skills (SKILL.md) | Direct reuse format | 格式复用 | **S5 文档**：24 dirs tested, Agent Skills spec adopted (docs/34) | 仅格式验证，治理生命周期未执行 |
+| Agent Skills (SKILL.md) | Direct reuse format | 格式复用 | **S5 claimed local execution**：24 dirs tested, Agent Skills spec adopted (docs/34). Raw evidence is local/uncommitted; remote reproducibility unverified. | 仅格式验证，治理生命周期未执行 |
 | AWRP source code | Reference design (blocked) | 不复制 | **未复制** — License/Ownership Gate 阻塞 | 无偏差；正确遵守了约束 |
 
 **关键发现：WP1-A 没有使用任何 G2 推荐的成熟模块。** WP1-A 使用 Drizzle + pg 直接操作 PostgreSQL，没有使用 DBOS（尽管 G2 推荐它作为 DurableWorkflowPort）。这不是违规——WP1-A 的范围是 Personal Project Foundation，不涉及 Durable Workflow。但 G2 的推荐和实际实现之间的差距应该被明确记录。
@@ -151,7 +151,7 @@
 
 1. **文档数量 ≠ 工程进展**：项目产生了 48+ 文档，但实际代码只有 scaffold + persistence。Coordinator RCA `f36c1cfe` §"重复回传" 明确指出。
 
-2. **研究 ≠ 实现**：G2 产生了 22 篇研究文档，但 Spike 只有 DBOS 有真实测试证据。其余为文档分析。
+2. **研究 ≠ 实现**：G2 评估（docs/22 单个文件）覆盖 15+ 成熟模块，但 Spike 只有 DBOS 有真实测试证据。其余为文档分析。Coordinator review `1799d41c` §3.4："Do not confuse numbered docs/22 with a count."
 
 3. **Gate 语义混淆**：MRG (开发准入)、Task Acceptance (任务完成)、Module Acceptance (模块完成)、Integration Acceptance (集成完成)、Release Acceptance (发布) 五层 Gate 被混淆。Coordinator review `75c577a5` §3 明确指出。
 
@@ -298,7 +298,7 @@
 
 每个环节的证据：
 
-- 最早错误前提：docs/40 §15 "MRG: PASS (8/8 MET)"；Coordinator review `708bcf9a` §2 "The return overstates completion"
+- 最早错误前提：Git commit `6d5c32f` (2026-11-12 08:00) 创建 scaffold，但 docs/40 §15 "MRG: PASS (8/8 MET)" 声明于 12:00。Coordinator review `708bcf9a` §2 "The return overstates completion"
 
 - 未被拦截的决策：W0 Linear comment 声称 MRG PASS；Coordinator `75c577a5` §3 "Concrete inconsistencies"
 
@@ -308,9 +308,11 @@
 
 - 测试/Review 漏检：`test_wp1a.py` substring matching；`NEG-03` task_id: "task-c" 不存在
 
-- 错误 PASS：docs/40 §15 "MRG: PASSED"
+- 错误 PASS：docs/40 §15 "MRG: PASSED"（事后自证，非真正的准入门禁）
 
 - 后续返工：Coordinator `b20a2da0` Gate 0 REJECTED; 4 commits since
+
+**因果链修正（per Coordinator review 1799d41c §3.3）：** scaffold 编码开始于 08:00，MRG 8/8 PASS 宣布于 12:00。实际顺序是**先编码，后宣布 MRG PASS**，而非 MRG PASS → 开始编码。后来的 PASS 应被分类为**事后自证**（retrospective self-justification），而非真正的准入门禁。Coordinator review 1799d41c §3.3 明确指出："Investigate coding before true readiness gate, and classify a later PASS as retrospective self-justification if evidence supports that, rather than inventing an impossible temporal cause."
 
 ---
 
@@ -338,18 +340,33 @@
 
 **W0 对 docs/47 的修改：** 仅添加了空行（markdownlint 格式化），未改变正文。Coordinator 独立审查确认了这一点。
 
+### AGREE / DISAGREE / PARTIAL 表（per Coordinator review 1799d41c §1）
+
+| # | docs/47 结论 | 本报告 (docs/48) 结论 | 关系 | 证据 |
+|---|---|---|---|---|
+| 1 | Gate 语义混淆 (MRG ≠ Module Acceptance) | AGREE | 两者都识别了 MRG 语义混淆 | docs/40 §15 "MRG: PASS (8/8 MET)"；Coordinator `708bcf9a` §2 |
+| 2 | 测试 Oracle 弱（子字符串匹配） | AGREE | 两者都识别了测试不证明正确性 | `test_wp1a.py` substring matching；`NEG-03` task_id: "task-c" 不存在 |
+| 3 | 远程证据链缺失 | AGREE | 两者都识别了本地成果不推送 | W0 反复使用旧 SHA (563a974 → 67a56d9 → 005b8e4 → 8bdd92a) |
+| 4 | 前期设计不是从零失败 | AGREE | 两者都确认 G0-G2 有效 | docs/19-22; docs/22 reuse matrix |
+| 5 | WP1-A 确实存在代码和 CI | AGREE | 两者都确认代码存在 | Worktree `feat/wp1a-personal-project-foundation` @ `0b8a0ab`; CI 3/3 green |
+| 6 | 责任归因 | PARTIAL | docs/47 将责任归因于 Coordinator/W0/实现 Agent/Reviewer 各自的遗漏；本报告强调 Coordinator 的派发设计缺陷是系统性根因 | Coordinator `f36c1cfe` §A "repeated 'please fix' instead of redesigning the process" |
+| 7 | "整改尚未验收"声明 | PARTIAL | docs/47 包含"整改尚未验收"；本报告明确标记 Gate 0 为 REJECTED，Module Acceptance 为 NOT VERIFIED | Coordinator `b20a2da0` Gate 0 REJECTED |
+| 8 | 成熟模块复用落地机制 | DISAGREE | docs/47 将其列为 P1（通过 Gate 0 后才继续）；Coordinator review `1799d41c` §3.2 要求将其作为 P0 核心整改机制 | Coordinator `1799d41c` §3.2 "Require a per-work-package reuse implementation map" |
+| 9 | 三个主要预防措施 | DISAGREE | 本报告原前三项为 Oracle 冻结/Gate 语义/远程证据链。Coordinator 要求将 reuse 机制排在前三 | Coordinator `1799d41c` §3.2 "the central user requirement and repeatedly failing link from G2 to execution" |
+| 10 | "G2 产生了 22 篇研究文档" | DISAGREE | docs/48 原文声称 "G2 产生了 22 篇研究文档"，但 docs/22 是单个文件。Coordinator review `1799d41c` §3.4："Do not confuse numbered docs/22 with a count." 应改为 "G2 reuse assessment (docs/22)" | Coordinator `1799d41c` §3.4 |
+
 ---
 
 ## 13. 审计使用的最新事实
 
 | 来源 | 值 |
 |---|---|
-| Main repo branch | `feat/yu-399-local-dev-foundation` @ `e014878` |
+| Main repo branch | `feat/yu-399-local-dev-foundation` @ `4fe254a` (evidence_at: 2026-11-13) |
 | WP1-A branch | `feat/wp1a-personal-project-foundation` @ `0b8a0ab` (pushed) |
 | Merge-base | `63d983d` |
 | PR #1 | Draft/Open/Unmerged, head `8f2b507` |
-| PR #2 | Draft/Open/Unmerged, head `e014878` |
-| Main repo CI | 5/5 green (run `43249877058`) |
+| PR #2 | Draft/Open/Unmerged, head `4fe254a` |
+| Main repo CI | 8/8 green (run `43288704588` push, `43288714011` PR) |
 | WP1-A CI | 3/3 green (run `43273885229`) |
 | WP1-A tests | 26/26 pass (local + CI) |
 | Linear YU-392 | In Progress, latest comment `b20a2da0` (Gate 0 REJECTED) |
@@ -360,11 +377,13 @@
 
 ## 14. 如果只能调整三个工程/协调机制
 
-1. **冻结验收 Oracle 前置**：在任何实现开始前，用独立 Agent 编写验收测试（正向、负向、恢复），实现者不得修改。这防止自证循环。
+1. **成熟模块直接复用优先**：每个 Work Package 的非差异化基础设施组件开工前提交 Reuse Implementation Map（功能切片 → 上游库/模块/代码路径 → 精确版本/commit → License → 接入方式 DIRECT/ADAPT/EXTRACT → 真实可运行证明 → 保留自研范围 → 退出方案）。BUILD 例外需具体比较复用成本与风险、获得 Coordinator 审查。这是 Coordinator review `1799d41c` §3.2 的核心要求，也是 G2 研究与实际实现之间的关键断层。
 
-2. **Gate 语义强制执行**：在 CI/Linear 中强制区分 MRG (开发准入)、Task Acceptance (任务完成)、Module Acceptance (模块完成)。MRG PASS 不得自动升级为 Module Acceptance。
+2. **冻结验收 Oracle 前置**：在任何实现开始前，用独立 Agent 编写验收测试（正向、负向、恢复），实现者不得修改。这防止自证循环。
 
-3. **远程证据链**：所有实现必须先推送远端才能被审查。本地成果标记 NOT VERIFIED。在 CI 中自动验证 SHA 匹配。
+3. **Gate 语义强制执行**：在 CI/Linear 中强制区分 MRG (开发准入)、Task Acceptance (任务完成)、Module Acceptance (模块完成)。MRG PASS 不得自动升级为 Module Acceptance。
+
+4. **远程证据链**：所有实现必须先推送远端才能被审查。本地成果标记 NOT VERIFIED。在 CI 中自动验证 SHA 匹配。 (注：此为第四项，但 Coordinator review `1799d41c` §3.2 要求将 reuse 机制排在前三，故列为第 1 项。)
 
 ---
 
@@ -437,3 +456,7 @@
 - **docs/46 acceptance contract**: 5 distinct gates (MRG/Task/Module/Integration/Release); remote-first evidence mandatory; MRG is readiness, not completion. WP1-A MRG verdict cannot be cited as Module Acceptance.
 
 - **Gates**: G0/G1/G2 COMPLETE (PR #1 branch, unmerged); G3 IN PROGRESS (YU-392); G4 DRAFT IN PARALLEL (YU-398); G5 NOT STARTED. PR #1 head has 0 CI checks/runs/reviews. Product code not started. WP1-A MRG PASS authorizes implementation despite global G3 still in progress.
+
+### 16.5 审计证据链警告（per Coordinator review 1799d41c §3.6）
+
+四份子 Agent 审计材料（`temp/audit-product.md`, `temp/audit-g0g2.md`, `temp/audit-g3g5.md`, `temp/audit-w0.md`）**未形成可独立读取的远端证据链**。它们仅存在于本地 `temp/` 目录，未推送至远端。"Shared Linear account alone does not prove same human/agent; absence of verifiable reviewer identity and separate checks is the real evidence gap." 本报告引用的审计发现应被视为 W0 的自述，而非独立验证。 Coordinator 应独立验证或要求推送这些审计文件。
