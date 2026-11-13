@@ -134,12 +134,12 @@ describe("WP1-A command contract (product code)", () => {
     const dep1 = await executor.execute({
       envelope: { commandId: "c14", idempotencyKey: "k14", actor: "personal-owner-1", personalSpaceId: "ps-1", createdAt: new Date().toISOString(), correlationId: "corr14", causationId: "cause14" },
       intent: "AddDependency",
-      payload: { source: t1.taskId as string, target: t2.taskId as string },
+      payload: { sourceTaskId: t1.taskId as string, targetTaskId: t2.taskId as string },
     });
     const dep2 = await executor.execute({
       envelope: { commandId: "c15", idempotencyKey: "k15", actor: "personal-owner-1", personalSpaceId: "ps-1", createdAt: new Date().toISOString(), correlationId: "corr15", causationId: "cause15" },
       intent: "AddDependency",
-      payload: { source: t2.taskId as string, target: t1.taskId as string },
+      payload: { sourceTaskId: t2.taskId as string, targetTaskId: t1.taskId as string },
     });
     assert.equal(dep2.status, "REJECTED");
     assert.ok((dep2.reason ?? "").toLowerCase().includes("cycle"), `expected cycle, got ${dep2.reason}`);
