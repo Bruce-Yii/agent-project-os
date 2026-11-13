@@ -25,7 +25,7 @@ describe("WP1-A command contract (product code)", () => {
   after(async () => {
     try { await closeDb(pool); } catch { /* already closed */ }
     await new Promise((r) => setTimeout(r, 1000));
-    await pg.stop().catch(() => {});
+    await pg.stop().catch((e: any) => { if (!String(e?.message || e).includes("terminating connection")) throw e; });
   });
 
   it("bootstrap PersonalSpace is idempotent", async () => {
@@ -136,7 +136,7 @@ describe("WP1-A command contract (product code)", () => {
       intent: "AddDependency",
       payload: { source: t1.taskId as string, target: t2.taskId as string },
     });
-    assert.equal(dep1.status, "OK");
+    console.log("DEBUG dep1:", JSON.stringify(dep1));\n    assert.equal(dep1.status, "OK");
     const dep2 = await executor.execute({
       envelope: { commandId: "c15", idempotencyKey: "k15", actor: "personal-owner-1", personalSpaceId: "ps-1", createdAt: new Date().toISOString(), correlationId: "corr15", causationId: "cause15" },
       intent: "AddDependency",

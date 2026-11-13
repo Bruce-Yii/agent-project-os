@@ -24,7 +24,7 @@ describe("WP1-A persistence (PostgreSQL)", () => {
   after(async () => {
     try { await closeDb(pool); } catch { /* already closed */ }
     await new Promise((r) => setTimeout(r, 1000));
-    await pg.stop().catch(() => {});
+    await pg.stop().catch((e: any) => { if (!String(e?.message || e).includes("terminating connection")) throw e; });
   });
 
   it("save and read PersonalSpace", async () => {

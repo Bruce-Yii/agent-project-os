@@ -89,7 +89,7 @@ await new Promise((r) => setTimeout(r, 60000));
       await closeDb(pool);
       // Allow lingering connections to close before stopping container
       await new Promise((r) => setTimeout(r, 500));
-      await pg.stop().catch(() => {});
+      await pg.stop().catch((e: any) => { if (!String(e?.message || e).includes("terminating connection")) throw e; });
     }
   });
 });
