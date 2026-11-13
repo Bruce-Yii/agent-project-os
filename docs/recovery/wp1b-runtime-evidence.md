@@ -163,3 +163,18 @@ Providers that can be tried by user:
 2. Codex: run codex login in local terminal (OAuth)
 3. OpenCode: add credits at https://opencode.ai/console
 4. Pi: run pi then /login to configure a provider
+
+## V4d: OpenCode Go free model attempt (2026-11-14)
+
+OpenCode Go configured with OPENCODE_GO_API_KEY. Attempted:
+- opencode run --model opencode/gemini-4-hydrogen -> Insufficient balance
+- opencode run --model goat/deepseek/deepseek-v4-flash -> API key expired
+
+Free models listed but still require account credits.
+
+API key verification:
+- DEEPSEEK_API_KEY -> 402 Payment Required (no credits)
+- XIAOMI_API_KEY -> SSL error (wrong endpoint)
+- OPENCODE_GO_API_KEY -> 405 Method Not Allowed (wrong endpoint) / Insufficient balance (via CLI)
+
+ALL providers blocked. Real turn completion requires user action.
