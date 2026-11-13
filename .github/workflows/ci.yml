@@ -36,23 +36,10 @@ jobs:
           args: --offline --no-progress './**/*.md'
           fail: true
 
-  dag-validate:
-    name: Dependency DAG cycle check
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v6
-      - name: Validate DAG (no cycles)
-        run: python scripts/validate_dag.py
-
-  wp1a-fixture-test:
-    name: WP1-A fixture validation
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v6
-      - name: Run WP1-A fixture harness
-        run: python tests/wp1a/test_wp1a.py
+  # The historical docs/24 DAG is ADAPT/PENDING and not in this clean base.
+  # The legacy in-memory WP1-A fixture harness is QUARANTINED (weak oracle).
+  # Do not run checks whose source is absent or rejected. Real WP1-A tests
+  # belong to the stacked implementation PR and must use the real module.
 
   checksum-verify:
     name: Manifest checksum verification
