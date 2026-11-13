@@ -24,7 +24,7 @@ describe("WP1-A command contract (product code)", () => {
 
   after(async () => {
     try { await closeDb(pool); } catch { /* already closed */ }
-    await new Promise((r) => setTimeout(r, 1000));
+    await new Promise((r) => setTimeout(r, 2000));
     await pg.stop().catch((e: any) => { if (!String(e?.message || e).includes("terminating connection")) throw e; });
   });
 
