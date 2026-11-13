@@ -1,4 +1,4 @@
-import { describe, it } from "node:test";
+import { describe, it, after } from "node:test";
 import assert from "node:assert/strict";
 import { spawnSync } from "node:child_process";
 import { writeFileSync, unlinkSync } from "node:fs";
@@ -55,12 +55,34 @@ await new Promise((r) => setTimeout(r, 60000));
       cwd: root,
       env,
       timeout: 3000,
-      stdio: "ignore",
+      stdio: "pipe",
     });
+    console.log("CHILD STDOUT:", result.stdout?.toString());
+    console.log("CHILD STDERR:", result.stderr?.toString());
+    console.log("CHILD STATUS:", result.status, "SIGNAL:", result.signal, "ERROR:", result.error);
 
-    // Verify child was terminated by timeout (expected) or completed
-    assert.ok(result.signal === "SIGTERM" || result.status === 0,
-      `child should have been terminated by timeout (SIGTERM) or completed (0), got status=${result.status} signal=${result.signal}`);
+    // Verify child was terminated by timeout (expected) or completed normally.
+    // Reject spawn errors (other than the expected ETIMEDOUT from spawnSync),
+    // crashes, unexpected signals, and non-zero exits.
+    const isTimeout =
+      !!result.error && (result.error as { code?: string }).code === "ETIMEDOUT";
+    assert.ok(
+      isTimeout || result.error === null || result.error === undefined,
+      `child spawn failed: ${result.error}`,
+    );
+    assert.ok(
+      isTimeout || result.signal === "SIGTERM" || result.status === 0,
+      `child should have been terminated by timeout (SIGTERM) or completed (0), got status=${result.status} signal=${result.signal} error=${result.error}`,
+    );
+    // Explicitly reject any other combination (crash, signal, non-zero exit).
+    if (!isTimeout && result.signal !== "SIGTERM" && result.status !== 0) {
+      assert.fail(
+        `unexpected child exit: status=${result.status} signal=${result.signal}`,
+      );
+    }
+    if (!isTimeout && result.error != null) {
+      assert.fail(`unexpected spawn error: ${result.error}`);
+    }
 
     try { unlinkSync(childPath); } catch { /* ignore */ }
 
@@ -90,6 +112,18 @@ await new Promise((r) => setTimeout(r, 60000));
       });
       assert.equal(replay.status, "OK", "idempotency replay should return OK");
       assert.equal(replay.projectId, restartProj!.id, "replay must return same projectId (persisted idempotency)");
+
+      // Verify replay returns the same stored receipt.
+      const { rows: receiptRows } = await pool.query(
+        "SELECT receipt_id FROM command_receipts WHERE idempotency_key = $1",
+        ["rk-proj"],
+      );
+      assert.equal(receiptRows.length, 1, "exactly one receipt should be stored");
+      assert.equal(
+        replay.receiptId,
+        receiptRows[0].receipt_id,
+        "replay must return same stored receipt",
+      );
 
       // Verify exactly one project row (no duplicate from replay)
       const projectsAfter = await projRepo.findBySpace("restart-ps");

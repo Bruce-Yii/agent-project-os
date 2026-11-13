@@ -4,6 +4,8 @@
 
 import { randomUUID } from "node:crypto";
 import type { Pool } from "pg";
+import type { Db } from "./db.js";
+import { sql } from "drizzle-orm";
 
 export interface Receipt {
   readonly receiptId: string;
@@ -36,7 +38,7 @@ export class ReceiptRecorder {
     this.pool = pool;
   }
 
-  async record(input: ReceiptInput): Promise<Receipt> {
+  async record(input: ReceiptInput, tx?: Db): Promise<Receipt> {
     const receipt: Receipt = {
       receiptId: randomUUID(),
       commandId: input.commandId,
@@ -48,26 +50,26 @@ export class ReceiptRecorder {
       details: input.details,
     };
 
-    if (this.pool) {
-      try {
-        await this.pool.query(
-          `INSERT INTO command_receipts (receipt_id, command_id, idempotency_key, actor, intent, status, details, recorded_at)
-           VALUES ($1, $2, $3, $4, $5, $6, $7, $8)`,
-          [
-            receipt.receiptId,
-            receipt.commandId ?? null,
-            receipt.idempotencyKey ?? null,
-            receipt.actor ?? null,
-            receipt.intent ?? null,
-            receipt.status,
-            receipt.details ? JSON.stringify(receipt.details) : null,
-            receipt.recordedAt,
-          ],
-        );
-      } catch (err) {
-        // Log but don't fail the command; receipt is best-effort audit
-        console.error("Receipt recording failed:", err);
-      }
+    if (tx) {
+      await tx.execute(
+        sql`INSERT INTO command_receipts (receipt_id, command_id, idempotency_key, actor, intent, status, details, recorded_at)
+            VALUES (${receipt.receiptId}, ${receipt.commandId ?? null}, ${receipt.idempotencyKey ?? null}, ${receipt.actor ?? null}, ${receipt.intent ?? null}, ${receipt.status}, ${receipt.details ? JSON.stringify(receipt.details) : null}::jsonb, ${receipt.recordedAt})`,
+      );
+    } else if (this.pool) {
+      await this.pool.query(
+        `INSERT INTO command_receipts (receipt_id, command_id, idempotency_key, actor, intent, status, details, recorded_at)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8)`,
+        [
+          receipt.receiptId,
+          receipt.commandId ?? null,
+          receipt.idempotencyKey ?? null,
+          receipt.actor ?? null,
+          receipt.intent ?? null,
+          receipt.status,
+          receipt.details ? JSON.stringify(receipt.details) : null,
+          receipt.recordedAt,
+        ],
+      );
     }
 
     return receipt;

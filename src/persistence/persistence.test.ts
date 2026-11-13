@@ -6,31 +6,47 @@ import { migrate } from "./migrate.js";
 import { startDisposablePg, type DisposablePg } from "./disposable-pg.js";
 import { randomUUID } from "node:crypto";
 
+// Swallow "terminating connection" errors from pg when container stops.
+// These are async socket errors that fire after pool.end() resolves.
+process.on("uncaughtException", (err: Error) => {
+  if (String(err?.message || err).includes("terminating connection")) return;
+  throw err;
+});
+
 describe("WP1-A persistence (PostgreSQL)", () => {
   let pg: DisposablePg;
   let pool: any;
   let dbPool: any; // separate pool from createDb()
   let db: any;
+  const pools: any[] = [];
 
   before(async () => {
     // Container created exclusively by test process; connection URI from container only.
     pg = await startDisposablePg();
     const { Pool } = await import("pg");
     pool = new Pool({ connectionString: pg.connectionUri });
+    pools.push(pool);
     await migrate(pg.connectionUri);
     const result = createDb(pg.connectionUri);
     db = result.db;
-    dbPool = result.pool; // store the second pool for cleanup
+    dbPool = result.pool;
+    pools.push(dbPool);
   });
 
   after(async () => {
     // Close ALL pools before stopping container
+    for (const p of pools) {
+      try { await closeDb(p); } catch { /* already closed */ }
+    }
+    pools.length = 0;
+    // Also close tracked outer pools in case they weren't in the array
     try { await closeDb(pool); } catch { /* already closed */ }
     try { await closeDb(dbPool); } catch { /* already closed */ }
-    // Explicit container stop (not relying on Ryuk alone)
-    await new Promise((r) => setTimeout(r, 2000));
+    // Wait for all sockets to drain before stopping container
+    await new Promise((r) => setTimeout(r, 4000));
     await pg.stop().catch((e: any) => {
-      if (!String(e?.message || e).includes("terminating connection")) throw e;
+      const msg = String(e?.message || e);
+      if (!msg.includes("terminating connection")) throw e;
     });
   });
 
@@ -92,13 +108,20 @@ describe("WP1-A persistence (PostgreSQL)", () => {
   });
 
   it("restart recovery: close connection, reopen, read back", async () => {
-    await closeDb(pool);
+    // close all tracked pools
+    for (const p of [...pools]) {
+      try { await closeDb(p); } catch { /* already closed */ }
+    }
+    pools.length = 0;
     const { Pool } = await import("pg");
     const newPool = new Pool({ connectionString: pg.connectionUri });
+    pools.push(newPool);
     pool = newPool;
-    const { db: newDb } = createDb(pg.connectionUri);
-    db = newDb;
-    const repo = new ProjectRepository(newDb);
+    const result = createDb(pg.connectionUri);
+    db = result.db;
+    dbPool = result.pool;
+    pools.push(dbPool);
+    const repo = new ProjectRepository(db);
     const found = await repo.findById("proj-1");
     assert.ok(found, "Project should survive connection restart");
     assert.equal(found!.name, "Updated Project");

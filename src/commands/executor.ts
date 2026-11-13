@@ -77,65 +77,96 @@ export class CommandExecutor {
     return `${command.envelope.actor}::${command.envelope.idempotencyKey}`;
   }
 
+  private canonicalPayload(command: Command): string {
+    const obj = { intent: command.intent, payload: command.payload ?? {} };
+    const keys = Object.keys(obj).sort();
+    const canon = (v: unknown): string => {
+      if (v === null || typeof v !== "object") return JSON.stringify(v);
+      if (Array.isArray(v)) return "[" + v.map(canon).join(",") + "]";
+      const ks = Object.keys(v as object).sort();
+      return "{" + ks.map((k) => JSON.stringify(k) + ":" + canon((v as Record<string, unknown>)[k])).join(",") + "}";
+    };
+    return canon(obj);
+  }
+
   async execute(command: Command): Promise<CommandResult> {
     const ikey = this.idempotencyKey(command);
+    const payloadCanonical = this.canonicalPayload(command);
 
-    // Idempotency: check DB-backed store first.
-    const stored = await this.idempotencyStore.get(ikey);
-    if (stored) {
-      return { ...(stored as CommandResult) };
-    }
-
-    // Authorization: Owner-only, fail-closed.
-    if (command.envelope.actor !== this.owner) {
-      const result: CommandResult = { status: "REJECTED", reason: "unauthorized" };
-      await this.idempotencyStore.set(ikey, command.envelope.actor, result);
-      return result;
-    }
-
-    let result: CommandResult;
     try {
-      result = await runInTransaction(this.db, async (tx) => {
-        const ctx = {
-          db: tx,
-          command,
-          executor: this,
-        };
-        return dispatchCommand(ctx, command);
+      return await runInTransaction(this.db, async (tx) => {
+        // Idempotency: check DB-backed store first (inside transaction).
+        const storedRec = await this.idempotencyStore.getRecord(ikey, tx);
+        if (storedRec) {
+          if (storedRec.payload && storedRec.payload !== payloadCanonical) {
+            return { status: "REJECTED", reason: "CONFLICT" };
+          }
+          return { ...(storedRec.result as Record<string, unknown>) } as CommandResult;
+        }
+
+        // Authorization: Owner-only, fail-closed.
+        if (command.envelope.actor !== this.owner) {
+          const result: CommandResult = { status: "REJECTED", reason: "unauthorized" };
+          await this.idempotencyStore.set(ikey, command.envelope.actor, result, payloadCanonical, tx);
+          return result;
+        }
+
+        let result: CommandResult;
+        try {
+          const ctx = { db: tx, command, executor: this };
+          result = await dispatchCommand(ctx, command);
+        } catch (err) {
+          const message = err instanceof Error ? err.message : String(err);
+          if (message === "STALE_VERSION") {
+            result = { status: "REJECTED", reason: "STALE_VERSION" };
+          } else if (message === "unauthorized") {
+            result = { status: "REJECTED", reason: "unauthorized" };
+          } else {
+            result = { status: "REJECTED", reason: message };
+          }
+        }
+
+        // Receipt: record mutation on success (same transaction).
+        if (result.status === "OK") {
+          const receipt = await this.receiptRecorder.record(
+            {
+              commandId: command.envelope.commandId,
+              idempotencyKey: command.envelope.idempotencyKey,
+              actor: command.envelope.actor,
+              intent: command.intent,
+              status: "recorded",
+              details: {
+                personalSpaceId: command.envelope.personalSpaceId,
+                projectId: command.envelope.projectId,
+                taskId: command.envelope.taskId,
+              },
+            },
+            tx,
+          );
+          (result as Record<string, unknown>).receiptId = receipt.receiptId;
+          (result as Record<string, unknown>).receipt = receipt;
+        }
+
+        // Persist idempotency record (same transaction).
+        await this.idempotencyStore.set(ikey, command.envelope.actor, result, payloadCanonical, tx);
+
+        return { ...result };
       });
     } catch (err) {
       const message = err instanceof Error ? err.message : String(err);
-      if (message === "STALE_VERSION") {
-        result = { status: "REJECTED", reason: "STALE_VERSION" };
-      } else if (message === "unauthorized") {
-        result = { status: "REJECTED", reason: "unauthorized" };
-      } else {
-        result = { status: "REJECTED", reason: message };
+      if (message === "IDEMPOTENCY_CONFLICT") {
+        const storedRec = await this.idempotencyStore.getRecord(ikey, this.db);
+        if (storedRec) {
+          if (storedRec.payload && storedRec.payload !== payloadCanonical) {
+            return { status: "REJECTED", reason: "CONFLICT" };
+          }
+          return { ...(storedRec.result as Record<string, unknown>) } as CommandResult;
+        }
       }
+      if (message === "STALE_VERSION") return { status: "REJECTED", reason: "STALE_VERSION" };
+      if (message === "unauthorized") return { status: "REJECTED", reason: "unauthorized" };
+      return { status: "REJECTED", reason: message };
     }
-
-    // Receipt: record mutation on success (DB-backed).
-    if (result.status === "OK" && this.pool) {
-      const receipt = await this.receiptRecorder.record({
-        commandId: command.envelope.commandId,
-        idempotencyKey: command.envelope.idempotencyKey,
-        actor: command.envelope.actor,
-        intent: command.intent,
-        status: "recorded",
-        details: {
-          personalSpaceId: command.envelope.personalSpaceId,
-          projectId: command.envelope.projectId,
-          taskId: command.envelope.taskId,
-        },
-      });
-      (result as Record<string, unknown>).receiptId = receipt.receiptId;
-      (result as Record<string, unknown>).receipt = receipt;
-    }
-
-    // Persist idempotency record (DB-backed).
-    await this.idempotencyStore.set(ikey, command.envelope.actor, result);
-
-    return { ...result };
   }
 
   // Expose transactional execution helper for handlers/tests.
