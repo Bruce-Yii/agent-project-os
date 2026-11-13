@@ -1,0 +1,110 @@
+# WP1-B Paseo/ACP Runtime Evidence (2026-11-13)
+
+**Owner:** W0-RECOVERY (WP1-B real runtime validation)
+**Date:** 2026-11-13
+**Branch:** feat/wp1b-runtime-validation
+**Paseo version:** 0.15.4 (npm @getpaseo/server 0.15.4, Apache-2.0 source, npm license metadata "None"/"Proprietary" defect)
+**Isolated environment:** PASEO_HOME = D:\12412\DshWorktrees\agent-project-os\wp1b-runtime\.paseo-home (no user config touched)
+
+## V1: Daemon start ✅ PASS
+- Command: `node node_modules/@getpaseo/server/dist/scripts/supervisor-entrypoint.js`
+- Result: Server listening on http://127.0.0.1:6767
+- Health: `{"status":"ok"}` (GET /api/health)
+- Status: `{"status":"server_info","serverId":"srv_xqfFhWG0vQtP","version":"0.15.4"}`
+- Daemon keypair saved to isolated PASEO_HOME
+- Terminal worker launched (PID 12312)
+- Speech provider reconciliation completed (local dictation STT)
+- Web UI disabled (no dist directory — expected for dev)
+
+## V2: Provider list ✅ PASS
+- Method: `client.listAvailableProviders()`
+- 7 providers reported:
+  - claude: available=true
+  - codex: available=true
+  - copilot: available=true
+  - pi: available=true
+  - opencode: available=false (not installed)
+  - antigravity: available=false (CLI not found)
+  - muse: available=false (not installed)
+
+## V3: Session create ✅ PASS
+- Method: `client.createAgent({ provider: 'claude', model: 'claude-sonnet-4-20250514', ... })`
+- Agent ID: afde8558-62bb-482b-abdf-237e9dfb3455
+- Status: idle
+- Capabilities: supportsStreaming, supportsSessionPersistence, supportsSessionListing, supportsDynamicModes, supportsMcpServers, supportsReasoningStream, supportsToolInvocations, supportsRewindConversation, supportsRewindFiles, supportsRewindBoth
+- Available modes: plan, default, acceptEdits, auto, bypassPermissions
+- Workspace ID: wks_ee711cb6a879d295
+
+## V4: Message send ⚠️ PARTIAL
+- Method: `client.sendAgentMessage(agentId, 'Say hello in one sentence.', {})`
+- Result: `{}` (empty — response delivered via streaming events, not return value)
+- Agent status after message: not captured (getAgent returned undefined)
+- **Unknown:** Whether the message was fully processed and a response received. The daemon log shows the agent was created but no turn completion event was observed in the 5-second wait window.
+
+## V5: Session persistence across daemon restart ✅ PASS
+- Killed daemon process (Stop-Process -Force)
+- Restarted daemon: serverId identical (srv_xqfFhWG0vQtP)
+- `fetchAgent('afde8558-...')` returned the persisted agent with same ID, provider, cwd, model, createdAt
+- Session file exists on disk: `.paseo-home/agents/.../afde8558-62bb-482b-abdf-237e9dfb3455.json`
+- **Conclusion:** Session identity persists across daemon restart. File-based persistence works.
+
+## V6: Session resume ⚠️ NOT VERIFIED
+- `resumeAgent(handle)` requires `AgentPersistenceHandle` with `provider` and `sessionId` (native handle)
+- The agent's `runtimeInfo.sessionId` was `null` (turn did not complete, so no native session ID assigned)
+- **Conclusion:** Resume cannot be tested until a turn completes and assigns a native session ID. This is a real unknown, not a failure.
+
+## V7: Attach (second client) — NOT TESTED
+- Not executed in this round. Requires two concurrent WebSocket connections to the same daemon.
+
+## V8: Reconnect + history reconciliation — NOT TESTED
+- Not executed. Requires disconnect/reconnect sequence with event cursor tracking.
+
+## V9: Subpath/dependency audit ✅ PASS
+- Package: @getpaseo/server 0.15.4
+- License: package.json has no `license` field (npm reports "None"/"Proprietary")
+- Source repo LICENSE: Apache-2.0 (with third-party carve-out)
+- Exports: 10 subpaths (daemon-control, configuration, process, auth, pairing, agent-activity, agent-response, utils/tool-call-parsers, agent-hooks)
+- Root export eagerly loads daemon bootstrap — ADAPT requires subpath-only imports
+- Transitive deps: 302 packages (includes node-pty, sherpa-onnx-node, @xterm/headless, esbuild, @anthropic-ai/claude-agent-sdk)
+- Native binaries: 4 (node-pty, sherpa-onnx, etc.)
+
+## Permission decision reason (Risk #1) — NOT TESTED
+- Issue #6923 (permission reason) is still open (P2/triaged)
+- The reason carrier is the existing `description` field; no protocol change needed
+- **Recommendation:** Build first-class "reason unavailable" state rather than depending on upstream fix
+
+## Provider-session survivability across daemon restart (Risk #2) — PARTIALLY VERIFIED
+- PTYs survive (detached worker process)
+- Agent JSON rehydrates from disk
+- But native provider session (Claude's session ID) was null — turn didn't complete
+- **Conclusion:** Daemon-level session identity persists. Native provider session persistence is UNKNOWN until a turn completes.
+
+## Summary
+
+| Check | Result |
+|---|---|
+| V1 Daemon start | ✅ PASS |
+| V2 Provider list | ✅ PASS (7 providers, 4 available) |
+| V3 Session create | ✅ PASS |
+| V4 Message send | ⚠️ PARTIAL (sent, response via events not captured) |
+| V5 Session persist (restart) | ✅ PASS (file + fetchAgent) |
+| V6 Session resume | ⚠️ NOT TESTED (native handle null) |
+| V7 Attach (2nd client) | ❌ NOT TESTED |
+| V8 Reconnect + history | ❌ NOT TESTED |
+| V9 Subpath/dependency audit | ✅ PASS |
+
+## Recommendation
+
+Paseo 0.15.4 is a viable ADAPT candidate. The daemon starts, creates sessions, persists identity across restart, and lists providers. Key unknowns:
+1. Message response capture (need event subscription, not just sendAgentMessage return)
+2. Native session resume (needs completed turn to assign native handle)
+3. Attach/resume/reconnect (not yet tested)
+4. Permission reason (upstream issue open, build "unavailable" state)
+
+WP1-B MRG: 2 PARTIAL, 0 PASS (criteria from docs/24 §7 / Notion §14.4 not available in recovery base; reconstructed from docs/22 §6).
+
+## Evidence artifacts
+- Test script: `test-session.mjs` (in wp1b-runtime worktree, not committed — contains no secrets)
+- Daemon log: captured in terminal output (not persisted to file)
+- Session file: `.paseo-home/agents/.../afde8558-62bb-482b-abdf-237e9dfb3455.json`
+- PASEO_HOME: `D:\12412\DshWorktrees\agent-project-os\wp1b-runtime\.paseo-home` (isolated, no user config touched)

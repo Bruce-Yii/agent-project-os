@@ -1,0 +1,19 @@
+{
+  "name": "wp1b-runtime",
+  "version": "1.0.0",
+  "description": "> **Product requirements and development documentation · v0.7 · 2026-11-10**  \r > Product codename: **Agent Project OS** (working name; brand not frozen)",
+  "main": "index.js",
+  "directories": {
+    "doc": "docs"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "dependencies": {
+    "@getpaseo/server": "^0.15.4"
+  }
+}
