@@ -27,7 +27,7 @@ describe("WP1-A command contract (product code)", () => {
 
   after(async () => {
     try { await closeDb(pool); } catch { /* already closed */ }
-    await pg.stop().catch(() => {});
+    await new Promise((r) => setTimeout(r, 1000));\n    await pg.stop().catch(() => {});
   });
 
   function env(overrides: Record<string, unknown> = {}) {

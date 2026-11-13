@@ -17,7 +17,7 @@ describe("WP1-A migrations", () => {
 
   after(async () => {
     await pool.end().catch(() => {});
-    await pg.stop().catch(() => {});
+    await new Promise((r) => setTimeout(r, 1000));\n    await pg.stop().catch(() => {});
   });
 
   it("applies from empty DB", async () => {
