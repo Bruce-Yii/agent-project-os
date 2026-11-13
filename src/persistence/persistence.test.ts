@@ -4,6 +4,7 @@ import { createDb, closeDb } from "./db.js";
 import { PersonalSpaceRepository, ProjectRepository, TaskRepository, GoalRepository, DependencyRepository } from "./repositories.js";
 import { migrate } from "./migrate.js";
 import { assertDisposableDb } from "../test-guard.js";
+import { randomUUID } from "node:crypto";
 
 function getDbUrl(): string {
   const url = process.env.DATABASE_URL || process.env.WP1A_TEST_DB;

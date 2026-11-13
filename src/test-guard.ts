@@ -7,6 +7,7 @@
 // - Require DATABASE_URL or WP1A_TEST_DB env var (no fallback credentials)
 // - Actual connected DB name must start with an exact allowed prefix
 //   (not a regex substring match)
+// - If WP1A_TEST_NONCE is set, the DB name must contain it (per-run marker)
 // - Negative tests prove refusal on non-disposable targets
 
 import { Pool } from "pg";
@@ -48,6 +49,12 @@ export async function verifyDisposableDb(connectionString: string): Promise<DbGu
     const allowed = ALLOWED_DB_PREFIXES.some((prefix) => dbName.startsWith(prefix));
     if (!allowed) {
       return { ok: false, reason: `Database '${dbName}' does not start with an allowed test prefix (${ALLOWED_DB_PREFIXES.join(", ")})` };
+    }
+
+    // Check 5: if per-run nonce is set, DB name must contain it
+    const nonce = process.env.WP1A_TEST_NONCE;
+    if (nonce && !dbName.includes(nonce)) {
+      return { ok: false, reason: `Database '${dbName}' does not contain the per-run nonce '${nonce}' (not created by this test run)` };
     }
 
     return { ok: true, dbName };
