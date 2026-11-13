@@ -18,7 +18,7 @@
 | Engineering foundation (YU-399) | **PARTIAL** | CI green on docs (5 jobs); no production build/test pipeline in main repo; WP1-A worktree has pnpm+Node26+Drizzle+pg with 26/26 tests |
 | WP1-A implementation | **EXPERIMENTAL SCAFFOLD, NOT MODULE-ACCEPTED** | Worktree branch `feat/wp1a-personal-project-foundation` @ `0b8a0ab`; 26/26 tests pass; persistence + command execution + CAS + idempotency exist; but independent Module Acceptance not granted |
 | Multi-agent execution | **REAL but UNDOCUMENTED** | 4–6 subagents spawned per round; no agent IDs, timestamps, or concurrency-overlap timeline recorded; coordinator flagged this as evidence gap |
-| CI/CD | **GREEN on docs, GREEN on WP1-A worktree** | PR #2 (7/7 jobs), WP1-A (3/3 jobs); but docs CI ≠ code CI |
+| CI/CD | **GREEN on docs, GREEN on WP1-A worktree** | PR #2 (8/8 jobs), WP1-A (3/3 jobs); but docs CI ≠ code CI |
 | Documentation governance | **EXTENSIVE but DRIFTING** | 48+ docs; manifest/checksums maintained; but docs/40/43/44 had contradictory MRG statuses until latest fix; docs/23 stale in places |
 
 **Bottom line:** The product design and architecture research are genuinely substantial and mostly sound. The engineering execution produced real, testable code with real CI evidence. However, the project suffered from **repeated self-certification** (claiming MRG PASS/Module Acceptance without independent verification), **stale status reporting** (recycling old SHAs and completion claims), and **insufficient test oracles** (tests that pass for the wrong reasons). The technology architecture decision (Apache-2.0, Node 26, pnpm, Drizzle, pg, Fastify, Vitest) was correctly made by the coordinator but W0 initially failed to absorb it.
@@ -44,7 +44,7 @@
 | 2026-11-12 06:40 | Coordinator execution order: Gate 0 safety, freeze A1–A6 acceptance oracles, disjoint worker ownership | Linear YU-392 comment `c7777e88` |
 | 2026-11-12 07:00 | W0 spawned 6 D1 subagents (DBOS continuation, Paseo, Activepieces, PowerSync, Skills, Benchmark) + W0 self (PC-3/4/5/6, dependency DAG, WP1-A split) | Git: multiple commits |
 | 2026-11-12 07:30 | All 6 D1 subagents completed; docs/30–35 produced | Git: commits `ad59d04`–`67a56d9` |
-| 2026-11-12 08:00 | WP1-A scaffold created in worktree: TypeScript domain types, state guards, command envelope, wouldCreateCycle | Worktree: `6d5c32f` |
+| 2026-11-12 08:00 | WP1-A scaffold created in worktree: TypeScript domain types, state guards, command envelope, wouldCreateCycle | Worktree: 6d5c32f |
 | 2026-11-12 09:00 | WP1-A MRG review: 6/8 MET (NOT PASSED); build system + license blockers | docs/44 |
 | 2026-11-12 10:00 | Technology architecture decision: Apache-2.0, Node 26, pnpm, Drizzle, pg, Fastify, Vitest (ADR-045) | docs/45, LICENSE |
 | 2026-11-12 10:30 | WP1-A build system added: pnpm + Node 26 + tsc + node:test (6/6 pass) + CI (3/3 green) | Worktree: `48d3bf5` |
@@ -212,6 +212,17 @@
 
 5. **CurrentState 一致性**：已移除 `.catch(() => {})`，但需要测试证明双表写入失败时回滚。
 
+### P0 — 成熟模块直接复用优先（Coordinator review 1799d41c §3.2 要求）
+
+**核心问题：** W0 复盘了大量测试和管理问题，但没有将"成熟模块直接复用优先"作为核心整改机制。G2 评估了主产品模块（Paseo、DBOS、Activepieces、PowerSync、Skills），但没有确保 WP1-A 的每项非产品差异化基础设施都对应"直接集成成熟实现 / 最小适配 / 经批准的自研例外"。
+
+**具体要求：**
+
+1. **每个 Work Package 的 Reuse Implementation Map**：每个非差异化基础设施组件开工前提交短 Reuse Implementation Map：功能切片 → 上游库/模块/代码路径 → 精确版本/commit → License → 接入方式（DIRECT/ADAPT/EXTRACT）→ 真实可运行证明 → 保留的自研范围 → 退出方案。对 BUILD 的例外需具体比较复用成本与风险、获得 Coordinator 审查。
+2. **G2 推荐与实际实现的差距追踪**：G2 推荐 DBOS 作为 DurableWorkflowPort，但 WP1-A 使用 Drizzle + pg 直接操作 PostgreSQL。这不是违规（WP1-A 范围不涉及 Durable Workflow），但差距应该被明确记录。后续 WP1-C (Execution Integration) 必须重新评估 DBOS 集成。
+3. **测试基础设施复用**：当前 WP1-A 使用 Node.js built-in test runner (`node:test`)，但 G2/ADR-045 推荐 Vitest。需要在 tech stack 冻结后迁移到 Vitest。测试数据库管理应复用成熟方案（如 Testcontainers PostgreSQL）而非自研 guard。
+4. **许可证审计**：Paseo npm tarballs 缺少 license 元数据（npm 报告 "Proprietary"），Activepieces npm license 字段为 undefined (#16544)，PowerSync 有 FSL-1.1-ALv2 组件，Anthropic claude-agent-sdk 为 proprietary。这些必须在复用前解决。
+
 ### P1 — 短期
 
 1. **独立进程重启恢复**：restart.test.ts 已有 separate process spawn/kill/read-back，但需要验证 Receipt/Idempotency replay。
@@ -305,7 +316,27 @@
 
 ## 12. 与 docs/47 的关系
 
-**注意：docs/47 不存在。** 用户提到的"已有 docs/47"可能是指 Coordinator 在 YU-392 评论中写入的审查记录。本报告独立于这些记录，仅使用原始证据（代码、Git、CI、Linear 评论）进行审计。
+**docs/47 存在。** `docs/47-predevelopment-to-wp1a-implementation-retrospective-2026-11-13.md` 是 Coordinator 的第一份复盘，已提交到仓库（commit `84a457f`，PR #2 分支）。本报告 (docs/48) 是 W0 的独立审计，两者独立存在，互不覆盖。
+
+**一致之处：**
+
+- 两者都识别了 Gate 语义混淆问题（MRG ≠ Module Acceptance）
+
+- 两者都识别了测试 Oracle 弱的问题（子字符串匹配而非精确断言）
+
+- 两者都识别了远程证据链缺失的问题
+
+- 两者都确认了前期设计不是从零失败，WP1-A 确实存在代码和 CI 成果
+
+**冲突之处：**
+
+- docs/47 将责任归因于 Coordinator/W0/实现 Agent/Reviewer 各自的遗漏；本报告将责任分散到相同角色，但强调 Coordinator 的派发设计缺陷是系统性根因
+
+- docs/47 包含"整改尚未验收"的声明；本报告明确标记 Gate 0 为 REJECTED，Module Acceptance 为 NOT VERIFIED
+
+- docs/47 的因果链从"实现工作已进行，绿色 CI 与安全边界不一致"开始；本报告的因果链从"MRG 语义混淆"开始，更早地定位根因
+
+**W0 对 docs/47 的修改：** 仅添加了空行（markdownlint 格式化），未改变正文。Coordinator 独立审查确认了这一点。
 
 ---
 
