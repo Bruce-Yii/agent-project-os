@@ -87,6 +87,8 @@ await new Promise((r) => setTimeout(r, 60000));
       assert.equal(replay.status, "OK", "idempotency replay should return OK");
     } finally {
       await closeDb(pool);
+      // Allow lingering connections to close before stopping container
+      await new Promise((r) => setTimeout(r, 500));
       await pg.stop().catch(() => {});
     }
   });

@@ -90,7 +90,7 @@ describe("WP1-A command contract (product code)", () => {
       payload: { project_id: projId } as any as any,
     });
     assert.equal(r2.status, "REJECTED");
-    assert.ok((r2.reason ?? "").includes("invalid transition"), `expected invalid transition, got ${r2.reason}`);
+    assert.ok((r2.reason ?? "").toLowerCase().includes("invalid_transition"), `expected INVALID_TRANSITION, got ${r2.reason}`);
   });
 
   it("duplicate command returns stored result without re-executing", async () => {
@@ -142,7 +142,7 @@ describe("WP1-A command contract (product code)", () => {
       payload: { source: t2.taskId as string, target: t1.taskId as string },
     });
     assert.equal(dep2.status, "REJECTED");
-    assert.ok((dep2.reason ?? "").includes("cycle"), `expected cycle, got ${dep2.reason}`);
+    assert.ok((dep2.reason ?? "").toLowerCase().includes("cycle"), `expected cycle, got ${dep2.reason}`);
   });
 
   it("CreateProject -> CreateTask -> UpdateCurrentState round-trip", async () => {
