@@ -1,0 +1,64 @@
+// Drizzle schema for WP1-A (Personal Project Foundation).
+// Tech stack: PostgreSQL + Drizzle (per YU-392 decision pack).
+// Tech stack status: PROPOSED (P-021/P-022 not frozen).
+
+import { pgTable, text, timestamp, integer, boolean } from "drizzle-orm/pg-core";
+
+export const personalSpaces = pgTable("personal_spaces", {
+  id: text("id").primaryKey(),
+  owner: text("owner").notNull(),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  version: integer("version").notNull().default(1),
+});
+
+export const projects = pgTable("projects", {
+  id: text("id").primaryKey(),
+  spaceId: text("space_id").notNull().references(() => personalSpaces.id),
+  name: text("name").notNull(),
+  goal: text("goal").notNull().default(""),
+  status: text("status").notNull().default("draft"),
+  currentState: text("current_state"),
+  currentStateFreshness: text("current_state_freshness"),
+  currentStateSource: text("current_state_source"),
+  version: integer("version").notNull().default(1),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+});
+
+export const goals = pgTable("goals", {
+  id: text("id").primaryKey(),
+  projectId: text("project_id").notNull().references(() => projects.id),
+  title: text("title").notNull(),
+  description: text("description").notNull().default(""),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+});
+
+export const tasks = pgTable("tasks", {
+  id: text("id").primaryKey(),
+  projectId: text("project_id").notNull().references(() => projects.id),
+  title: text("title").notNull(),
+  scope: text("scope").notNull().default(""),
+  nonScope: text("non_scope").notNull().default(""),
+  acceptanceCriteria: text("acceptance_criteria").notNull().default(""),
+  parentId: text("parent_id"),
+  status: text("status").notNull().default("backlog"),
+  version: integer("version").notNull().default(1),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+});
+
+export const dependencyEdges = pgTable("dependency_edges", {
+  id: text("id").primaryKey(),
+  sourceTaskId: text("source_task_id").notNull().references(() => tasks.id),
+  targetTaskId: text("target_task_id").notNull().references(() => tasks.id),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+
+export const projectCurrentStates = pgTable("project_current_states", {
+  projectId: text("project_id").primaryKey().references(() => projects.id),
+  summary: text("summary").notNull().default(""),
+  freshness: text("freshness").notNull(),
+  source: text("source").notNull().default("owner"),
+  version: integer("version").notNull().default(1),
+});
