@@ -93,10 +93,34 @@ export class IdempotencyStore {
     }
 
     if (!this.pool) return;
+    const { rows: existing } = await this.pool.query(
+      "SELECT result_json FROM idempotency_records WHERE idempotency_key = $1",
+      [key],
+    );
+    if (existing.length > 0) {
+      const existingRaw = existing[0].result_json;
+      let existingPayload: string | undefined;
+      let existingResult: unknown = existingRaw;
+      if (existingRaw && typeof existingRaw === "object" && !Array.isArray(existingRaw)) {
+        const { __idempotencyPayload, ...rest } = existingRaw as Record<string, unknown>;
+        if (__idempotencyPayload !== undefined) {
+          existingPayload = String(__idempotencyPayload);
+          existingResult = rest;
+        }
+      }
+      // Compare canonical payloads if provided; otherwise compare results.
+      const conflict =
+        payload !== undefined
+          ? existingPayload !== payload
+          : JSON.stringify(existingResult) !== JSON.stringify(result);
+      if (conflict) {
+        throw new Error("IDEMPOTENCY_CONFLICT");
+      }
+      return;
+    }
     await this.pool.query(
       `INSERT INTO idempotency_records (idempotency_key, actor, result_json, recorded_at)
-       VALUES ($1, $2, $3, NOW())
-       ON CONFLICT (idempotency_key) DO NOTHING`,
+       VALUES ($1, $2, $3, NOW())`,
       [key, actor, JSON.stringify(toStore)],
     );
   }
