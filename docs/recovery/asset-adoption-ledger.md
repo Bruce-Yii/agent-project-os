@@ -10,8 +10,8 @@
 | Label | Branch | Full SHA | State |
 |---|---|---|---|
 | PR1-G0G2 | `docs/pre-development-readiness-2026-11-10` | `8f2b50707fef30b47294ebbcd07fc17583abcb11` | Draft/Open/Unmerged (base of this branch) |
-| PR2-G3 | `feat/yu-399-local-dev-foundation` | `c7ed525ce9b2a7c9cbb270078045a51eedd4524f` | Draft/Open/Unmerged |
-| WP1A | `feat/wp1a-personal-project-foundation` | `b6b828af66b239e3a827b962bfa5d5b83b61ff61` | Draft/Open/Unmerged, Gate 0 REJECTED |
+| PR2-G3 | `feat/yu-399-local-dev-foundation` | `c7ed525ce9b2a7c9cbb270078045a51eedd4524f` | CLOSED/UNMERGED/FROZEN (archive source only) |
+| WP1A | `feat/wp1a-personal-project-foundation` | `b6b828af66b239e3a827b962bfa5d5b83b61ff61` | QUARANTINED (no open PR, Gate 0 REJECTED) |
 | main | `main` | `6cdb0477cd03131ec62872e24990a30c6a15979d` | default |
 
 ## Ledger entries
@@ -32,9 +32,9 @@
 | A10 | Agent dev contract (docs/17) | PR1-G0G2 @ 8f2b507 | `docs/17-agent-development-contract.md` | ADOPT | |
 | A11 | Local Agent Session (docs/18) | PR1-G0G2 @ 8f2b507 | `docs/18-local-agent-session-subsystem.md` | ADOPT | |
 | A12 | AGENTS.md (root) | PR1-G0G2 @ 8f2b507 | `AGENTS.md` | ADOPT | Identity lock |
-| A13 | LICENSE (Apache-2.0) | PR1-G0G2 @ 8f2b507 | `LICENSE` | ADOPT | ADR-045 accepted |
-| A14 | ADR-045 tech stack | PR1-G0G2 @ 8f2b507 | `docs/45-technology-architecture-adr.md` | ADOPT | Node 26/pnpm/PG/Fastify/Drizzle |
-| A15 | docs/46 acceptance contract | PR1-G0G2 @ 8f2b507 | `docs/46-acceptance-and-remote-evidence-contract.md` | ADOPT | Remote-first evidence rules |
+| A13 | LICENSE (Apache-2.0) | PR2 @ c7ed525 | `LICENSE` | ADOPTED (imported + verified) | Was NOT in PR #1. Imported from PR #2 @ c7ed525. Verified: Apache-2.0 full text. |
+| A14 | ADR-045 tech stack | PR2 @ c7ed525 | `docs/45-technology-architecture-adr.md` | ADOPTED (imported + verified) | Was NOT in PR #1. Imported from PR #2 @ c7ed525. Verified: Accepted for planning. |
+| A15 | docs/46 acceptance contract | PR2 @ c7ed525 | `docs/46-acceptance-and-remote-evidence-contract.md` | ADOPTED (imported + verified) | Was NOT in PR #1. Imported from PR #2 @ c7ed525. Verified: ACCEPTED. |
 
 ### B. Adopt from PR2 (selective paths/sections, not blanket merge)
 
@@ -47,7 +47,7 @@
 | B5 | WP1-C contract (docs/42) | PR2 @ c7ed525 | `docs/42-wp1c-execution-integration.md` | ADAPT | Import; WP1-C waits for A+B |
 | B6 | WP1-A module contract (docs/43) | PR2 @ c7ed525 | `docs/43-wp1a-module-contract.md` | QUARANTINE | MRG status contradictory; re-verify before adopt |
 | B7 | WP1-A MRG review (docs/44) | PR2 @ c7ed525 | `docs/44-wp1a-mrg-review.md` | QUARANTINE | "8/8 PASS" not valid Module Acceptance |
-| B8 | CI workflow | PR2 @ c7ed525 | `.github/workflows/ci.yml` | ADAPT | Import; verify jobs actually run |
+| B8 | CI workflow | PR2 @ c7ed525 | `.github/workflows/ci.yml` | ADOPTED (imported) | Imported from PR #2. Docs-only CI (markdown-lint, link-check, checksum-verify). |
 | B9 | Bootstrap scripts | PR2 @ c7ed525 | `scripts/` | ADAPT | Import useful ones; audit |
 | B10 | Fixtures/tests harness | PR2 @ c7ed525 | `fixtures/`, `tests/` | QUARANTINE | Loose substring harness; review assertions |
 
