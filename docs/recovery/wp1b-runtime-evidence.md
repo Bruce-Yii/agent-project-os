@@ -284,3 +284,31 @@ Paseo Daemon infrastructure is verified for: start, provider discovery, session 
 - Reconnect backfill of missed events (partial)
 - Native turn through Paseo with a working provider (blocked by auth/credits)
 - Project OS Runtime Adapter wrapping Paseo as LocalRuntimeNode (not started)
+
+---
+
+## V7: Native Turn Configuration Attempt (2026-11-14)
+
+### Paseo Provider Configuration
+- Paseo config.json: daemon listen, CORS, relay only. **No provider configuration.**
+- Providers discovered from system-installed CLIs (opencode, claude, codex, pi, copilot)
+- OpenCode provider uses opencode CLI (v2.3.0) which reads its own config
+- OpenCode Go API key (oc_sk_...) is for direct HTTP, not for opencode CLI
+
+### Configuration Attempts
+1. Environment variables: OPENCODE_API_KEY, OPENCODE_BASE_URL → opencode CLI ignores (uses its own auth)
+2. Paseo config.json: no provider override section
+3. Paseo plugin system: could inject custom provider, but requires building a plugin (out of scope)
+
+### Conclusion
+Native LLM turn through Paseo is blocked by provider auth/credits:
+- opencode: "Insufficient balance" (account needs credits)
+- claude: OAuth required (needs claude login)
+- codex: OAuth required (needs codex login)
+- pi: No API key configured (needs /login)
+
+**Status: AUTH_REQUIRED** — not a Paseo infrastructure issue. Direct OpenCode Go API turn (V5) proves LLM capability exists via a different code path.
+
+### No paid credit consumption
+- No new API calls made during this verification
+- No credentials exposed in logs or commits
