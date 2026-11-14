@@ -97,6 +97,7 @@ These are test gaps, not code defects. The code structure supports all three; te
 ## C. Evidence
 
 ### Commands run
+
 ```
 npm run typecheck → PASS (0 errors)
 npm run build → PASS (tsc)
