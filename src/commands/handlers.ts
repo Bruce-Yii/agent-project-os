@@ -20,6 +20,8 @@ import {
 import { createPersonalSpace } from "../domain/personal-space.js";
 import { canTransitionProject } from "../domain/project.js";
 import { canTransitionTask } from "../domain/task.js";
+import { canTransitionAssignment } from "../domain/assignment.js";
+import { canTransitionRun } from "../domain/run.js";
 import { wouldCreateCycle } from "../domain/dependency.js";
 import { assertProjectTransition, assertTaskTransition } from "../state/guards.js";
 import type { Command, CommandEnvelope } from "./envelope.js";
@@ -735,10 +737,25 @@ export async function StartRun(...args: unknown[]): Promise<CommandResult> {
   if (!assignmentId) return { status: "REJECTED", reason: "MISSING_FIELDS" };
   const assignment = await repos.assignments.findById(assignmentId);
   if (!assignment) return { status: "REJECTED", reason: "ASSIGNMENT_NOT_FOUND" };
+  if (assignment.status !== "pending" && assignment.status !== "active") {
+    return { status: "REJECTED", reason: "INVALID_TRANSITION" };
+  }
+  if (assignment.status === "pending" && !canTransitionAssignment(assignment.status as any, "active")) {
+    return { status: "REJECTED", reason: "INVALID_TRANSITION" };
+  }
+  if (!canTransitionRun("queued", "running")) {
+    return { status: "REJECTED", reason: "INVALID_TRANSITION" };
+  }
+  const existingRuns = await repos.runs.findByAssignment(assignmentId);
+  const nextAttempt = existingRuns.length
+    ? Math.max(...existingRuns.map((r: any) => r.attempt ?? 0)) + 1
+    : 1;
   const id = randomUUID();
-  await repos.runs.save({ id, assignmentId, attempt: 1, status: "running" });
-  await repos.assignments.updateStatus(assignmentId, "active");
-  return { status: "OK", runId: id };
+  await repos.runs.save({ id, assignmentId, attempt: nextAttempt, status: "running" });
+  if (assignment.status === "pending") {
+    await repos.assignments.updateStatus(assignmentId, "active");
+  }
+  return { status: "OK", runId: id, attempt: nextAttempt };
 }
 
 // ---------- CompleteRun ----------
@@ -752,6 +769,9 @@ export async function CompleteRun(...args: unknown[]): Promise<CommandResult> {
   if (!runId || !status) return { status: "REJECTED", reason: "MISSING_FIELDS" };
   const run = await repos.runs.findById(runId);
   if (!run) return { status: "REJECTED", reason: "RUN_NOT_FOUND" };
+  if (!canTransitionRun(run.status as any, status as any)) {
+    return { status: "REJECTED", reason: "INVALID_TRANSITION" };
+  }
   await repos.runs.updateStatus(runId, status);
   return { status: "OK", runId, runStatus: status };
 }
@@ -786,6 +806,18 @@ export async function SubmitReview(...args: unknown[]): Promise<CommandResult> {
   if (!taskId) return { status: "REJECTED", reason: "MISSING_FIELDS" };
   const task = await repos.tasks.findById(taskId);
   if (!task) return { status: "REJECTED", reason: "TASK_NOT_FOUND" };
+  if (runId) {
+    const run = await repos.runs.findById(runId);
+    if (!run) return { status: "REJECTED", reason: "RUN_NOT_FOUND" };
+    const assignment = await repos.assignments.findById(run.assignmentId);
+    if (!assignment || assignment.taskId !== taskId) {
+      return { status: "REJECTED", reason: "RUN_TASK_MISMATCH" };
+    }
+  }
+  const allowedVerdicts = ["pending", "changes_required", "accepted", "rejected"];
+  if (verdict && !allowedVerdicts.includes(verdict)) {
+    return { status: "REJECTED", reason: "INVALID_VERDICT" };
+  }
   const id = randomUUID();
   await repos.reviews.save({ id, taskId, runId: runId ?? null, verdict: verdict ?? "pending", evidenceRefs: evidenceRefs ?? null });
   return { status: "OK", reviewId: id };
@@ -801,8 +833,63 @@ export async function AcceptReview(...args: unknown[]): Promise<CommandResult> {
   if (!reviewId) return { status: "REJECTED", reason: "MISSING_FIELDS" };
   const review = await repos.reviews.findById(reviewId);
   if (!review) return { status: "REJECTED", reason: "REVIEW_NOT_FOUND" };
+  if (review.verdict !== "pending" && review.verdict !== "changes_required") {
+    return { status: "REJECTED", reason: "INVALID_TRANSITION" };
+  }
   await repos.reviews.updateVerdict(reviewId, "accepted");
   return { status: "OK", reviewId };
+}
+
+// ---------- CompleteAssignment ----------
+export async function CompleteAssignment(...args: unknown[]): Promise<CommandResult> {
+  const ctx = resolveContext(args);
+  const db = (ctx.db ?? (ctx as any).tx ?? (ctx as any).database) as Db;
+  const repos = makeRepos(db);
+  const p = payload(ctx);
+  const assignmentId = str(p.assignmentId);
+  if (!assignmentId) return { status: "REJECTED", reason: "MISSING_FIELDS" };
+  const assignment = await repos.assignments.findById(assignmentId);
+  if (!assignment) return { status: "REJECTED", reason: "ASSIGNMENT_NOT_FOUND" };
+  if (!canTransitionAssignment(assignment.status as any, "completed")) {
+    return { status: "REJECTED", reason: "INVALID_TRANSITION" };
+  }
+  await repos.assignments.updateStatus(assignmentId, "completed");
+  return { status: "OK", assignmentId };
+}
+
+// ---------- CancelAssignment ----------
+export async function CancelAssignment(...args: unknown[]): Promise<CommandResult> {
+  const ctx = resolveContext(args);
+  const db = (ctx.db ?? (ctx as any).tx ?? (ctx as any).database) as Db;
+  const repos = makeRepos(db);
+  const p = payload(ctx);
+  const assignmentId = str(p.assignmentId);
+  if (!assignmentId) return { status: "REJECTED", reason: "MISSING_FIELDS" };
+  const assignment = await repos.assignments.findById(assignmentId);
+  if (!assignment) return { status: "REJECTED", reason: "ASSIGNMENT_NOT_FOUND" };
+  if (!canTransitionAssignment(assignment.status as any, "cancelled")) {
+    return { status: "REJECTED", reason: "INVALID_TRANSITION" };
+  }
+  await repos.assignments.updateStatus(assignmentId, "cancelled");
+  return { status: "OK", assignmentId };
+}
+
+// ---------- TransitionRunState ----------
+export async function TransitionRunState(...args: unknown[]): Promise<CommandResult> {
+  const ctx = resolveContext(args);
+  const db = (ctx.db ?? (ctx as any).tx ?? (ctx as any).database) as Db;
+  const repos = makeRepos(db);
+  const p = payload(ctx);
+  const runId = str(p.runId);
+  const toStatus = str(p.toStatus) ?? str(p.status) ?? str(p.to);
+  if (!runId || !toStatus) return { status: "REJECTED", reason: "MISSING_FIELDS" };
+  const run = await repos.runs.findById(runId);
+  if (!run) return { status: "REJECTED", reason: "RUN_NOT_FOUND" };
+  if (!canTransitionRun(run.status as any, toStatus as any)) {
+    return { status: "REJECTED", reason: "INVALID_TRANSITION" };
+  }
+  await repos.runs.updateStatus(runId, toStatus);
+  return { status: "OK", runId, from: run.status, to: toStatus };
 }
 
 export const handleCreateAssignment = CreateAssignment;
@@ -811,6 +898,9 @@ export const handleCompleteRun = CompleteRun;
 export const handleSubmitArtifact = SubmitArtifact;
 export const handleSubmitReview = SubmitReview;
 export const handleAcceptReview = AcceptReview;
+export const handleCompleteAssignment = CompleteAssignment;
+export const handleCancelAssignment = CancelAssignment;
+export const handleTransitionRunState = TransitionRunState;
 
 export const handlers: Record<string, (...args: unknown[]) => Promise<CommandResult>> = {
   BootstrapPersonalSpace,
@@ -838,4 +928,7 @@ export const handlers: Record<string, (...args: unknown[]) => Promise<CommandRes
   SubmitArtifact,
   SubmitReview,
   AcceptReview,
+  CompleteAssignment,
+  CancelAssignment,
+  TransitionRunState,
 };

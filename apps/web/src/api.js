@@ -46,7 +46,7 @@ export const api = {
   pendingReviews: () => request('/v1/reviews/pending'),
   providers: () => request('/v1/providers'),
   agentSessions: () => request('/v1/agents/sessions'),
-  createAgentSession: (provider, cwd = '', title = '') => request('/v1/agents/sessions', { method: 'POST', body: JSON.stringify({ provider, cwd, title }) }),
+  createAgentSession: (provider, cwd = '', title = '', projectId = null, taskId = null, assignmentId = null) => request('/v1/agents/sessions', { method: 'POST', body: JSON.stringify({ provider, cwd, title, projectId, taskId, assignmentId }) }),
   sendAgentMessage: (sessionId, text, options = {}) => request(`/v1/agents/sessions/${encodeURIComponent(sessionId)}/messages`, { method: 'POST', body: JSON.stringify({ text, options }) }),
   agentTimeline: (sessionId, options = {}) => {
     const qs = new URLSearchParams(options || {}).toString();

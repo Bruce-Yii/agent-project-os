@@ -82,8 +82,16 @@ export class PaseoRuntimeAdapter {
     return () => {};
   }
 
-  async resumeSession(sessionId) {
+  async fetchAgentMetadata(sessionId) {
     return this.getSession(sessionId);
+  }
+
+  async resumeSession(sessionId) {
+    return this.fetchAgentMetadata(sessionId);
+  }
+
+  async nativeResume(sessionId) {
+    throw new Error('native resume is not supported; use fetchAgentMetadata (metadata-lookup)');
   }
 
   _ensureConnected() {

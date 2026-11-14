@@ -170,3 +170,5 @@ jobs:
         run: npm run test:db
       - name: HTTP + PG integration tests
         run: npm run test:integration
+      - name: Agent session tests
+        run: npm run test:agent-session

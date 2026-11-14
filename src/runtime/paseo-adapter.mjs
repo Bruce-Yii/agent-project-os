@@ -52,10 +52,10 @@ export class PaseoRuntimeAdapter {
     return this._mapAgent(agent);
   }
 
-  async resumeSession(sessionId) {
+  async fetchAgentMetadata(sessionId) {
     this._ensureConnected();
-    // Uses fetchAgent (metadata lookup), NOT provider-native resume.
-    // Propagate errors instead of swallowing them silently.
+    // Metadata lookup via fetchAgent (NOT provider-native resume).
+    // Errors propagate to the caller instead of being swallowed.
     const result = await this.client.fetchAgent(sessionId);
     const agent = result && (result.agent || result);
     const mapped = this._mapAgent(agent);
@@ -63,6 +63,16 @@ export class PaseoRuntimeAdapter {
       mapped.resumeType = 'metadata-lookup';
     }
     return mapped;
+  }
+
+  async resumeSession(sessionId) {
+    // Alias kept for compatibility; clearly a metadata lookup, not native resume.
+    return this.fetchAgentMetadata(sessionId);
+  }
+
+  async nativeResume(sessionId) {
+    // Paseo adapter does not support provider-native resume in this slice.
+    throw new Error('native resume is not supported; use fetchAgentMetadata (metadata-lookup)');
   }
 
   async sendMessage(sessionId, text, options = {}) {

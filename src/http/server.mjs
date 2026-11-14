@@ -564,6 +564,14 @@ fastify.post('/v1/agents/sessions', async (request, reply) => {
         });
       } catch (e) {
         fastify.log.error(e);
+        try { await adapter.disconnect(); } catch { /* ignore */ }
+        return reply.status(500).send({
+          reason: 'DB_SAVE_FAILED',
+          message: e && e.message ? e.message : String(e),
+          mode: 'real',
+          source: 'paseo',
+          mock: false,
+        });
       }
     }
     // Keep in-memory cache for mock/legacy paths.
@@ -677,7 +685,7 @@ fastify.get('/v1/agents/sessions', async () => {
       inMemoryAgentSessions.set(rec.id, updated);
       sessions.push(updated);
     } else {
-      sessions.push({ ...rec, status, source: 'paseo', mock: false, resumeType: rec.resumeType || null });
+      sessions.push({ ...rec, status: 'unavailable', source: 'db', mock: true, resumeType: rec.resumeType || null });
     }
   }
   try { await adapter.disconnect(); } catch { /* ignore */ }

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { api, ApiError } from './api.js';
+import { api, ApiError, API } from './api.js';
 
 function modeBadge(mode) {
   const real = mode === 'real';
@@ -151,6 +151,7 @@ function AgentWorkbench() {
   const [sessionProvider, setSessionProvider] = useState('');
   const [sessionCwd, setSessionCwd] = useState('');
   const [sessionTitle, setSessionTitle] = useState('');
+  const [sessionProjectId, setSessionProjectId] = useState('');
   const [sessionMsg, setSessionMsg] = useState(null);
 
   const [selectedSessionId, setSelectedSessionId] = useState(null);
@@ -161,6 +162,8 @@ function AgentWorkbench() {
   const [timelineLoading, setTimelineLoading] = useState(false);
   const [timelineError, setTimelineError] = useState(null);
   const [timelineMeta, setTimelineMeta] = useState(null);
+  const [liveEvents, setLiveEvents] = useState([]);
+  const [sseStatus, setSseStatus] = useState('disconnected');
 
   const sessionIdOf = (s) => s.id || s.sessionId;
 
@@ -226,6 +229,47 @@ function AgentWorkbench() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedSessionId]);
 
+  // Real-time event stream via SSE with reconnect/backfill.
+  useEffect(() => {
+    if (!selectedSessionId) {
+      setLiveEvents([]);
+      setSseStatus('disconnected');
+      return;
+    }
+    setLiveEvents([]);
+    let es = null;
+    let cancelled = false;
+    const connect = async () => {
+      await fetchTimeline(selectedSessionId);
+      if (cancelled) return;
+      const url = `${API}/v1/agents/sessions/${encodeURIComponent(selectedSessionId)}/events`;
+      const source = new EventSource(url);
+      es = source;
+      setSseStatus('connecting');
+      source.onopen = () => {
+        setSseStatus('connected');
+        fetchTimeline(selectedSessionId);
+      };
+      source.onmessage = (e) => {
+        try {
+          const data = JSON.parse(e.data);
+          setLiveEvents(prev => [...prev, data]);
+        } catch {
+          setLiveEvents(prev => [...prev, { type: 'message', payload: e.data }]);
+        }
+      };
+      source.onerror = () => {
+        setSseStatus('reconnecting');
+      };
+    };
+    connect();
+    return () => {
+      cancelled = true;
+      if (es) es.close();
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedSessionId]);
+
   // Reconnect/backfill on visibility/focus/online changes.
   useEffect(() => {
     const handler = () => {
@@ -252,7 +296,7 @@ function AgentWorkbench() {
     setError(null);
     setSessionMsg(null);
     try {
-      const s = await api.createAgentSession(sessionProvider.trim(), sessionCwd.trim(), sessionTitle.trim());
+      const s = await api.createAgentSession(sessionProvider.trim(), sessionCwd.trim(), sessionTitle.trim(), sessionProjectId.trim() || null);
       setSessions(prev => [...prev, s]);
       setSessionTitle('');
       setSessionMsg(s.mock ? 'Session created (mock).' : 'Session created (real).');
@@ -338,6 +382,7 @@ function AgentWorkbench() {
               <input value={sessionProvider} onChange={e => setSessionProvider(e.target.value)} placeholder="Provider (e.g. claude)" disabled={creatingSession} />
               <input value={sessionCwd} onChange={e => setSessionCwd(e.target.value)} placeholder="Working directory (optional)" disabled={creatingSession} />
               <input value={sessionTitle} onChange={e => setSessionTitle(e.target.value)} placeholder="Session title (optional)" disabled={creatingSession} />
+              <input value={sessionProjectId} onChange={e => setSessionProjectId(e.target.value)} placeholder="Project ID (optional)" disabled={creatingSession} />
               <button className="btn" onClick={createSession} disabled={creatingSession || !sessionProvider.trim()}>
                 {creatingSession ? 'Creating...' : 'Create Session'}
               </button>
@@ -355,6 +400,7 @@ function AgentWorkbench() {
                   {s.resumeType && <span className="badge">{s.resumeType}</span>}
                   {s.provider && <div className="status">Provider: {s.provider}</div>}
                   {s.cwd && <div className="status">CWD: {s.cwd}</div>}
+                  {s.projectId && <div className="status">Project: {s.projectId}</div>}
                 </div>
               );
             })}
@@ -377,6 +423,18 @@ function AgentWorkbench() {
           </div>
 
           <h3>Event Stream / Timeline</h3>
+          <div className="status">SSE: {sseStatus}</div>
+          {liveEvents.length > 0 && (
+            <div style={{ marginBottom: '8px' }}>
+              <strong>Live events ({liveEvents.length})</strong>
+              {liveEvents.map((ev, i) => (
+                <div key={i} style={{ padding: '4px 0', borderBottom: '1px solid #334155' }}>
+                  <strong>{ev.type || 'event'}</strong>
+                  {ev.timestamp && <span className="status" style={{ marginLeft: '8px' }}>{ev.timestamp}</span>}
+                </div>
+              ))}
+            </div>
+          )}
           {timelineLoading && <div className="status">Loading timeline...</div>}
           {timelineError && <div className="status" style={{ color: '#f87171' }}>Error: {timelineError} <button className="btn" onClick={() => fetchTimeline(selectedSessionId)} style={{ marginLeft: '8px' }}>Retry</button></div>}
           {!timelineLoading && !timelineError && (
