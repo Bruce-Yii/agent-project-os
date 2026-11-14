@@ -837,6 +837,66 @@ fastify.get('/v1/agents/sessions/:id/timeline', async (request, reply) => {
 });
 
 // ---------------------------------------------------------------------------
+// Agent session events (SSE)
+// ---------------------------------------------------------------------------
+fastify.get('/v1/agents/sessions/:id/events', async (request, reply) => {
+  const id = request.params.id;
+  reply.hijack();
+  const res = reply.raw;
+  res.writeHead(200, {
+    'Content-Type': 'text/event-stream',
+    'Cache-Control': 'no-cache, no-transform',
+    'Connection': 'keep-alive',
+    'X-Accel-Buffering': 'no',
+  });
+
+  const send = (obj) => {
+    try { res.write(`data: ${JSON.stringify(obj)}\n\n`); } catch { /* ignore */ }
+  };
+
+  const adapter = await tryConnectPaseo();
+  if (!adapter) {
+    send({ type: 'error', reason: 'PASEO_UNAVAILABLE' });
+    try { res.end(); } catch { /* ignore */ }
+    return;
+  }
+
+  // Backfill on connect.
+  try {
+    if (typeof adapter.fetchTimeline === 'function') {
+      const tl = await adapter.fetchTimeline(id, request.query || {});
+      for (const entry of (tl && tl.entries) || []) send(entry);
+    }
+  } catch (e) {
+    send({ type: 'error', message: e && e.message ? e.message : String(e) });
+  }
+
+  let unsub = null;
+  let closed = false;
+  const cleanup = () => {
+    if (closed) return;
+    closed = true;
+    if (typeof unsub === 'function') try { unsub(); } catch { /* ignore */ }
+    try { adapter.disconnect(); } catch { /* ignore */ }
+    try { res.end(); } catch { /* ignore */ }
+  };
+
+  try {
+    if (typeof adapter.subscribeEvents === 'function') {
+      unsub = adapter.subscribeEvents(id, (event) => {
+        if (!closed) send(event);
+      });
+      if (typeof unsub !== 'function') unsub = null;
+    }
+  } catch (e) {
+    send({ type: 'error', message: e && e.message ? e.message : String(e) });
+  }
+
+  request.raw.on('close', cleanup);
+  res.on('close', cleanup);
+});
+
+// ---------------------------------------------------------------------------
 // Attention (DEFERRED — requires WP1-C module contract v0.1)
 // ---------------------------------------------------------------------------
 fastify.get('/v1/attention', async () => {
