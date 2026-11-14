@@ -1,27 +1,35 @@
 {
-  "name": "wp1a-personal-project-foundation",
+  "name": "agent-project-os",
   "version": "0.0.0",
   "private": true,
-  "description": "WP1-A: Personal Project Foundation — Gate 0 REJECTED, safety redesign in progress. Tech stack: Node 26 LTS + pnpm 12.18.0 + TypeScript + PostgreSQL (Testcontainers) + Drizzle + pg (ADR-045). License: Apache-2.0.",
+  "description": "Agent Project OS — WP1-A domain + WP1-C Web/API shell (integrated)",
   "engines": {
     "node": ">=24.0.0"
   },
   "scripts": {
-    "typecheck": "tsc --noEmit",
+    "typecheck": "tsc --noEmit && node --check src/http/server.mjs",
     "build": "tsc",
+    "build:web": "cd apps/web && vite build",
     "test": "npm run build && node --test --test-concurrency=1 dist/src/tests/domain.test.js",
     "test:db": "npm run build && node --test --test-concurrency=1 dist/src/persistence/persistence.test.js dist/src/persistence/migrate.test.js dist/src/commands/contract.test.js dist/tests/wp1a/contract.test.js dist/tests/wp1a/restart.test.js",
-    "test:fixtures": "python tests/wp1a/test_wp1a.py"
+    "test:fixtures": "python tests/wp1a/test_wp1a.py",
+    "dev:api": "node src/http/server.mjs",
+    "dev:web": "cd apps/web && vite"
   },
   "dependencies": {
     "drizzle-orm": "^0.45.0",
-    "pg": "^8.23.0"
+    "pg": "^8.23.0",
+    "fastify": "^5.0.0",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1"
   },
   "devDependencies": {
     "@testcontainers/postgresql": "^12.2.1",
     "@types/node": "^24.0.0",
     "@types/pg": "^8.0.0",
-    "typescript": "^7.0.0"
+    "typescript": "^7.0.0",
+    "vite": "^6.0.0",
+    "@vitejs/plugin-react": "^4.0.0"
   },
   "license": "Apache-2.0",
   "type": "module"
