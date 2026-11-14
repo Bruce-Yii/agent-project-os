@@ -125,6 +125,8 @@ jobs:
         run: npm run typecheck
       - name: Build
         run: npm run build
+      - name: Build web
+        run: npm run build:web
       - name: Domain tests (no DB)
         run: npm run test
 

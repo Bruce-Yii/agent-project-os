@@ -153,7 +153,11 @@ export class CommandExecutor {
         return { ...result };
       });
     } catch (err) {
-      const message = err instanceof Error ? err.message : String(err);
+      // Prefer the underlying cause message when Drizzle wraps a driver error
+      // (e.g. a mocked pool failure) so callers see the original reason.
+      const rawErr = err instanceof Error ? err : new Error(String(err));
+      const cause = (rawErr as { cause?: unknown }).cause;
+      const message = cause instanceof Error ? cause.message : rawErr.message;
       if (message === "IDEMPOTENCY_CONFLICT") {
         const storedRec = await this.idempotencyStore.getRecord(ikey, this.db);
         if (storedRec) {
