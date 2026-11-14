@@ -172,3 +172,5 @@ jobs:
         run: npm run test:integration
       - name: Agent session tests
         run: npm run test:agent-session
+      - name: Workflow tests
+        run: npm run test:workflow

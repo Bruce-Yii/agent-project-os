@@ -98,10 +98,16 @@ describe('Workflow P2 vertical slice + negatives', () => {
     assert.ok(runId);
     assert.equal(r.body.attempt, 1);
 
+    // complete first run before starting another (max one non-terminal run)
+    const cr0 = await cmd('CompleteRun', { runId, status: 'succeeded' });
+    assert.equal(cr0.body.status, 'OK');
+
     // second run increments attempt
     const r2 = await cmd('StartRun', { assignmentId });
+    assert.equal(r2.status, 200);
     assert.equal(r2.body.status, 'OK');
     assert.equal(r2.body.attempt, 2);
+    runId = r2.body.runId;
 
     const cr = await cmd('CompleteRun', { runId, status: 'succeeded' });
     assert.equal(cr.status, 200);
@@ -183,6 +189,54 @@ describe('Workflow P2 vertical slice + negatives', () => {
     const bad = await cmd('CompleteRun', { runId: rid, status: 'failed' });
     assert.equal(bad.body.status, 'REJECTED');
     assert.equal(bad.body.reason, 'INVALID_TRANSITION');
+  });
+
+  test('CompleteAssignment/CancelAssignment/TransitionRunState', async () => {
+    const p = await cmd('CreateProject', { name: 'CA Project' });
+    assert.equal(p.body.status, 'OK');
+    const t = await cmd('CreateTask', { projectId: p.body.projectId, title: 'CA Task' });
+    assert.equal(t.body.status, 'OK');
+    const a = await cmd('CreateAssignment', { taskId: t.body.taskId, agentId: 'agent-x' });
+    assert.equal(a.body.status, 'OK');
+    const assignmentId = a.body.assignmentId;
+
+    const run = await cmd('StartRun', { assignmentId });
+    assert.equal(run.body.status, 'OK');
+    const rid = run.body.runId;
+
+    const tr = await cmd('TransitionRunState', { runId: rid, toStatus: 'succeeded' });
+    assert.equal(tr.status, 200);
+    assert.equal(tr.body.status, 'OK');
+    assert.equal(tr.body.to, 'succeeded');
+
+    const ca = await cmd('CompleteAssignment', { assignmentId });
+    assert.equal(ca.status, 200);
+    assert.equal(ca.body.status, 'OK');
+
+    // cancelling a completed assignment is invalid
+    const canc = await cmd('CancelAssignment', { assignmentId });
+    assert.equal(canc.body.status, 'REJECTED');
+    assert.equal(canc.body.reason, 'INVALID_TRANSITION');
+  });
+
+  test('CancelAssignment on pending assignment', async () => {
+    const p = await cmd('CreateProject', { name: 'Cancel Project' });
+    const t = await cmd('CreateTask', { projectId: p.body.projectId, title: 'Cancel Task' });
+    const a = await cmd('CreateAssignment', { taskId: t.body.taskId, agentId: 'agent-y' });
+    const canc = await cmd('CancelAssignment', { assignmentId: a.body.assignmentId });
+    assert.equal(canc.status, 200);
+    assert.equal(canc.body.status, 'OK');
+  });
+
+  test('negative: active run prevents concurrent StartRun', async () => {
+    const p = await cmd('CreateProject', { name: 'Concurrent Project' });
+    const t = await cmd('CreateTask', { projectId: p.body.projectId, title: 'Concurrent Task' });
+    const a = await cmd('CreateAssignment', { taskId: t.body.taskId, agentId: 'agent-z' });
+    const r1 = await cmd('StartRun', { assignmentId: a.body.assignmentId });
+    assert.equal(r1.body.status, 'OK');
+    const r2 = await cmd('StartRun', { assignmentId: a.body.assignmentId });
+    assert.equal(r2.body.status, 'REJECTED');
+    assert.equal(r2.body.reason, 'ACTIVE_RUN_EXISTS');
   });
 
   test('negative: duplicate/replayed command', async () => {

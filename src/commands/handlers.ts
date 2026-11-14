@@ -1,4 +1,4 @@
-// Handler functions for WP1-A commands.
+﻿// Handler functions for WP1-A commands.
 // Each handler receives a HandlerContext (or (command, context)) and runs inside
 // the CommandExecutor's Drizzle transaction.
 
@@ -737,6 +737,11 @@ export async function StartRun(...args: unknown[]): Promise<CommandResult> {
   if (!assignmentId) return { status: "REJECTED", reason: "MISSING_FIELDS" };
   const assignment = await repos.assignments.findById(assignmentId);
   if (!assignment) return { status: "REJECTED", reason: "ASSIGNMENT_NOT_FOUND" };
+
+  // DB-level serialization for concurrent StartRun on the same assignment.
+  await db.execute(sql`SELECT id FROM assignments WHERE id = ${assignmentId} FOR UPDATE`);
+
+  // Check assignment state first.
   if (assignment.status !== "pending" && assignment.status !== "active") {
     return { status: "REJECTED", reason: "INVALID_TRANSITION" };
   }
@@ -746,12 +751,30 @@ export async function StartRun(...args: unknown[]): Promise<CommandResult> {
   if (!canTransitionRun("queued", "running")) {
     return { status: "REJECTED", reason: "INVALID_TRANSITION" };
   }
+
   const existingRuns = await repos.runs.findByAssignment(assignmentId);
+
+  // Enforce at most one non-terminal run per assignment.
+  const terminalStatuses = new Set(["succeeded", "cancelled"]);
+  const activeRun = existingRuns.find((r: any) => !terminalStatuses.has(r.status));
+  if (activeRun) {
+    return { status: "REJECTED", reason: "ACTIVE_RUN_EXISTS" };
+  }
+
+  // Attempt must strictly increment from the max existing attempt.
   const nextAttempt = existingRuns.length
     ? Math.max(...existingRuns.map((r: any) => r.attempt ?? 0)) + 1
     : 1;
   const id = randomUUID();
-  await repos.runs.save({ id, assignmentId, attempt: nextAttempt, status: "running" });
+  try {
+    await repos.runs.save({ id, assignmentId, attempt: nextAttempt, status: "running" });
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : String(err);
+    if (msg.includes("unique") || msg.includes("duplicate") || msg.includes("23505")) {
+      return { status: "REJECTED", reason: "DUPLICATE_ATTEMPT" };
+    }
+    throw err;
+  }
   if (assignment.status === "pending") {
     await repos.assignments.updateStatus(assignmentId, "active");
   }
@@ -769,6 +792,12 @@ export async function CompleteRun(...args: unknown[]): Promise<CommandResult> {
   if (!runId || !status) return { status: "REJECTED", reason: "MISSING_FIELDS" };
   const run = await repos.runs.findById(runId);
   if (!run) return { status: "REJECTED", reason: "RUN_NOT_FOUND" };
+  // Check assignment state first.
+  const assignment = await repos.assignments.findById(run.assignmentId);
+  if (!assignment) return { status: "REJECTED", reason: "ASSIGNMENT_NOT_FOUND" };
+  if (assignment.status !== "active" && assignment.status !== "pending") {
+    return { status: "REJECTED", reason: "INVALID_TRANSITION" };
+  }
   if (!canTransitionRun(run.status as any, status as any)) {
     return { status: "REJECTED", reason: "INVALID_TRANSITION" };
   }

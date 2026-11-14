@@ -622,17 +622,28 @@ function dbSessionToRecord(row) {
   };
 }
 
-fastify.get('/v1/agents/sessions', async () => {
+fastify.get('/v1/agents/sessions', async (request, reply) => {
   // Read durable registry (DB) when available, else in-memory cache.
   let tracked = [];
-  if (isReal() && AgentSessionRepositoryCls) {
+  let dbReadFailed = false;
+  let dbAvailable = isReal() && !!AgentSessionRepositoryCls;
+  if (dbAvailable) {
     try {
       const repo = new AgentSessionRepositoryCls(db);
       const rows = await repo.findAll();
       tracked = rows.map(dbSessionToRecord);
     } catch (e) {
       fastify.log.error(e);
-      tracked = Array.from(inMemoryAgentSessions.values());
+      dbReadFailed = true;
+      // Do not silently fall back to cache with a false 'db' label.
+      return reply.status(500).send({
+        reason: 'DB_READ_FAILED',
+        message: e && e.message ? e.message : String(e),
+        mode: 'real',
+        source: 'cache',
+        mock: true,
+        warning: 'Database read failed; not falling back to cache.',
+      });
     }
   } else {
     tracked = Array.from(inMemoryAgentSessions.values());
@@ -645,8 +656,8 @@ fastify.get('/v1/agents/sessions', async () => {
       sessions,
       agents: sessions,
       mode: isReal() ? 'real' : 'mock-in-memory',
-      source: isReal() ? 'db' : 'mock',
-      mock: !isReal(),
+      source: dbAvailable ? 'db' : 'cache',
+      mock: !dbAvailable,
       deferred: false,
       note: isReal()
         ? 'Durable agent sessions (Paseo unavailable; status not refreshed).'
@@ -854,10 +865,29 @@ fastify.get('/v1/agents/sessions/:id/events', async (request, reply) => {
     try { res.write(`data: ${JSON.stringify(obj)}\n\n`); } catch { /* ignore */ }
   };
 
-  const adapter = await tryConnectPaseo();
+  // Register client disconnect cleanup BEFORE any async connect/backfill.
+  let adapter = null;
+  let unsub = null;
+  let closed = false;
+  const cleanup = () => {
+    if (closed) return;
+    closed = true;
+    if (typeof unsub === 'function') try { unsub(); } catch { /* ignore */ }
+    if (adapter) try { adapter.disconnect(); } catch { /* ignore */ }
+    try { res.end(); } catch { /* ignore */ }
+  };
+  request.raw.on('close', cleanup);
+  res.on('close', cleanup);
+
+  try {
+    adapter = await tryConnectPaseo();
+  } catch (e) {
+    adapter = null;
+  }
+  if (closed) { cleanup(); return; }
   if (!adapter) {
     send({ type: 'error', reason: 'PASEO_UNAVAILABLE' });
-    try { res.end(); } catch { /* ignore */ }
+    cleanup();
     return;
   }
 
@@ -865,21 +895,13 @@ fastify.get('/v1/agents/sessions/:id/events', async (request, reply) => {
   try {
     if (typeof adapter.fetchTimeline === 'function') {
       const tl = await adapter.fetchTimeline(id, request.query || {});
+      if (closed) { cleanup(); return; }
       for (const entry of (tl && tl.entries) || []) send(entry);
     }
   } catch (e) {
-    send({ type: 'error', message: e && e.message ? e.message : String(e) });
+    if (!closed) send({ type: 'error', message: e && e.message ? e.message : String(e) });
   }
-
-  let unsub = null;
-  let closed = false;
-  const cleanup = () => {
-    if (closed) return;
-    closed = true;
-    if (typeof unsub === 'function') try { unsub(); } catch { /* ignore */ }
-    try { adapter.disconnect(); } catch { /* ignore */ }
-    try { res.end(); } catch { /* ignore */ }
-  };
+  if (closed) { cleanup(); return; }
 
   try {
     if (typeof adapter.subscribeEvents === 'function') {
@@ -889,11 +911,9 @@ fastify.get('/v1/agents/sessions/:id/events', async (request, reply) => {
       if (typeof unsub !== 'function') unsub = null;
     }
   } catch (e) {
-    send({ type: 'error', message: e && e.message ? e.message : String(e) });
+    if (!closed) send({ type: 'error', message: e && e.message ? e.message : String(e) });
   }
-
-  request.raw.on('close', cleanup);
-  res.on('close', cleanup);
+  if (closed) { cleanup(); return; }
 });
 
 // ---------------------------------------------------------------------------

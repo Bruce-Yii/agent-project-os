@@ -18,7 +18,8 @@ CREATE TABLE IF NOT EXISTS runs (
   status TEXT NOT NULL DEFAULT 'queued',
   idempotency_key TEXT,
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  CONSTRAINT runs_assignment_id_attempt_unique UNIQUE (assignment_id, attempt)
 );
 
 CREATE TABLE IF NOT EXISTS artifacts (
@@ -38,5 +39,7 @@ CREATE TABLE IF NOT EXISTS reviews (
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
+
+CREATE UNIQUE INDEX IF NOT EXISTS runs_assignment_id_attempt_unique ON runs (assignment_id, attempt);
 
 INSERT INTO schema_migrations (version) VALUES ('0004_workflow.sql') ON CONFLICT DO NOTHING;

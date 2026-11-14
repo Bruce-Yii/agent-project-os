@@ -2,7 +2,7 @@
 // Tech stack: PostgreSQL + Drizzle (per YU-392 decision pack).
 // Tech stack status: PROPOSED (P-021/P-022 not frozen).
 
-import { pgTable, text, timestamp, integer, boolean } from "drizzle-orm/pg-core";
+import { pgTable, text, timestamp, integer, boolean, uniqueIndex } from "drizzle-orm/pg-core";
 
 export const personalSpaces = pgTable("personal_spaces", {
   id: text("id").primaryKey(),
@@ -96,7 +96,9 @@ export const runs = pgTable("runs", {
   idempotencyKey: text("idempotency_key"),
   createdAt: timestamp("created_at").notNull().defaultNow(),
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
-});
+}, (table) => ({
+  assignmentAttemptUnique: uniqueIndex("runs_assignment_id_attempt_unique").on(table.assignmentId, table.attempt),
+}));
 
 export const artifacts = pgTable("artifacts", {
   id: text("id").primaryKey(),

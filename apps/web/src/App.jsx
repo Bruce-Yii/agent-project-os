@@ -152,6 +152,8 @@ function AgentWorkbench() {
   const [sessionCwd, setSessionCwd] = useState('');
   const [sessionTitle, setSessionTitle] = useState('');
   const [sessionProjectId, setSessionProjectId] = useState('');
+  const [sessionTaskId, setSessionTaskId] = useState('');
+  const [sessionAssignmentId, setSessionAssignmentId] = useState('');
   const [sessionMsg, setSessionMsg] = useState(null);
 
   const [selectedSessionId, setSelectedSessionId] = useState(null);
@@ -296,7 +298,7 @@ function AgentWorkbench() {
     setError(null);
     setSessionMsg(null);
     try {
-      const s = await api.createAgentSession(sessionProvider.trim(), sessionCwd.trim(), sessionTitle.trim(), sessionProjectId.trim() || null);
+      const s = await api.createAgentSession(sessionProvider.trim(), sessionCwd.trim(), sessionTitle.trim(), sessionProjectId.trim() || null, sessionTaskId.trim() || null, sessionAssignmentId.trim() || null);
       setSessions(prev => [...prev, s]);
       setSessionTitle('');
       setSessionMsg(s.mock ? 'Session created (mock).' : 'Session created (real).');
@@ -383,6 +385,8 @@ function AgentWorkbench() {
               <input value={sessionCwd} onChange={e => setSessionCwd(e.target.value)} placeholder="Working directory (optional)" disabled={creatingSession} />
               <input value={sessionTitle} onChange={e => setSessionTitle(e.target.value)} placeholder="Session title (optional)" disabled={creatingSession} />
               <input value={sessionProjectId} onChange={e => setSessionProjectId(e.target.value)} placeholder="Project ID (optional)" disabled={creatingSession} />
+               <input value={sessionTaskId} onChange={e => setSessionTaskId(e.target.value)} placeholder="Task ID (optional)" disabled={creatingSession} />
+               <input value={sessionAssignmentId} onChange={e => setSessionAssignmentId(e.target.value)} placeholder="Assignment ID (optional)" disabled={creatingSession} />
               <button className="btn" onClick={createSession} disabled={creatingSession || !sessionProvider.trim()}>
                 {creatingSession ? 'Creating...' : 'Create Session'}
               </button>
@@ -401,6 +405,8 @@ function AgentWorkbench() {
                   {s.provider && <div className="status">Provider: {s.provider}</div>}
                   {s.cwd && <div className="status">CWD: {s.cwd}</div>}
                   {s.projectId && <div className="status">Project: {s.projectId}</div>}
+                   {s.taskId && <div className="status">Task: {s.taskId}</div>}
+                   {s.assignmentId && <div className="status">Assignment: {s.assignmentId}</div>}
                 </div>
               );
             })}

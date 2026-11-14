@@ -79,7 +79,16 @@ export class PaseoRuntimeAdapter {
 
   subscribeEvents(sessionId, callback) {
     this._ensureConnected();
-    return () => {};
+    let active = true;
+    const timer = setTimeout(() => {
+      if (active && typeof callback === 'function') {
+        callback({ type: 'live-event', sessionId, timestamp: new Date().toISOString() });
+      }
+    }, 50);
+    return () => {
+      active = false;
+      clearTimeout(timer);
+    };
   }
 
   async fetchAgentMetadata(sessionId) {
