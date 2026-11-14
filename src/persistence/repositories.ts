@@ -230,6 +230,83 @@ export class GoalRepository {
   }
 }
 
+export class AgentSessionRepository {
+  constructor(private db: Db) {}
+
+  async save(session: {
+    id: string;
+    providerSessionId: string;
+    provider: string;
+    cwd?: string | null;
+    title?: string | null;
+    status?: string;
+    projectId?: string | null;
+    taskId?: string | null;
+    assignmentId?: string | null;
+    capabilities?: string | null;
+  }): Promise<void> {
+    await this.db
+      .insert(schema.agentSessions)
+      .values({
+        id: session.id,
+        providerSessionId: session.providerSessionId,
+        provider: session.provider,
+        cwd: session.cwd ?? null,
+        title: session.title ?? null,
+        status: session.status ?? "idle",
+        projectId: session.projectId ?? null,
+        taskId: session.taskId ?? null,
+        assignmentId: session.assignmentId ?? null,
+        capabilities: session.capabilities ?? null,
+      })
+      .onConflictDoUpdate({
+        target: schema.agentSessions.id,
+        set: {
+          providerSessionId: session.providerSessionId,
+          provider: session.provider,
+          cwd: session.cwd ?? null,
+          title: session.title ?? null,
+          status: session.status ?? "idle",
+          projectId: session.projectId ?? null,
+          taskId: session.taskId ?? null,
+          assignmentId: session.assignmentId ?? null,
+          capabilities: session.capabilities ?? null,
+          updatedAt: new Date(),
+        },
+      });
+  }
+
+  async findById(id: string): Promise<typeof schema.agentSessions.$inferSelect | null> {
+    const rows = await this.db
+      .select()
+      .from(schema.agentSessions)
+      .where(eq(schema.agentSessions.id, id));
+    return rows[0] ?? null;
+  }
+
+  async findByProject(projectId: string): Promise<(typeof schema.agentSessions.$inferSelect)[]> {
+    return this.db
+      .select()
+      .from(schema.agentSessions)
+      .where(eq(schema.agentSessions.projectId, projectId));
+  }
+
+  async findAll(): Promise<(typeof schema.agentSessions.$inferSelect)[]> {
+    return this.db.select().from(schema.agentSessions);
+  }
+
+  async updateStatus(id: string, status: string): Promise<void> {
+    await this.db
+      .update(schema.agentSessions)
+      .set({ status, updatedAt: new Date() })
+      .where(eq(schema.agentSessions.id, id));
+  }
+
+  async delete(id: string): Promise<void> {
+    await this.db.delete(schema.agentSessions).where(eq(schema.agentSessions.id, id));
+  }
+}
+
 export class DependencyRepository {
   constructor(private db: Db) {}
 

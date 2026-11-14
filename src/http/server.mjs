@@ -45,6 +45,7 @@ let closeDbFn = null;
 let executor = null;
 let ProjectRepositoryCls = null;
 let TaskRepositoryCls = null;
+let AgentSessionRepositoryCls = null;
 let schemaMod = null;
 let handlersMap = {};
 
@@ -98,6 +99,7 @@ if (DATABASE_URL) {
     const { CommandExecutor } = execMod;
     ProjectRepositoryCls = reposMod.ProjectRepository;
     TaskRepositoryCls = reposMod.TaskRepository;
+    AgentSessionRepositoryCls = reposMod.AgentSessionRepository;
     handlersMap = (handlersMod && handlersMod.handlers) || {};
 
     const created = createDb(DATABASE_URL);
@@ -532,6 +534,10 @@ fastify.post('/v1/agents/sessions', async (request, reply) => {
       cwd: created.cwd || cwd || process.cwd(),
       title: title || '',
       status: created.status || 'idle',
+      projectId: (body && body.projectId) || null,
+      taskId: (body && body.taskId) || null,
+      assignmentId: (body && body.assignmentId) || null,
+      capabilities: created.capabilities || (body && body.capabilities) || null,
       model: created.model || null,
       createdAt: created.createdAt || new Date().toISOString(),
       updatedAt: created.updatedAt || new Date().toISOString(),
@@ -539,6 +545,28 @@ fastify.post('/v1/agents/sessions', async (request, reply) => {
       mock: false,
       resumeType: null,
     };
+
+    // Persist to durable registry when DB is available.
+    if (isReal() && AgentSessionRepositoryCls) {
+      try {
+        const repo = new AgentSessionRepositoryCls(db);
+        await repo.save({
+          id: record.id,
+          providerSessionId: record.providerSessionId,
+          provider: record.provider,
+          cwd: record.cwd,
+          title: record.title,
+          status: record.status,
+          projectId: record.projectId,
+          taskId: record.taskId,
+          assignmentId: record.assignmentId,
+          capabilities: record.capabilities ? JSON.stringify(record.capabilities) : null,
+        });
+      } catch (e) {
+        fastify.log.error(e);
+      }
+    }
+    // Keep in-memory cache for mock/legacy paths.
     inMemoryAgentSessions.set(created.sessionId, record);
 
     return reply.status(201).send({
@@ -560,34 +588,76 @@ fastify.post('/v1/agents/sessions', async (request, reply) => {
   }
 });
 
+function dbSessionToRecord(row) {
+  let caps = null;
+  if (row && row.capabilities) {
+    try { caps = JSON.parse(row.capabilities); } catch { caps = row.capabilities; }
+  }
+  return {
+    id: row.id,
+    sessionId: row.id,
+    providerSessionId: row.providerSessionId,
+    provider: row.provider,
+    cwd: row.cwd,
+    title: row.title || '',
+    status: row.status || 'idle',
+    projectId: row.projectId || null,
+    taskId: row.taskId || null,
+    assignmentId: row.assignmentId || null,
+    capabilities: caps,
+    model: null,
+    createdAt: row.createdAt,
+    updatedAt: row.updatedAt,
+    source: 'db',
+    mock: false,
+    resumeType: null,
+  };
+}
+
 fastify.get('/v1/agents/sessions', async () => {
+  // Read durable registry (DB) when available, else in-memory cache.
+  let tracked = [];
+  if (isReal() && AgentSessionRepositoryCls) {
+    try {
+      const repo = new AgentSessionRepositoryCls(db);
+      const rows = await repo.findAll();
+      tracked = rows.map(dbSessionToRecord);
+    } catch (e) {
+      fastify.log.error(e);
+      tracked = Array.from(inMemoryAgentSessions.values());
+    }
+  } else {
+    tracked = Array.from(inMemoryAgentSessions.values());
+  }
+
   const adapter = await tryConnectPaseo();
   if (!adapter) {
-    const mode = 'mock-in-memory';
+    const sessions = tracked.map((rec) => ({ ...rec }));
     return {
-      sessions: [],
-      agents: [],
-      mode,
-      source: 'mock',
-      mock: true,
+      sessions,
+      agents: sessions,
+      mode: isReal() ? 'real' : 'mock-in-memory',
+      source: isReal() ? 'db' : 'mock',
+      mock: !isReal(),
       deferred: false,
-      note: 'Paseo Runtime Adapter not available; agent sessions unavailable.',
+      note: isReal()
+        ? 'Durable agent sessions (Paseo unavailable; status not refreshed).'
+        : 'Paseo Runtime Adapter not available; agent sessions unavailable.',
     };
   }
 
-  const tracked = Array.from(inMemoryAgentSessions.values());
   const sessions = [];
   for (const rec of tracked) {
     let status = rec.status;
     let live = null;
     try {
-      live = await adapter.getSession(rec.sessionId);
+      live = await adapter.getSession(rec.sessionId || rec.id);
     } catch {
       live = null;
     }
     if (live) {
       status = live.status || status;
-      sessions.push({
+      const updated = {
         ...rec,
         status,
         model: live.model || rec.model,
@@ -595,7 +665,17 @@ fastify.get('/v1/agents/sessions', async () => {
         source: 'paseo',
         mock: false,
         resumeType: live.resumeType || rec.resumeType || null,
-      });
+      };
+      // Refresh durable status when possible.
+      if (isReal() && AgentSessionRepositoryCls) {
+        try {
+          const repo = new AgentSessionRepositoryCls(db);
+          await repo.updateStatus(rec.id, status);
+        } catch { /* ignore */ }
+      }
+      // Update cache.
+      inMemoryAgentSessions.set(rec.id, updated);
+      sessions.push(updated);
     } else {
       sessions.push({ ...rec, status, source: 'paseo', mock: false, resumeType: rec.resumeType || null });
     }

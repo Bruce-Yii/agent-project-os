@@ -37,12 +37,13 @@ describe("WP1-A migrations", () => {
       "tasks",
       "dependency_edges",
       "project_current_states",
+      "agent_sessions",
       "schema_migrations",
     ]) {
       assert.ok(names.includes(t), `missing table ${t}`);
     }
     const mig = await pool.query("SELECT version FROM schema_migrations");
-    assert.equal(mig.rows.length, 2);
+    assert.equal(mig.rows.length, 3);
   });
 
   it("is idempotent", async () => {

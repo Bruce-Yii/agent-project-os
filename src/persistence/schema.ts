@@ -62,3 +62,18 @@ export const projectCurrentStates = pgTable("project_current_states", {
   source: text("source").notNull().default("owner"),
   version: integer("version").notNull().default(1),
 });
+
+export const agentSessions = pgTable("agent_sessions", {
+  id: text("id").primaryKey(),
+  providerSessionId: text("provider_session_id").notNull(),
+  provider: text("provider").notNull(),
+  cwd: text("cwd"),
+  title: text("title"),
+  status: text("status").notNull().default("idle"),
+  projectId: text("project_id"),
+  taskId: text("task_id"),
+  assignmentId: text("assignment_id"),
+  capabilities: text("capabilities"), // JSON
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+});
