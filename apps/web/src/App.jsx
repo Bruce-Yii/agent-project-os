@@ -140,28 +140,152 @@ function ProjectWorkbench({ projectId, onNavigate, mode }) {
 }
 
 function AgentWorkbench() {
+  const [caps, setCaps] = useState(null);
+  const [providers, setProviders] = useState([]);
+  const [sessions, setSessions] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [connecting, setConnecting] = useState(false);
+  const [connectMsg, setConnectMsg] = useState(null);
+
+  const load = async () => {
+    setLoading(true);
+    setError(null);
+    setConnectMsg(null);
+    try {
+      const [c, p] = await Promise.all([api.capabilities(), api.providers()]);
+      setCaps(c);
+      setProviders(p.providers || []);
+      try {
+        const s = await api.agentSessions();
+        setSessions(s.sessions || s.agents || []);
+      } catch (e) {
+        // keep providers even if sessions fail
+      }
+    } catch (e) {
+      setError(e instanceof ApiError ? e.message : String(e));
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => { load(); }, []);
+
+  const connectProvider = async () => {
+    setConnecting(true);
+    setError(null);
+    setConnectMsg(null);
+    try {
+      const p = await api.providers();
+      setProviders(p.providers || []);
+      setConnectMsg(p.mock ? 'Providers are mock (WP1-B not connected).' : 'Provider connected.');
+    } catch (e) {
+      setError(e instanceof ApiError ? e.message : String(e));
+    } finally {
+      setConnecting(false);
+    }
+  };
+
+  const mode = caps?.mode || 'mock';
+
   return (
     <div>
-      <h1>Agent Workbench <span className="badge mock">MOCK (not implemented)</span></h1>
+      <h1>Agent Workbench {modeBadge(mode)}</h1>
       <div className="card">
-        <h2>Agent Session</h2>
-        <div className="status">Agent-first direct entry. Create or connect to a Session without a Task.</div>
-        <div className="status">Real Provider integration requires WP1-B turn completion.</div>
-        <div className="status" style={{ color: '#f59e0b' }}>Mock-dependent: no real sessions/runs yet.</div>
+        <h2>Providers</h2>
+        {loading && <div className="status">Loading providers...</div>}
+        {error && (
+          <div className="status" style={{ color: '#f87171' }}>
+            Error: {error}
+            <button className="btn" onClick={load} style={{ marginLeft: '8px' }}>Retry</button>
+          </div>
+        )}
+        {!loading && !error && (
+          <>
+            <button className="btn" onClick={connectProvider} disabled={connecting}>
+              {connecting ? 'Connecting...' : 'Connect Provider'}
+            </button>
+            {connectMsg && <div className="status">{connectMsg}</div>}
+            {providers.length === 0 && <div className="status">No providers available.</div>}
+            {providers.map((p, i) => (
+              <div key={p.id || i} style={{ padding: '8px 0', borderBottom: '1px solid #334155' }}>
+                <strong>{p.name}</strong>{' '}
+                <span className={`badge ${p.mock ? 'mock' : 'real'}`}>{p.mock ? 'MOCK' : 'REAL'}</span>
+                <div className="status">{p.available ? 'Available' : 'Unavailable'}{p.error ? ` — ${p.error}` : ''}</div>
+              </div>
+            ))}
+          </>
+        )}
+      </div>
+      <div className="card">
+        <h2>Agent Sessions</h2>
+        {loading && <div className="status">Loading sessions...</div>}
+        {!loading && !error && sessions.length === 0 && <div className="status">No active sessions.</div>}
+        {!loading && !error && sessions.map((s, i) => (
+          <div key={s.id || s.sessionId || i} style={{ padding: '8px 0', borderBottom: '1px solid #334155' }}>
+            <strong>{s.id || s.sessionId || 'session'}</strong>{' '}
+            <span className="badge mock">MOCK</span>
+          </div>
+        ))}
+        <div className="status" style={{ color: '#f59e0b' }}>Agent sessions are mock until WP1-B is connected.</div>
+      </div>
+      <div className="card">
+        <h2>Capabilities</h2>
+        {caps && (
+          <>
+            <div className="status">Real: {(caps.real || []).join(', ') || 'none'}</div>
+            <div className="status">Mock: {(caps.mock || []).join(', ') || 'none'}</div>
+          </>
+        )}
       </div>
     </div>
   );
 }
 
 function Attention() {
+  const [data, setData] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  const load = async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const d = await api.attention();
+      setData(d);
+    } catch (e) {
+      setError(e instanceof ApiError ? e.message : String(e));
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => { load(); }, []);
+
+  const mode = data?.mode || 'mock';
+  const items = data?.items || data?.attention || data?.attentionItems || data?.pending || [];
+
   return (
     <div>
-      <h1>Attention <span className="badge mock">MOCK (not implemented)</span></h1>
+      <h1>Attention {modeBadge(mode)}</h1>
       <div className="card">
         <h2>Pending Items</h2>
-        <div className="status">No pending reviews, permissions, or failures.</div>
-        <div className="status">Real attention items require WP1-C integration with Run/Review/Event systems.</div>
-        <div className="status" style={{ color: '#f59e0b' }}>Mock-dependent: no real attention feed yet.</div>
+        {loading && <div className="status">Loading attention items...</div>}
+        {error && (
+          <div className="status" style={{ color: '#f87171' }}>
+            Error: {error}
+            <button className="btn" onClick={load} style={{ marginLeft: '8px' }}>Retry</button>
+          </div>
+        )}
+        {!loading && !error && items.length === 0 && <div className="status">No pending items</div>}
+        {!loading && !error && items.map((item, i) => (
+          <div key={item.id || i} style={{ padding: '8px 0', borderBottom: '1px solid #334155' }}>
+            <strong>{item.title || item.type || 'Attention item'}</strong>{' '}
+            <span className={`badge ${item.mock ? 'mock' : 'real'}`}>{item.mock ? 'MOCK' : 'REAL'}</span>
+            {item.description && <div className="status">{item.description}</div>}
+          </div>
+        ))}
+        <div className="status" style={{ color: '#f59e0b' }}>Attention feed is mock until WP1-C is connected.</div>
       </div>
     </div>
   );

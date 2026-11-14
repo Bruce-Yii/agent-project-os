@@ -1,4 +1,4 @@
-﻿// Centralized typed-ish HTTP client for the WP1-C shell API.
+// Centralized typed-ish HTTP client for the WP1-C shell API.
 // All fetch calls in the UI go through this module.
 
 const API_BASE = (typeof import.meta !== 'undefined' && import.meta.env && import.meta.env.VITE_API_BASE) || '/api';
@@ -44,6 +44,9 @@ export const api = {
   createTask: (projectId, title) => request('/v1/tasks', { method: 'POST', body: JSON.stringify({ projectId, title }) }),
   currentState: (projectId) => request(`/v1/projects/${encodeURIComponent(projectId)}/current-state`),
   pendingReviews: () => request('/v1/reviews/pending'),
+  providers: () => request('/v1/providers'),
+  agentSessions: () => request('/v1/agents/sessions'),
+  attention: () => request('/v1/attention'),
   command: (intent, payload = {}, envelope = {}) => request('/v1/commands', { method: 'POST', body: JSON.stringify({ intent, payload, envelope }) }),
 };
 

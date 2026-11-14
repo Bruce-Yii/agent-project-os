@@ -185,9 +185,15 @@ fastify.get('/v1/capabilities', async () => {
         'tasks: create/read/list (persistent, validates projectId exists)',
         'project current-state read (persistent)',
         'POST /v1/commands for implemented intents',
+        'providers: list (mock — WP1-B not connected)',
+        'agent sessions: list (mock — WP1-B not connected)',
+        'attention: list (mock — WP1-C not connected)',
       ],
       mock: [
         'agent sessions / providers / runs / assignments / artifacts / approvals (in-memory)',
+        'providers: list (mock — WP1-B not connected)',
+        'agent sessions: list (mock — WP1-B not connected)',
+        'attention: list (mock — WP1-C not connected)',
         'reviews: list pending (in-memory)',
         'events / cursors / SSE / WebSocket',
       ],
@@ -213,6 +219,9 @@ fastify.get('/v1/capabilities', async () => {
       'project current-state read (in-memory stub)',
       'POST /v1/commands (not implemented -> 501 NOT_IMPLEMENTED)',
       'agent sessions / providers / runs / assignments / artifacts / approvals',
+      'providers: list (mock — WP1-B not connected)',
+      'agent sessions: list (mock — WP1-B not connected)',
+      'attention: list (mock — WP1-C not connected)',
       'current-state writes',
       'events / cursors / SSE / WebSocket',
     ],
@@ -396,11 +405,98 @@ fastify.post('/v1/commands', async (request, reply) => {
   return reply.status(200).send(result);
 });
 
+// (consolidated into labeled endpoints below)
 // ---------------------------------------------------------------------------
 // Reviews (mock)
 // ---------------------------------------------------------------------------
 fastify.get('/v1/reviews/pending', async () => {
   return { reviews: Array.from(inMemoryReviews.values()).filter(r => r.status === 'pending'), mode: 'mock-in-memory' };
+});
+
+// ---------------------------------------------------------------------------
+// Providers (WP1-B not connected -> mock, clearly labeled)
+// ---------------------------------------------------------------------------
+fastify.get('/v1/providers', async () => {
+  let providers = null;
+  let source = 'mock';
+  try {
+    const adapterPath = process.env.PASEO_ADAPTER_PATH;
+    if (adapterPath) {
+      const mod = await import(adapterPath);
+      const AdapterCls = mod.default || mod.PaseoRuntimeAdapter;
+      if (AdapterCls) {
+        const adapter = new AdapterCls({ daemonUrl: process.env.PASEO_DAEMON_URL || 'ws://127.0.0.1:6767/ws' });
+        await adapter.connect();
+        const discovered = await adapter.discover();
+        if (Array.isArray(discovered)) {
+          providers = discovered.map((p) => ({
+            id: p.name || p.id || 'provider',
+            name: p.name || p.id || 'provider',
+            available: !!p.available,
+            status: p.available ? 'available' : 'unavailable',
+            level: p.level || (p.available ? 'native' : 'unsupported'),
+            error: p.error || null,
+            source: 'paseo',
+            mock: false,
+          }));
+          source = 'paseo';
+          await adapter.disconnect();
+        }
+      }
+    }
+  } catch (err) {
+    providers = null;
+    source = 'mock';
+  }
+
+  if (!providers) {
+    providers = [
+      { id: 'claude', name: 'claude', available: true, status: 'available', level: 'native', error: null, source: 'mock', mock: true, note: 'requires interactive OAuth login' },
+      { id: 'codex', name: 'codex', available: true, status: 'available', level: 'native', error: null, source: 'mock', mock: true, note: 'requires interactive OAuth login' },
+      { id: 'opencode', name: 'opencode', available: true, status: 'available', level: 'native', error: null, source: 'mock', mock: true, note: 'requires credits' },
+      { id: 'pi', name: 'pi', available: true, status: 'available', level: 'native', error: null, source: 'mock', mock: true, note: 'requires /login' },
+      { id: 'copilot', name: 'copilot', available: false, status: 'unavailable', level: 'unsupported', error: 'requires GitHub Copilot subscription', source: 'mock', mock: true, note: 'requires GitHub Copilot subscription' },
+    ];
+    source = 'mock';
+  }
+
+  const mode = source === 'paseo' ? 'real' : 'mock-in-memory';
+  return {
+    providers,
+    mode,
+    source,
+    mock: source !== 'paseo',
+    note: 'Provider list is mock. Real discovery requires WP1-B Paseo Runtime Adapter connection.',
+  };
+});
+
+// ---------------------------------------------------------------------------
+// Agent sessions (mock for now, clearly labeled)
+// ---------------------------------------------------------------------------
+fastify.get('/v1/agents/sessions', async () => {
+  return {
+    sessions: [],
+    agents: [],
+    mode: 'mock-in-memory',
+    source: 'mock',
+    mock: true,
+  };
+});
+
+// ---------------------------------------------------------------------------
+// Attention (mock for now, clearly labeled)
+// ---------------------------------------------------------------------------
+fastify.get('/v1/attention', async () => {
+  const items = [];
+  return {
+    items,
+    attention: items,
+    attentionItems: items,
+    pending: items,
+    mode: 'mock-in-memory',
+    source: 'mock',
+    mock: true,
+  };
 });
 
 // ---------------------------------------------------------------------------
