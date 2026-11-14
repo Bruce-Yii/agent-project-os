@@ -13,6 +13,7 @@
     "test": "npm run build && node --test --test-concurrency=1 dist/src/tests/domain.test.js",
     "test:db": "npm run build && node --test --test-concurrency=1 dist/src/persistence/persistence.test.js dist/src/persistence/migrate.test.js dist/src/persistence/receipts.test.js dist/src/persistence/idempotency.test.js dist/src/commands/contract.test.js dist/tests/wp1a/contract.test.js dist/tests/wp1a/restart.test.js dist/tests/wp1a/concurrent.test.js",
     "test:fixtures": "python tests/wp1a/test_wp1a.py",
+    "test:integration": "node --test --test-concurrency=1 tests/integration/http-pg.test.mjs",
     "dev:api": "node src/http/server.mjs",
     "dev:web": "cd apps/web && vite"
   },
