@@ -1,4 +1,4 @@
-// WP1-C Web/API shell — Fastify 5.
+﻿// WP1-C Web/API shell — Fastify 5.
 // Integrated with WP1-A: uses real CommandExecutor + PostgreSQL when DATABASE_URL is set.
 // Falls back to in-memory mock mode with a clear warning when DATABASE_URL is absent or DB unavailable.
 
@@ -874,6 +874,11 @@ fastify.get('/v1/agents/sessions/:id/events', async (request, reply) => {
     closed = true;
     if (typeof unsub === 'function') try { unsub(); } catch { /* ignore */ }
     if (adapter) try { adapter.disconnect(); } catch { /* ignore */ }
+    try { res.end(); } catch { /* ignore */ }
+  };
+  const lateCleanup = () => {
+    if (adapter) try { adapter.disconnect(); } catch { /* ignore */ }
+    if (typeof unsub === 'function') try { unsub(); } catch { /* ignore */ }
     try { res.end(); } catch { /* ignore */ }
   };
   // Client disconnect signals. In Node 24, request.raw 'close' fires on
