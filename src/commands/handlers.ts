@@ -735,12 +735,12 @@ export async function StartRun(...args: unknown[]): Promise<CommandResult> {
   const p = payload(ctx);
   const assignmentId = str(p.assignmentId);
   if (!assignmentId) return { status: "REJECTED", reason: "MISSING_FIELDS" };
-  const assignment = await repos.assignments.findById(assignmentId);
-  if (!assignment) return { status: "REJECTED", reason: "ASSIGNMENT_NOT_FOUND" };
-
-  // DB-level serialization for concurrent StartRun on the same assignment.
+  // DB-level serialization: lock the assignment row first.
   await db.execute(sql`SELECT id FROM assignments WHERE id = ${assignmentId} FOR UPDATE`);
 
+  // Re-read assignment after acquiring lock (avoid stale state).
+  const assignment = await repos.assignments.findById(assignmentId);
+  if (!assignment) return { status: "REJECTED", reason: "ASSIGNMENT_NOT_FOUND" };
   // Check assignment state first.
   if (assignment.status !== "pending" && assignment.status !== "active") {
     return { status: "REJECTED", reason: "INVALID_TRANSITION" };
@@ -879,6 +879,8 @@ export async function CompleteAssignment(...args: unknown[]): Promise<CommandRes
   const p = payload(ctx);
   const assignmentId = str(p.assignmentId);
   if (!assignmentId) return { status: "REJECTED", reason: "MISSING_FIELDS" };
+  // Lock the assignment row first.
+  await db.execute(sql`SELECT id FROM assignments WHERE id = ${assignmentId} FOR UPDATE`);
   const assignment = await repos.assignments.findById(assignmentId);
   if (!assignment) return { status: "REJECTED", reason: "ASSIGNMENT_NOT_FOUND" };
   // Guard: assignment cannot be completed while a run is still active.
@@ -901,6 +903,8 @@ export async function CancelAssignment(...args: unknown[]): Promise<CommandResul
   const p = payload(ctx);
   const assignmentId = str(p.assignmentId);
   if (!assignmentId) return { status: "REJECTED", reason: "MISSING_FIELDS" };
+  // Lock the assignment row first.
+  await db.execute(sql`SELECT id FROM assignments WHERE id = ${assignmentId} FOR UPDATE`);
   const assignment = await repos.assignments.findById(assignmentId);
   if (!assignment) return { status: "REJECTED", reason: "ASSIGNMENT_NOT_FOUND" };
   // Guard: assignment cannot be cancelled while a run is still active.
