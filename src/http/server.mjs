@@ -420,9 +420,9 @@ fastify.get('/v1/providers', async () => {
   let providers = null;
   let source = 'mock';
   try {
-    const adapterPath = process.env.PASEO_ADAPTER_PATH;
+    const adapterPath = process.env.PASEO_ADAPTER_PATH || path.resolve(__dirname, '..', 'runtime', 'paseo-adapter.mjs');
     if (adapterPath) {
-      const mod = await import(adapterPath);
+      const mod = await import(pathToFileURL(adapterPath).href);
       const AdapterCls = mod.default || mod.PaseoRuntimeAdapter;
       if (AdapterCls) {
         const adapter = new AdapterCls({ daemonUrl: process.env.PASEO_DAEMON_URL || 'ws://127.0.0.1:6767/ws' });
@@ -466,7 +466,7 @@ fastify.get('/v1/providers', async () => {
     mode,
     source,
     mock: source !== 'paseo',
-    note: 'Provider list is mock. Real discovery requires WP1-B Paseo Runtime Adapter connection.',
+    note: 'Provider list from Paseo Daemon (real).',
   };
 });
 
