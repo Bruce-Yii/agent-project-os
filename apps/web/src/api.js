@@ -1,7 +1,7 @@
-// Centralized typed-ish HTTP client for the WP1-C shell API.
+﻿// Centralized typed-ish HTTP client for the WP1-C shell API.
 // All fetch calls in the UI go through this module.
 
-const API_BASE = (typeof import.meta !== 'undefined' && import.meta.env && import.meta.env.VITE_API_BASE) || 'http://localhost:3000';
+const API_BASE = (typeof import.meta !== 'undefined' && import.meta.env && import.meta.env.VITE_API_BASE) || '/api';
 
 export const API = API_BASE;
 
