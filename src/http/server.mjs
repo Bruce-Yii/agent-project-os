@@ -471,15 +471,35 @@ fastify.get('/v1/providers', async () => {
 });
 
 // ---------------------------------------------------------------------------
-// Agent sessions (mock for now, clearly labeled)
+// Agent sessions (Paseo-backed when adapter available, else mock)
 // ---------------------------------------------------------------------------
 fastify.get('/v1/agents/sessions', async () => {
+  let sessions = [];
+  let source = 'mock';
+  try {
+    const adapterPath = process.env.PASEO_ADAPTER_PATH || path.resolve(__dirname, '..', 'runtime', 'paseo-adapter.mjs');
+    const mod = await import(pathToFileURL(adapterPath).href);
+    const AdapterCls = mod.default || mod.PaseoRuntimeAdapter;
+    if (AdapterCls) {
+      const adapter = new AdapterCls({ daemonUrl: process.env.PASEO_DAEMON_URL || 'ws://127.0.0.1:6767/ws' });
+      await adapter.connect();
+      // Paseo has no listSessions; return empty (sessions created via POST would be tracked)
+      source = 'paseo';
+      await adapter.disconnect();
+    }
+  } catch (err) {
+    source = 'mock';
+  }
+  const mode = source === 'paseo' ? 'real' : 'mock-in-memory';
   return {
-    sessions: [],
-    agents: [],
-    mode: 'mock-in-memory',
-    source: 'mock',
-    mock: true,
+    sessions,
+    agents: sessions,
+    mode,
+    source,
+    mock: source !== 'paseo',
+    note: source === 'paseo'
+      ? 'Agent sessions require WP1-B full Runtime Adapter (session tracking not yet implemented). Paseo Daemon connected.'
+      : 'Agent sessions are mock. Real sessions require WP1-B Paseo Runtime Adapter connection.',
   };
 });
 
