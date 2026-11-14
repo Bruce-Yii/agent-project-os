@@ -312,3 +312,49 @@ Native LLM turn through Paseo is blocked by provider auth/credits:
 ### No paid credit consumption
 - No new API calls made during this verification
 - No credentials exposed in logs or commits
+
+## V4f: Native turn through Paseo with OpenCode Go direct endpoint (2026-11-14) — SUCCESS
+
+**Configuration approach:** Custom OpenCode provider added to an isolated OpenCode home config (`opencode.json`) pointing at the OpenCode Go inference endpoint, with the API key supplied through an environment variable (`OPENCODE_GO_DIRECT_KEY`) and a static `x-opencode-session` header. Paseo daemon was started with environment variables pointing `HOME`/`USERPROFILE`/`XDG_*` at the isolated OpenCode home so the spawned `opencode serve` process loads the custom provider. Paseo provider remained the built-in `opencode` provider; session created with model `opencode-go-direct/deepseek-v4.1-flash`.
+
+**Isolated OpenCode home:** `D:\12412\DshWorktrees\agent-project-os\wp1b-runtime\.paseo-home\opencode-isolated-home` (gitignored; contains config only, no credentials).
+
+**Custom provider config (no secrets):**
+```json
+{
+  "providers": {
+    "opencode-go-direct": {
+      "name": "OpenCode Go Direct",
+      "package": "aisdk:@ai-sdk/openai-compatible",
+      "settings": {
+        "baseURL": "https://opencode.ai/inference/go/openai/v1",
+        "apiKey": "{env:OPENCODE_GO_DIRECT_KEY}",
+        "headers": { "x-opencode-session": "{env:OPENCODE_GO_SESSION_ID}" }
+      },
+      "models": {
+        "deepseek-v4.1-flash": {
+          "name": "DeepSeek V4.1 Flash (Go Direct)",
+          "limit": { "context": 1000000, "output": 262144 }
+        }
+      }
+    }
+  }
+}
+```
+
+**Required environment variables (set when starting daemon):**
+- `OPENCODE_GO_DIRECT_KEY` (OpenCode Go API key)
+- `OPENCODE_GO_SESSION_ID` (session id header value)
+- `HOME`, `USERPROFILE`, `XDG_CONFIG_HOME`, `XDG_DATA_HOME`, `XDG_STATE_HOME`, `XDG_CACHE_HOME` pointing at the isolated OpenCode home
+- `PASEO_HOME` pointing at the isolated Paseo home
+
+**Native turn result:**
+- Provider: opencode (Paseo)
+- Model: opencode-go-direct/deepseek-v4.1-flash
+- Agent ID: 2f300504-ff3c-440e-9051-f2f2897ef1ea
+- Events received: turn_started, user_message, reasoning (x2), assistant_message (x2), turn_completed
+- Assistant response: "Hello! I'm ready to help you with your Agent Project OS work whenever you are."
+- Usage: 12081 input tokens, 256 cached, 20 output tokens
+- Turn completed successfully through Paseo event stream (two-client not re-tested in this round, but event streaming verified)
+
+**Conclusion:** Paseo's opencode provider CAN be configured to use the OpenCode Go API endpoint by adding a custom OpenAI-compatible provider to the OpenCode config and launching the daemon with the isolated home environment. Native turn verified end-to-end through Paseo's event stream. No interactive OAuth required; uses API key via environment variable. Credentials were not committed.
