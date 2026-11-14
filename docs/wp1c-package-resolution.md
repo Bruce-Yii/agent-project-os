@@ -26,6 +26,7 @@ Merge WP1-C's web dependencies into WP1-A's package.json:
 - Vite config → `apps/web/vite.config.js`
 
 ### Step 4: Unified scripts
+
 ```json
 {
   "scripts": {
