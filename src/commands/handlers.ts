@@ -12,6 +12,10 @@ import {
   TaskRepository,
   GoalRepository,
   DependencyRepository,
+  AssignmentRepository,
+  RunRepository,
+  ArtifactRepository,
+  ReviewRepository,
 } from "../persistence/repositories.js";
 import { createPersonalSpace } from "../domain/personal-space.js";
 import { canTransitionProject } from "../domain/project.js";
@@ -34,6 +38,10 @@ function makeRepos(db: Db) {
     tasks: new TaskRepository(db),
     goals: new GoalRepository(db),
     dependencies: new DependencyRepository(db),
+    assignments: new AssignmentRepository(db),
+    runs: new RunRepository(db),
+    artifacts: new ArtifactRepository(db),
+    reviews: new ReviewRepository(db),
   };
 }
 
@@ -698,6 +706,112 @@ export const handleRemoveDependency = RemoveDependency;
 export const handleTransitionTaskState = TransitionTaskState;
 
 // handlers map
+
+
+// ---------- CreateAssignment ----------
+export async function CreateAssignment(...args: unknown[]): Promise<CommandResult> {
+  const ctx = resolveContext(args);
+  const db = (ctx.db ?? (ctx as any).tx ?? (ctx as any).database) as Db;
+  const repos = makeRepos(db);
+  const p = payload(ctx);
+  const taskId = str(p.taskId);
+  const agentId = str(p.agentId);
+  const runtimeId = str(p.runtimeId);
+  if (!taskId || !agentId) return { status: "REJECTED", reason: "MISSING_FIELDS" };
+  const task = await repos.tasks.findById(taskId);
+  if (!task) return { status: "REJECTED", reason: "TASK_NOT_FOUND" };
+  const id = randomUUID();
+  await repos.assignments.save({ id, taskId, agentId, runtimeId: runtimeId ?? null, status: "pending" });
+  return { status: "OK", assignmentId: id };
+}
+
+// ---------- StartRun ----------
+export async function StartRun(...args: unknown[]): Promise<CommandResult> {
+  const ctx = resolveContext(args);
+  const db = (ctx.db ?? (ctx as any).tx ?? (ctx as any).database) as Db;
+  const repos = makeRepos(db);
+  const p = payload(ctx);
+  const assignmentId = str(p.assignmentId);
+  if (!assignmentId) return { status: "REJECTED", reason: "MISSING_FIELDS" };
+  const assignment = await repos.assignments.findById(assignmentId);
+  if (!assignment) return { status: "REJECTED", reason: "ASSIGNMENT_NOT_FOUND" };
+  const id = randomUUID();
+  await repos.runs.save({ id, assignmentId, attempt: 1, status: "running" });
+  await repos.assignments.updateStatus(assignmentId, "active");
+  return { status: "OK", runId: id };
+}
+
+// ---------- CompleteRun ----------
+export async function CompleteRun(...args: unknown[]): Promise<CommandResult> {
+  const ctx = resolveContext(args);
+  const db = (ctx.db ?? (ctx as any).tx ?? (ctx as any).database) as Db;
+  const repos = makeRepos(db);
+  const p = payload(ctx);
+  const runId = str(p.runId);
+  const status = str(p.status);
+  if (!runId || !status) return { status: "REJECTED", reason: "MISSING_FIELDS" };
+  const run = await repos.runs.findById(runId);
+  if (!run) return { status: "REJECTED", reason: "RUN_NOT_FOUND" };
+  await repos.runs.updateStatus(runId, status);
+  return { status: "OK", runId, runStatus: status };
+}
+
+// ---------- SubmitArtifact ----------
+export async function SubmitArtifact(...args: unknown[]): Promise<CommandResult> {
+  const ctx = resolveContext(args);
+  const db = (ctx.db ?? (ctx as any).tx ?? (ctx as any).database) as Db;
+  const repos = makeRepos(db);
+  const p = payload(ctx);
+  const runId = str(p.runId);
+  const kind = str(p.kind);
+  const immutableRef = str(p.immutableRef);
+  if (!runId || !kind || !immutableRef) return { status: "REJECTED", reason: "MISSING_FIELDS" };
+  const run = await repos.runs.findById(runId);
+  if (!run) return { status: "REJECTED", reason: "RUN_NOT_FOUND" };
+  const id = randomUUID();
+  await repos.artifacts.save({ id, runId, kind, immutableRef });
+  return { status: "OK", artifactId: id };
+}
+
+// ---------- SubmitReview ----------
+export async function SubmitReview(...args: unknown[]): Promise<CommandResult> {
+  const ctx = resolveContext(args);
+  const db = (ctx.db ?? (ctx as any).tx ?? (ctx as any).database) as Db;
+  const repos = makeRepos(db);
+  const p = payload(ctx);
+  const taskId = str(p.taskId);
+  const runId = str(p.runId);
+  const verdict = str(p.verdict);
+  const evidenceRefs = str(p.evidenceRefs);
+  if (!taskId) return { status: "REJECTED", reason: "MISSING_FIELDS" };
+  const task = await repos.tasks.findById(taskId);
+  if (!task) return { status: "REJECTED", reason: "TASK_NOT_FOUND" };
+  const id = randomUUID();
+  await repos.reviews.save({ id, taskId, runId: runId ?? null, verdict: verdict ?? "pending", evidenceRefs: evidenceRefs ?? null });
+  return { status: "OK", reviewId: id };
+}
+
+// ---------- AcceptReview ----------
+export async function AcceptReview(...args: unknown[]): Promise<CommandResult> {
+  const ctx = resolveContext(args);
+  const db = (ctx.db ?? (ctx as any).tx ?? (ctx as any).database) as Db;
+  const repos = makeRepos(db);
+  const p = payload(ctx);
+  const reviewId = str(p.reviewId);
+  if (!reviewId) return { status: "REJECTED", reason: "MISSING_FIELDS" };
+  const review = await repos.reviews.findById(reviewId);
+  if (!review) return { status: "REJECTED", reason: "REVIEW_NOT_FOUND" };
+  await repos.reviews.updateVerdict(reviewId, "accepted");
+  return { status: "OK", reviewId };
+}
+
+export const handleCreateAssignment = CreateAssignment;
+export const handleStartRun = StartRun;
+export const handleCompleteRun = CompleteRun;
+export const handleSubmitArtifact = SubmitArtifact;
+export const handleSubmitReview = SubmitReview;
+export const handleAcceptReview = AcceptReview;
+
 export const handlers: Record<string, (...args: unknown[]) => Promise<CommandResult>> = {
   BootstrapPersonalSpace,
   CreateProject,
@@ -718,4 +832,10 @@ export const handlers: Record<string, (...args: unknown[]) => Promise<CommandRes
   AddDependency,
   RemoveDependency,
   TransitionTaskState,
+  CreateAssignment,
+  StartRun,
+  CompleteRun,
+  SubmitArtifact,
+  SubmitReview,
+  AcceptReview,
 };

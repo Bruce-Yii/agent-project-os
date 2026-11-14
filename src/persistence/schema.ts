@@ -77,3 +77,41 @@ export const agentSessions = pgTable("agent_sessions", {
   createdAt: timestamp("created_at").notNull().defaultNow(),
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
 });
+
+export const assignments = pgTable("assignments", {
+  id: text("id").primaryKey(),
+  taskId: text("task_id").notNull().references(() => tasks.id),
+  agentId: text("agent_id").notNull(),
+  runtimeId: text("runtime_id"),
+  status: text("status").notNull().default("pending"),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+});
+
+export const runs = pgTable("runs", {
+  id: text("id").primaryKey(),
+  assignmentId: text("assignment_id").notNull().references(() => assignments.id),
+  attempt: integer("attempt").notNull().default(1),
+  status: text("status").notNull().default("queued"),
+  idempotencyKey: text("idempotency_key"),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+});
+
+export const artifacts = pgTable("artifacts", {
+  id: text("id").primaryKey(),
+  runId: text("run_id").notNull().references(() => runs.id),
+  kind: text("kind").notNull(),
+  immutableRef: text("immutable_ref").notNull(),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+
+export const reviews = pgTable("reviews", {
+  id: text("id").primaryKey(),
+  taskId: text("task_id").notNull().references(() => tasks.id),
+  runId: text("run_id").references(() => runs.id),
+  verdict: text("verdict").notNull().default("pending"),
+  evidenceRefs: text("evidence_refs"),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+});

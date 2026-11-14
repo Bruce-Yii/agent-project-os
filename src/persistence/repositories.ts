@@ -331,3 +331,76 @@ export class DependencyRepository {
       .where(eq(schema.dependencyEdges.sourceTaskId, sourceTaskId));
   }
 }
+export class AssignmentRepository {
+  constructor(private db: Db) {}
+  async save(a: { id: string; taskId: string; agentId: string; runtimeId?: string | null; status?: string }) {
+    await this.db.insert(schema.assignments).values({
+      id: a.id, taskId: a.taskId, agentId: a.agentId, runtimeId: a.runtimeId ?? null, status: a.status ?? "pending",
+    }).onConflictDoUpdate({ target: schema.assignments.id, set: { status: a.status ?? "pending", updatedAt: new Date() } });
+  }
+  async findById(id: string) {
+    const rows = await this.db.select().from(schema.assignments).where(eq(schema.assignments.id, id));
+    return rows[0] ?? null;
+  }
+  async findByTask(taskId: string) {
+    return this.db.select().from(schema.assignments).where(eq(schema.assignments.taskId, taskId));
+  }
+  async findAll() { return this.db.select().from(schema.assignments); }
+  async updateStatus(id: string, status: string) {
+    await this.db.update(schema.assignments).set({ status, updatedAt: new Date() }).where(eq(schema.assignments.id, id));
+  }
+}
+
+export class RunRepository {
+  constructor(private db: Db) {}
+  async save(r: { id: string; assignmentId: string; attempt?: number; status?: string; idempotencyKey?: string | null }) {
+    await this.db.insert(schema.runs).values({
+      id: r.id, assignmentId: r.assignmentId, attempt: r.attempt ?? 1, status: r.status ?? "queued", idempotencyKey: r.idempotencyKey ?? null,
+    }).onConflictDoUpdate({ target: schema.runs.id, set: { status: r.status ?? "queued", updatedAt: new Date() } });
+  }
+  async findById(id: string) {
+    const rows = await this.db.select().from(schema.runs).where(eq(schema.runs.id, id));
+    return rows[0] ?? null;
+  }
+  async findByAssignment(assignmentId: string) {
+    return this.db.select().from(schema.runs).where(eq(schema.runs.assignmentId, assignmentId));
+  }
+  async findAll() { return this.db.select().from(schema.runs); }
+  async updateStatus(id: string, status: string) {
+    await this.db.update(schema.runs).set({ status, updatedAt: new Date() }).where(eq(schema.runs.id, id));
+  }
+}
+
+export class ArtifactRepository {
+  constructor(private db: Db) {}
+  async save(a: { id: string; runId: string; kind: string; immutableRef: string }) {
+    await this.db.insert(schema.artifacts).values({ id: a.id, runId: a.runId, kind: a.kind, immutableRef: a.immutableRef });
+  }
+  async findById(id: string) {
+    const rows = await this.db.select().from(schema.artifacts).where(eq(schema.artifacts.id, id));
+    return rows[0] ?? null;
+  }
+  async findByRun(runId: string) {
+    return this.db.select().from(schema.artifacts).where(eq(schema.artifacts.runId, runId));
+  }
+}
+
+export class ReviewRepository {
+  constructor(private db: Db) {}
+  async save(r: { id: string; taskId: string; runId?: string | null; verdict?: string; evidenceRefs?: string | null }) {
+    await this.db.insert(schema.reviews).values({
+      id: r.id, taskId: r.taskId, runId: r.runId ?? null, verdict: r.verdict ?? "pending", evidenceRefs: r.evidenceRefs ?? null,
+    }).onConflictDoUpdate({ target: schema.reviews.id, set: { verdict: r.verdict ?? "pending", evidenceRefs: r.evidenceRefs ?? null, updatedAt: new Date() } });
+  }
+  async findById(id: string) {
+    const rows = await this.db.select().from(schema.reviews).where(eq(schema.reviews.id, id));
+    return rows[0] ?? null;
+  }
+  async findByTask(taskId: string) {
+    return this.db.select().from(schema.reviews).where(eq(schema.reviews.taskId, taskId));
+  }
+  async findAll() { return this.db.select().from(schema.reviews); }
+  async updateVerdict(id: string, verdict: string) {
+    await this.db.update(schema.reviews).set({ verdict, updatedAt: new Date() }).where(eq(schema.reviews.id, id));
+  }
+}
