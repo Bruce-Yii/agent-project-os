@@ -36,6 +36,7 @@ const inMemoryProjects = new Map();
 const inMemoryTasks = new Map();
 const inMemoryRuns = new Map();
 const inMemoryReviews = new Map();
+const inMemoryAgentSessions = new Map();
 
 let mode = 'mock-in-memory'; // 'real' | 'mock-in-memory'
 let db = null;
@@ -53,6 +54,23 @@ function isNonEmptyString(v) {
 
 function isReal() {
   return mode === 'real' && executor !== null && db !== null;
+}
+
+// ---------------------------------------------------------------------------
+// Paseo adapter helper
+// ---------------------------------------------------------------------------
+async function tryConnectPaseo() {
+  try {
+    const adapterPath = process.env.PASEO_ADAPTER_PATH || path.resolve(__dirname, '..', 'runtime', 'paseo-adapter.mjs');
+    const mod = await import(pathToFileURL(adapterPath).href);
+    const AdapterCls = mod.default || mod.PaseoRuntimeAdapter;
+    if (!AdapterCls) return null;
+    const adapter = new AdapterCls({ daemonUrl: process.env.PASEO_DAEMON_URL || 'ws://127.0.0.1:6767/ws' });
+    await adapter.connect();
+    return adapter;
+  } catch (err) {
+    return null;
+  }
 }
 
 // ---------------------------------------------------------------------------
@@ -171,6 +189,10 @@ fastify.get('/api/health', async () => {
 // Capabilities
 // ---------------------------------------------------------------------------
 fastify.get('/v1/capabilities', async () => {
+  const paseoAdapter = await tryConnectPaseo();
+  const paseoConnected = !!paseoAdapter;
+  if (paseoAdapter) { try { await paseoAdapter.disconnect(); } catch { /* ignore */ } }
+
   if (isReal()) {
     return {
       service: 'agent-project-os',
@@ -185,17 +207,17 @@ fastify.get('/v1/capabilities', async () => {
         'tasks: create/read/list (persistent, validates projectId exists)',
         'project current-state read (persistent)',
         'POST /v1/commands for implemented intents',
-        'providers: list (mock — WP1-B not connected)',
-        'agent sessions: list (mock — WP1-B not connected)',
-        'attention: list (mock — WP1-C not connected)',
+        paseoConnected ? 'providers: list (real via Paseo)' : 'providers: list (mock — Paseo not connected)',
+        paseoConnected ? 'agent sessions: create/list (real via Paseo)' : 'agent sessions: (mock — Paseo not connected)',
       ],
       mock: [
         'agent sessions / providers / runs / assignments / artifacts / approvals (in-memory)',
-        'providers: list (mock — WP1-B not connected)',
-        'agent sessions: list (mock — WP1-B not connected)',
-        'attention: list (mock — WP1-C not connected)',
         'reviews: list pending (in-memory)',
         'events / cursors / SSE / WebSocket',
+        'attention: DEFERRED (WP1-C module contract v0.1 for review/approval/attention)',
+      ],
+      deferred: [
+        'attention: DEFERRED — requires WP1-C module contract v0.1 (review/approval/attention)',
       ],
       requires: [
         'WP1-B Module Acceptance for provider/session/runtime',
@@ -219,11 +241,14 @@ fastify.get('/v1/capabilities', async () => {
       'project current-state read (in-memory stub)',
       'POST /v1/commands (not implemented -> 501 NOT_IMPLEMENTED)',
       'agent sessions / providers / runs / assignments / artifacts / approvals',
-      'providers: list (mock — WP1-B not connected)',
-      'agent sessions: list (mock — WP1-B not connected)',
-      'attention: list (mock — WP1-C not connected)',
+      paseoConnected ? 'providers: list (real via Paseo)' : 'providers: list (mock — Paseo not connected)',
+      paseoConnected ? 'agent sessions: create/list (real via Paseo)' : 'agent sessions: list (mock — Paseo not connected)',
+      'attention: DEFERRED (WP1-C module contract v0.1 for review/approval/attention)',
       'current-state writes',
       'events / cursors / SSE / WebSocket',
+    ],
+    deferred: [
+      'attention: DEFERRED — requires WP1-C module contract v0.1 (review/approval/attention)',
     ],
     requires: [
       'Set DATABASE_URL to enable real PostgreSQL + CommandExecutor mode',
@@ -473,38 +498,117 @@ fastify.get('/v1/providers', async () => {
 // ---------------------------------------------------------------------------
 // Agent sessions (Paseo-backed when adapter available, else mock)
 // ---------------------------------------------------------------------------
-fastify.get('/v1/agents/sessions', async () => {
-  let sessions = [];
-  let source = 'mock';
-  try {
-    const adapterPath = process.env.PASEO_ADAPTER_PATH || path.resolve(__dirname, '..', 'runtime', 'paseo-adapter.mjs');
-    const mod = await import(pathToFileURL(adapterPath).href);
-    const AdapterCls = mod.default || mod.PaseoRuntimeAdapter;
-    if (AdapterCls) {
-      const adapter = new AdapterCls({ daemonUrl: process.env.PASEO_DAEMON_URL || 'ws://127.0.0.1:6767/ws' });
-      await adapter.connect();
-      // Paseo has no listSessions; return empty (sessions created via POST would be tracked)
-      source = 'paseo';
-      await adapter.disconnect();
-    }
-  } catch (err) {
-    source = 'mock';
+fastify.post('/v1/agents/sessions', async (request, reply) => {
+  const body = request.body || {};
+  const { provider, cwd, title } = body;
+  if (!isNonEmptyString(provider)) {
+    return reply.status(400).send({ reason: 'MISSING_PROVIDER', message: 'provider is required and must be a non-empty string' });
   }
-  const mode = source === 'paseo' ? 'real' : 'mock-in-memory';
+
+  const adapter = await tryConnectPaseo();
+  if (!adapter) {
+    return reply.status(503).send({
+      reason: 'PASEO_UNAVAILABLE',
+      message: 'Paseo Runtime Adapter is not available; cannot create a real session.',
+      mode: 'mock-in-memory',
+      source: 'mock',
+      mock: true,
+    });
+  }
+
+  try {
+    const created = await adapter.createSession(provider.trim(), cwd || process.cwd(), title || '');
+    await adapter.disconnect();
+
+    const record = {
+      id: created.sessionId,
+      sessionId: created.sessionId,
+      providerSessionId: created.providerSessionId || created.sessionId,
+      provider: created.provider || provider.trim(),
+      cwd: created.cwd || cwd || process.cwd(),
+      title: title || '',
+      status: created.status || 'idle',
+      model: created.model || null,
+      createdAt: created.createdAt || new Date().toISOString(),
+      updatedAt: created.updatedAt || new Date().toISOString(),
+      source: 'paseo',
+      mock: false,
+    };
+    inMemoryAgentSessions.set(created.sessionId, record);
+
+    return reply.status(201).send({
+      ...record,
+      mode: 'real',
+      source: 'paseo',
+      mock: false,
+      note: 'Real Paseo session created.',
+    });
+  } catch (err) {
+    try { await adapter.disconnect(); } catch { /* ignore */ }
+    return reply.status(502).send({
+      reason: 'PASEO_ERROR',
+      message: err && err.message ? err.message : String(err),
+      mode: 'mock-in-memory',
+      source: 'mock',
+      mock: true,
+    });
+  }
+});
+
+fastify.get('/v1/agents/sessions', async () => {
+  const adapter = await tryConnectPaseo();
+  if (!adapter) {
+    const mode = 'mock-in-memory';
+    return {
+      sessions: [],
+      agents: [],
+      mode,
+      source: 'mock',
+      mock: true,
+      deferred: false,
+      note: 'Paseo Runtime Adapter not available; agent sessions unavailable.',
+    };
+  }
+
+  const tracked = Array.from(inMemoryAgentSessions.values());
+  const sessions = [];
+  for (const rec of tracked) {
+    let status = rec.status;
+    let live = null;
+    try {
+      live = await adapter.getSession(rec.sessionId);
+    } catch {
+      live = null;
+    }
+    if (live) {
+      status = live.status || status;
+      sessions.push({
+        ...rec,
+        status,
+        model: live.model || rec.model,
+        updatedAt: live.updatedAt || rec.updatedAt,
+        source: 'paseo',
+        mock: false,
+      });
+    } else {
+      sessions.push({ ...rec, status, source: 'paseo', mock: false });
+    }
+  }
+  try { await adapter.disconnect(); } catch { /* ignore */ }
+
+  const mode = 'real';
   return {
     sessions,
     agents: sessions,
     mode,
-    source,
-    mock: source !== 'paseo',
-    note: source === 'paseo'
-      ? 'Agent sessions require WP1-B full Runtime Adapter (session tracking not yet implemented). Paseo Daemon connected.'
-      : 'Agent sessions are mock. Real sessions require WP1-B Paseo Runtime Adapter connection.',
+    source: 'paseo',
+    mock: false,
+    note: 'Tracked Paseo sessions with live status from Paseo Daemon.',
   };
 });
 
 // ---------------------------------------------------------------------------
-// Attention (mock for now, clearly labeled)
+// Attention (DEFERRED — requires WP1-C module contract v0.1)
 // ---------------------------------------------------------------------------
 fastify.get('/v1/attention', async () => {
   const items = [];
@@ -513,9 +617,12 @@ fastify.get('/v1/attention', async () => {
     attention: items,
     attentionItems: items,
     pending: items,
-    mode: 'mock-in-memory',
+    mode: 'deferred',
     source: 'mock',
     mock: true,
+    deferred: true,
+    label: 'DEFERRED',
+    note: 'Attention system requires WP1-C module contract v0.1 (review/approval/attention). Currently deferred.',
   };
 });
 

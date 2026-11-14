@@ -46,6 +46,7 @@ export const api = {
   pendingReviews: () => request('/v1/reviews/pending'),
   providers: () => request('/v1/providers'),
   agentSessions: () => request('/v1/agents/sessions'),
+  createAgentSession: (provider, cwd = '', title = '') => request('/v1/agents/sessions', { method: 'POST', body: JSON.stringify({ provider, cwd, title }) }),
   attention: () => request('/v1/attention'),
   command: (intent, payload = {}, envelope = {}) => request('/v1/commands', { method: 'POST', body: JSON.stringify({ intent, payload, envelope }) }),
 };

@@ -147,6 +147,11 @@ function AgentWorkbench() {
   const [error, setError] = useState(null);
   const [connecting, setConnecting] = useState(false);
   const [connectMsg, setConnectMsg] = useState(null);
+  const [creatingSession, setCreatingSession] = useState(false);
+  const [sessionProvider, setSessionProvider] = useState('');
+  const [sessionCwd, setSessionCwd] = useState('');
+  const [sessionTitle, setSessionTitle] = useState('');
+  const [sessionMsg, setSessionMsg] = useState(null);
 
   const load = async () => {
     setLoading(true);
@@ -156,6 +161,10 @@ function AgentWorkbench() {
       const [c, p] = await Promise.all([api.capabilities(), api.providers()]);
       setCaps(c);
       setProviders(p.providers || []);
+      if (!sessionProvider && (p.providers || []).length > 0) {
+        const firstAvailable = (p.providers || []).find(x => x.available) || (p.providers || [])[0];
+        if (firstAvailable) setSessionProvider(firstAvailable.id || firstAvailable.name);
+      }
       try {
         const s = await api.agentSessions();
         setSessions(s.sessions || s.agents || []);
@@ -166,6 +175,23 @@ function AgentWorkbench() {
       setError(e instanceof ApiError ? e.message : String(e));
     } finally {
       setLoading(false);
+    }
+  };
+
+  const createSession = async () => {
+    if (!sessionProvider.trim()) return;
+    setCreatingSession(true);
+    setError(null);
+    setSessionMsg(null);
+    try {
+      const s = await api.createAgentSession(sessionProvider.trim(), sessionCwd.trim(), sessionTitle.trim());
+      setSessions(prev => [...prev, s]);
+      setSessionTitle('');
+      setSessionMsg(s.mock ? 'Session created (mock).' : 'Session created (real).');
+    } catch (e) {
+      setError(e instanceof ApiError ? e.message : String(e));
+    } finally {
+      setCreatingSession(false);
     }
   };
 
@@ -220,14 +246,29 @@ function AgentWorkbench() {
       <div className="card">
         <h2>Agent Sessions</h2>
         {loading && <div className="status">Loading sessions...</div>}
-        {!loading && !error && sessions.length === 0 && <div className="status">No active sessions.</div>}
-        {!loading && !error && sessions.map((s, i) => (
-          <div key={s.id || s.sessionId || i} style={{ padding: '8px 0', borderBottom: '1px solid #334155' }}>
-            <strong>{s.id || s.sessionId || 'session'}</strong>{' '}
-            <span className="badge mock">MOCK</span>
-          </div>
-        ))}
-        <div className="status" style={{ color: '#f59e0b' }}>Agent sessions are mock until WP1-B is connected.</div>
+        {!loading && !error && (
+          <>
+            <div style={{ marginBottom: '8px' }}>
+              <input value={sessionProvider} onChange={e => setSessionProvider(e.target.value)} placeholder="Provider (e.g. claude)" disabled={creatingSession} />
+              <input value={sessionCwd} onChange={e => setSessionCwd(e.target.value)} placeholder="Working directory (optional)" disabled={creatingSession} />
+              <input value={sessionTitle} onChange={e => setSessionTitle(e.target.value)} placeholder="Session title (optional)" disabled={creatingSession} />
+              <button className="btn" onClick={createSession} disabled={creatingSession || !sessionProvider.trim()}>
+                {creatingSession ? 'Creating...' : 'Create Session'}
+              </button>
+              {sessionMsg && <div className="status">{sessionMsg}</div>}
+            </div>
+            {sessions.length === 0 && <div className="status">No active sessions.</div>}
+            {sessions.map((s, i) => (
+              <div key={s.id || s.sessionId || i} style={{ padding: '8px 0', borderBottom: '1px solid #334155' }}>
+                <strong>{s.id || s.sessionId || 'session'}</strong>{' '}
+                <span className={`badge ${s.mock ? 'mock' : 'real'}`}>{s.mock ? 'MOCK' : 'REAL'}</span>
+                <span className="badge">{s.status || 'unknown'}</span>
+                {s.provider && <div className="status">Provider: {s.provider}</div>}
+                {s.cwd && <div className="status">CWD: {s.cwd}</div>}
+              </div>
+            ))}
+          </>
+        )}
       </div>
       <div className="card">
         <h2>Capabilities</h2>
@@ -264,10 +305,11 @@ function Attention() {
 
   const mode = data?.mode || 'mock';
   const items = data?.items || data?.attention || data?.attentionItems || data?.pending || [];
+  const deferred = data?.deferred || data?.label === 'DEFERRED';
 
   return (
     <div>
-      <h1>Attention {modeBadge(mode)}</h1>
+      <h1>Attention {modeBadge(mode)} <span className="badge mock">DEFERRED</span></h1>
       <div className="card">
         <h2>Pending Items</h2>
         {loading && <div className="status">Loading attention items...</div>}
@@ -285,7 +327,7 @@ function Attention() {
             {item.description && <div className="status">{item.description}</div>}
           </div>
         ))}
-        <div className="status" style={{ color: '#f59e0b' }}>Attention feed is mock until WP1-C is connected.</div>
+        <div className="status" style={{ color: '#f59e0b' }}>Attention is DEFERRED — requires WP1-C module contract v0.1 (review/approval/attention).</div>
       </div>
     </div>
   );
