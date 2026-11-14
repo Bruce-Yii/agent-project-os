@@ -1,4 +1,4 @@
-// Paseo Runtime Adapter — Project OS LocalRuntimeNode wrapper for Paseo Daemon 0.15.4
+﻿// Paseo Runtime Adapter — Project OS LocalRuntimeNode wrapper for Paseo Daemon 0.15.4
 //
 // Wraps @getpaseo/client DaemonClient to provide a stable LocalRuntimeNode interface
 // for Project OS. Maps Paseo concepts to Project OS domain objects.
@@ -147,5 +147,3 @@ export class PaseoRuntimeAdapter {
 }
 
 export default PaseoRuntimeAdapter;
-'@ | Set-Content -Path "D:\12412\DshWorktrees\agent-project-os\wp1b-runtime\src\runtime\paseo-adapter.mjs" -Encoding UTF8
-Write-Host "Adapter written"
