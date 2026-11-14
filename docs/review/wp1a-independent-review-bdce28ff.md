@@ -97,10 +97,12 @@ These are test gaps, not code defects. The code structure supports all three; te
 ## C. Evidence
 
 ### Commands run
+
 ```
 npm run typecheck → PASS (0 errors)
 npm run build → PASS (tsc)
 npm run test:db → 28/28 PASS (5 suites, 0 fail, 0 skip, 0 cancelled)
+
 ```
 
 ### CI
