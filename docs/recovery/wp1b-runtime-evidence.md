@@ -206,7 +206,7 @@ Real turn completion requires user action: interactive login for Claude/Codex/Pi
 **Provider:** OpenCode Go (opencode.ai/zen/go)
 **Model:** deepseek-v4.1-flash
 **Endpoint:** https://opencode.ai/inference/go/openai/v1/chat/completions
-**Auth:** Bearer oc_sk_e2ffd1f1d892_CqyO7vHyrpFNqIULNQvLcKXZ4Xs8bFaB
+**Auth:** Bearer [REDACTED CREDENTIAL — revoke/rotate; value removed from current file]
 **Required header:** x-opencode-session (session ID)
 
 **Request:**
