@@ -1,4 +1,4 @@
-﻿// Handler functions for WP1-A commands.
+// Handler functions for WP1-A commands.
 // Each handler receives a HandlerContext (or (command, context)) and runs inside
 // the CommandExecutor's Drizzle transaction.
 
@@ -755,8 +755,10 @@ export async function StartRun(...args: unknown[]): Promise<CommandResult> {
   const existingRuns = await repos.runs.findByAssignment(assignmentId);
 
   // Enforce at most one non-terminal run per assignment.
-  const terminalStatuses = new Set(["succeeded", "cancelled"]);
-  const activeRun = existingRuns.find((r: any) => !terminalStatuses.has(r.status));
+  // Only 'queued' and 'running' are non-terminal (active). failed/interrupted
+  // allow a new attempt (retry).
+  const isActiveRun = (s: any) => s === "queued" || s === "running";
+  const activeRun = existingRuns.find((r: any) => isActiveRun(r.status));
   if (activeRun) {
     return { status: "REJECTED", reason: "ACTIVE_RUN_EXISTS" };
   }
@@ -879,6 +881,11 @@ export async function CompleteAssignment(...args: unknown[]): Promise<CommandRes
   if (!assignmentId) return { status: "REJECTED", reason: "MISSING_FIELDS" };
   const assignment = await repos.assignments.findById(assignmentId);
   if (!assignment) return { status: "REJECTED", reason: "ASSIGNMENT_NOT_FOUND" };
+  // Guard: assignment cannot be completed while a run is still active.
+  const runs = await repos.runs.findByAssignment(assignmentId);
+  if (runs.some((r: any) => r.status === "queued" || r.status === "running")) {
+    return { status: "REJECTED", reason: "ACTIVE_RUN_EXISTS" };
+  }
   if (!canTransitionAssignment(assignment.status as any, "completed")) {
     return { status: "REJECTED", reason: "INVALID_TRANSITION" };
   }
@@ -896,6 +903,11 @@ export async function CancelAssignment(...args: unknown[]): Promise<CommandResul
   if (!assignmentId) return { status: "REJECTED", reason: "MISSING_FIELDS" };
   const assignment = await repos.assignments.findById(assignmentId);
   if (!assignment) return { status: "REJECTED", reason: "ASSIGNMENT_NOT_FOUND" };
+  // Guard: assignment cannot be cancelled while a run is still active.
+  const runs = await repos.runs.findByAssignment(assignmentId);
+  if (runs.some((r: any) => r.status === "queued" || r.status === "running")) {
+    return { status: "REJECTED", reason: "ACTIVE_RUN_EXISTS" };
+  }
   if (!canTransitionAssignment(assignment.status as any, "cancelled")) {
     return { status: "REJECTED", reason: "INVALID_TRANSITION" };
   }

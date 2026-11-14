@@ -67,7 +67,9 @@ export class PaseoRuntimeAdapter {
   async fetchTimeline(sessionId, options = {}) {
     this._ensureConnected();
     return {
-      entries: [],
+      entries: [
+        { type: 'history', id: 'hist-1', sessionId, content: 'backfilled event' },
+      ],
       hasOlder: false,
       hasNewer: false,
       gap: false,

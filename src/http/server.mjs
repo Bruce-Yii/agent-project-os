@@ -876,8 +876,11 @@ fastify.get('/v1/agents/sessions/:id/events', async (request, reply) => {
     if (adapter) try { adapter.disconnect(); } catch { /* ignore */ }
     try { res.end(); } catch { /* ignore */ }
   };
-  request.raw.on('close', cleanup);
+  // Client disconnect signals. In Node 24, request.raw 'close' fires on
+  // request completion rather than connection close, so rely on reply.raw
+  // 'close' plus request.raw 'aborted'.
   res.on('close', cleanup);
+  request.raw.on('aborted', cleanup);
 
   try {
     adapter = await tryConnectPaseo();
@@ -896,7 +899,10 @@ fastify.get('/v1/agents/sessions/:id/events', async (request, reply) => {
     if (typeof adapter.fetchTimeline === 'function') {
       const tl = await adapter.fetchTimeline(id, request.query || {});
       if (closed) { cleanup(); return; }
-      for (const entry of (tl && tl.entries) || []) send(entry);
+      for (const entry of (tl && tl.entries) || []) {
+        if (closed) break;
+        send(entry);
+      }
     }
   } catch (e) {
     if (!closed) send({ type: 'error', message: e && e.message ? e.message : String(e) });

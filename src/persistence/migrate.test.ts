@@ -1,4 +1,4 @@
-﻿import { describe, it, before, after } from "node:test";
+import { describe, it, before, after } from "node:test";
 import assert from "node:assert/strict";
 import { Pool } from "pg";
 import { migrate } from "./migrate.js";
@@ -45,7 +45,7 @@ describe("WP1-A migrations", () => {
       assert.ok(names.includes(t), `missing table ${t}`);
     }
     const mig = await pool.query("SELECT version FROM schema_migrations");
-    assert.equal(mig.rows.length, 4);
+    assert.equal(mig.rows.length, 5);
   });
 
   it("is idempotent", async () => {
