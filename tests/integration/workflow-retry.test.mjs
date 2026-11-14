@@ -169,6 +169,10 @@ async function assertCrossCommandRace(firstIntent, secondIntent, expectedAssignm
   const t = await cmd('CreateTask', { projectId: p.body.projectId, title: 'Race Task' });
   const a = await cmd('CreateAssignment', { taskId: t.body.taskId, agentId: 'agent-race' });
   const assignmentId = a.body.assignmentId;
+  if (firstIntent === 'CompleteAssignment' || secondIntent === 'CompleteAssignment') {
+    // Completion is valid only from active; establish that precondition before racing.
+    await observerPool.query("UPDATE assignments SET status='active' WHERE id=$1", [assignmentId]);
+  }
 
   const lockClient = await observerPool.connect();
   let transactionOpen = false;
