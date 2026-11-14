@@ -887,7 +887,7 @@ fastify.get('/v1/agents/sessions/:id/events', async (request, reply) => {
   } catch (e) {
     adapter = null;
   }
-  if (closed) { cleanup(); return; }
+  if (closed) { lateCleanup(); return; }
   if (!adapter) {
     send({ type: 'error', reason: 'PASEO_UNAVAILABLE' });
     cleanup();
@@ -907,7 +907,7 @@ fastify.get('/v1/agents/sessions/:id/events', async (request, reply) => {
   } catch (e) {
     if (!closed) send({ type: 'error', message: e && e.message ? e.message : String(e) });
   }
-  if (closed) { cleanup(); return; }
+  if (closed) { lateCleanup(); return; }
 
   try {
     if (typeof adapter.subscribeEvents === 'function') {
@@ -919,7 +919,7 @@ fastify.get('/v1/agents/sessions/:id/events', async (request, reply) => {
   } catch (e) {
     if (!closed) send({ type: 'error', message: e && e.message ? e.message : String(e) });
   }
-  if (closed) { cleanup(); return; }
+  if (closed) { lateCleanup(); return; }
 });
 
 // ---------------------------------------------------------------------------
