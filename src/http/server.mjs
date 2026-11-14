@@ -66,7 +66,11 @@ async function tryConnectPaseo() {
     const AdapterCls = mod.default || mod.PaseoRuntimeAdapter;
     if (!AdapterCls) return null;
     const adapter = new AdapterCls({ daemonUrl: process.env.PASEO_DAEMON_URL || 'ws://127.0.0.1:6767/ws' });
-    await adapter.connect();
+    const connectTimeoutMs = Number(process.env.PASEO_CONNECT_TIMEOUT_MS || 3000);
+    await Promise.race([
+      adapter.connect(),
+      new Promise((_, reject) => setTimeout(() => reject(new Error('Paseo connect timeout')), connectTimeoutMs)),
+    ]);
     return adapter;
   } catch (err) {
     return null;
@@ -533,6 +537,7 @@ fastify.post('/v1/agents/sessions', async (request, reply) => {
       updatedAt: created.updatedAt || new Date().toISOString(),
       source: 'paseo',
       mock: false,
+      resumeType: null,
     };
     inMemoryAgentSessions.set(created.sessionId, record);
 
@@ -589,9 +594,10 @@ fastify.get('/v1/agents/sessions', async () => {
         updatedAt: live.updatedAt || rec.updatedAt,
         source: 'paseo',
         mock: false,
+        resumeType: live.resumeType || rec.resumeType || null,
       });
     } else {
-      sessions.push({ ...rec, status, source: 'paseo', mock: false });
+      sessions.push({ ...rec, status, source: 'paseo', mock: false, resumeType: rec.resumeType || null });
     }
   }
   try { await adapter.disconnect(); } catch { /* ignore */ }
@@ -605,6 +611,141 @@ fastify.get('/v1/agents/sessions', async () => {
     mock: false,
     note: 'Tracked Paseo sessions with live status from Paseo Daemon.',
   };
+});
+
+// ---------------------------------------------------------------------------
+// Agent session messages + timeline (Paseo-backed when adapter available)
+// ---------------------------------------------------------------------------
+fastify.post('/v1/agents/sessions/:id/messages', async (request, reply) => {
+  const id = request.params.id;
+  const body = request.body || {};
+  const text = body.text ?? body.message ?? body.content;
+  if (!isNonEmptyString(text)) {
+    return reply.status(400).send({ reason: 'MISSING_TEXT', message: 'text is required and must be a non-empty string' });
+  }
+
+  const adapter = await tryConnectPaseo();
+  if (!adapter) {
+    return reply.status(200).send({
+      sessionId: id,
+      result: { deliveryStatus: 'queued' },
+      deliveryStatus: 'queued',
+      mode: 'mock-in-memory',
+      source: 'mock',
+      mock: true,
+      note: 'Paseo Runtime Adapter not available; mock fallback.',
+    });
+  }
+
+  try {
+    const sendFn = typeof adapter.sendMessage === 'function'
+      ? adapter.sendMessage.bind(adapter)
+      : (typeof adapter.sendAgentMessage === 'function' ? adapter.sendAgentMessage.bind(adapter) : null);
+
+    if (!sendFn) {
+      await adapter.disconnect();
+      return reply.status(200).send({
+        sessionId: id,
+        result: { deliveryStatus: 'queued' },
+        deliveryStatus: 'queued',
+        mode: 'mock-in-memory',
+        source: 'mock',
+        mock: true,
+        note: 'Adapter does not support sendMessage; mock fallback.',
+      });
+    }
+
+    const result = await sendFn(id, text.trim(), body.options || {});
+    await adapter.disconnect();
+    const deliveryStatus = (result && result.deliveryStatus) || 'queued';
+    return reply.status(200).send({
+      sessionId: id,
+      result: result || { deliveryStatus },
+      deliveryStatus,
+      mode: 'real',
+      source: 'paseo',
+      mock: false,
+      note: 'Message sent via Paseo.',
+    });
+  } catch (err) {
+    try { await adapter.disconnect(); } catch { /* ignore */ }
+    return reply.status(502).send({
+      reason: 'PASEO_ERROR',
+      message: err && err.message ? err.message : String(err),
+      mode: 'mock-in-memory',
+      source: 'mock',
+      mock: true,
+    });
+  }
+});
+
+fastify.get('/v1/agents/sessions/:id/timeline', async (request, reply) => {
+  const id = request.params.id;
+  const options = request.query || {};
+
+  const adapter = await tryConnectPaseo();
+  if (!adapter) {
+    return {
+      sessionId: id,
+      entries: [],
+      hasOlder: false,
+      hasNewer: false,
+      gap: false,
+      epoch: null,
+      startCursor: null,
+      endCursor: null,
+      mode: 'mock-in-memory',
+      source: 'mock',
+      mock: true,
+      note: 'Paseo Runtime Adapter not available; mock fallback.',
+    };
+  }
+
+  try {
+    if (typeof adapter.fetchTimeline !== 'function') {
+      await adapter.disconnect();
+      return {
+        sessionId: id,
+        entries: [],
+        hasOlder: false,
+        hasNewer: false,
+        gap: false,
+        epoch: null,
+        startCursor: null,
+        endCursor: null,
+        mode: 'mock-in-memory',
+        source: 'mock',
+        mock: true,
+        note: 'Adapter does not support fetchTimeline; mock fallback.',
+      };
+    }
+
+    const tl = await adapter.fetchTimeline(id, options);
+    await adapter.disconnect();
+    return {
+      sessionId: id,
+      entries: (tl && tl.entries) || [],
+      hasOlder: !!(tl && tl.hasOlder),
+      hasNewer: !!(tl && tl.hasNewer),
+      gap: !!(tl && tl.gap),
+      epoch: (tl && tl.epoch) || null,
+      startCursor: (tl && tl.startCursor) || null,
+      endCursor: (tl && tl.endCursor) || null,
+      mode: 'real',
+      source: 'paseo',
+      mock: false,
+      note: 'Timeline from Paseo.',
+    };
+  } catch (err) {
+    try { await adapter.disconnect(); } catch { /* ignore */ }
+    return reply.status(502).send({
+      reason: 'PASEO_ERROR',
+      message: err && err.message ? err.message : String(err),
+      mode: 'mock-in-memory',
+      source: 'mock',
+      mock: true,
+    });
+  }
 });
 
 // ---------------------------------------------------------------------------

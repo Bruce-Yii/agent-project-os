@@ -51,7 +51,35 @@ export class PaseoRuntimeAdapter {
       status: 'running',
       model: 'fake-model',
       updatedAt: now,
+      resumeType: 'metadata-lookup',
     };
+  }
+
+  async sendMessage(sessionId, text, options = {}) {
+    this._ensureConnected();
+    return { deliveryStatus: 'queued' };
+  }
+
+  async sendAgentMessage(sessionId, text, options = {}) {
+    return this.sendMessage(sessionId, text, options);
+  }
+
+  async fetchTimeline(sessionId, options = {}) {
+    this._ensureConnected();
+    return {
+      entries: [],
+      hasOlder: false,
+      hasNewer: false,
+      gap: false,
+      epoch: null,
+      startCursor: null,
+      endCursor: null,
+    };
+  }
+
+  subscribeEvents(sessionId, callback) {
+    this._ensureConnected();
+    return () => {};
   }
 
   async resumeSession(sessionId) {

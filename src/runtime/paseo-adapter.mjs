@@ -1,4 +1,4 @@
-﻿// Paseo Runtime Adapter — Project OS LocalRuntimeNode wrapper for Paseo Daemon 0.15.4
+// Paseo Runtime Adapter — Project OS LocalRuntimeNode wrapper for Paseo Daemon 0.15.4
 //
 // Wraps @getpaseo/client DaemonClient to provide a stable LocalRuntimeNode interface
 // for Project OS. Maps Paseo concepts to Project OS domain objects.
@@ -54,13 +54,15 @@ export class PaseoRuntimeAdapter {
 
   async resumeSession(sessionId) {
     this._ensureConnected();
-    try {
-      const result = await this.client.fetchAgent(sessionId);
-      const agent = result.agent || result;
-      return this._mapAgent(agent);
-    } catch (e) {
-      return null;
+    // Uses fetchAgent (metadata lookup), NOT provider-native resume.
+    // Propagate errors instead of swallowing them silently.
+    const result = await this.client.fetchAgent(sessionId);
+    const agent = result && (result.agent || result);
+    const mapped = this._mapAgent(agent);
+    if (mapped) {
+      mapped.resumeType = 'metadata-lookup';
     }
+    return mapped;
   }
 
   async sendMessage(sessionId, text, options = {}) {
@@ -132,6 +134,7 @@ export class PaseoRuntimeAdapter {
       runtimeInfo: a.runtimeInfo || null,
       createdAt: a.createdAt,
       updatedAt: a.updatedAt,
+      resumeType: null,
     };
   }
 

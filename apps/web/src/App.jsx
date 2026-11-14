@@ -153,6 +153,17 @@ function AgentWorkbench() {
   const [sessionTitle, setSessionTitle] = useState('');
   const [sessionMsg, setSessionMsg] = useState(null);
 
+  const [selectedSessionId, setSelectedSessionId] = useState(null);
+  const [messageText, setMessageText] = useState('');
+  const [sending, setSending] = useState(false);
+  const [sendMsg, setSendMsg] = useState(null);
+  const [timeline, setTimeline] = useState([]);
+  const [timelineLoading, setTimelineLoading] = useState(false);
+  const [timelineError, setTimelineError] = useState(null);
+  const [timelineMeta, setTimelineMeta] = useState(null);
+
+  const sessionIdOf = (s) => s.id || s.sessionId;
+
   const load = async () => {
     setLoading(true);
     setError(null);
@@ -167,7 +178,11 @@ function AgentWorkbench() {
       }
       try {
         const s = await api.agentSessions();
-        setSessions(s.sessions || s.agents || []);
+        const list = s.sessions || s.agents || [];
+        setSessions(list);
+        if (!selectedSessionId && list.length > 0) {
+          setSelectedSessionId(sessionIdOf(list[0]));
+        }
       } catch (e) {
         // keep providers even if sessions fail
       }
@@ -177,6 +192,59 @@ function AgentWorkbench() {
       setLoading(false);
     }
   };
+
+  const fetchTimeline = async (sid) => {
+    const target = sid || selectedSessionId;
+    if (!target) return;
+    setTimelineLoading(true);
+    setTimelineError(null);
+    try {
+      const t = await api.agentTimeline(target);
+      const entries = t.entries || [];
+      setTimeline(entries);
+      setTimelineMeta(t);
+    } catch (e) {
+      setTimelineError(e instanceof ApiError ? e.message : String(e));
+    } finally {
+      setTimelineLoading(false);
+    }
+  };
+
+  const backfill = async () => {
+    // Reconnect/backfill: fetch timeline to recover missed events.
+    await fetchTimeline(selectedSessionId);
+  };
+
+  useEffect(() => { load(); }, []);
+
+  useEffect(() => {
+    if (selectedSessionId) {
+      fetchTimeline(selectedSessionId);
+    } else {
+      setTimeline([]);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedSessionId]);
+
+  // Reconnect/backfill on visibility/focus/online changes.
+  useEffect(() => {
+    const handler = () => {
+      if (document.visibilityState === 'visible') {
+        backfill();
+      }
+    };
+    const focusHandler = () => backfill();
+    const onlineHandler = () => backfill();
+    document.addEventListener('visibilitychange', handler);
+    window.addEventListener('focus', focusHandler);
+    window.addEventListener('online', onlineHandler);
+    return () => {
+      document.removeEventListener('visibilitychange', handler);
+      window.removeEventListener('focus', focusHandler);
+      window.removeEventListener('online', onlineHandler);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedSessionId]);
 
   const createSession = async () => {
     if (!sessionProvider.trim()) return;
@@ -188,14 +256,14 @@ function AgentWorkbench() {
       setSessions(prev => [...prev, s]);
       setSessionTitle('');
       setSessionMsg(s.mock ? 'Session created (mock).' : 'Session created (real).');
+      const newId = sessionIdOf(s);
+      if (newId) setSelectedSessionId(newId);
     } catch (e) {
       setError(e instanceof ApiError ? e.message : String(e));
     } finally {
       setCreatingSession(false);
     }
   };
-
-  useEffect(() => { load(); }, []);
 
   const connectProvider = async () => {
     setConnecting(true);
@@ -212,7 +280,25 @@ function AgentWorkbench() {
     }
   };
 
+  const sendMessage = async () => {
+    if (!selectedSessionId || !messageText.trim()) return;
+    setSending(true);
+    setSendMsg(null);
+    try {
+      const r = await api.sendAgentMessage(selectedSessionId, messageText.trim());
+      setSendMsg(r.mock ? 'Sent (mock).' : 'Sent.');
+      setMessageText('');
+      // backfill after send
+      await fetchTimeline(selectedSessionId);
+    } catch (e) {
+      setSendMsg(e instanceof ApiError ? e.message : String(e));
+    } finally {
+      setSending(false);
+    }
+  };
+
   const mode = caps?.mode || 'mock';
+  const selectedSession = sessions.find(s => sessionIdOf(s) === selectedSessionId);
 
   return (
     <div>
@@ -258,18 +344,60 @@ function AgentWorkbench() {
               {sessionMsg && <div className="status">{sessionMsg}</div>}
             </div>
             {sessions.length === 0 && <div className="status">No active sessions.</div>}
-            {sessions.map((s, i) => (
-              <div key={s.id || s.sessionId || i} style={{ padding: '8px 0', borderBottom: '1px solid #334155' }}>
-                <strong>{s.id || s.sessionId || 'session'}</strong>{' '}
-                <span className={`badge ${s.mock ? 'mock' : 'real'}`}>{s.mock ? 'MOCK' : 'REAL'}</span>
-                <span className="badge">{s.status || 'unknown'}</span>
-                {s.provider && <div className="status">Provider: {s.provider}</div>}
-                {s.cwd && <div className="status">CWD: {s.cwd}</div>}
-              </div>
-            ))}
+            {sessions.map((s, i) => {
+              const sid = sessionIdOf(s);
+              const selected = sid === selectedSessionId;
+              return (
+                <div key={sid || i} style={{ padding: '8px 0', borderBottom: '1px solid #334155', background: selected ? '#1e293b' : 'transparent', cursor: 'pointer' }} onClick={() => setSelectedSessionId(sid)}>
+                  <strong>{sid || 'session'}</strong>{' '}
+                  <span className={`badge ${s.mock ? 'mock' : 'real'}`}>{s.mock ? 'MOCK' : 'REAL'}</span>
+                  <span className="badge">{s.status || 'unknown'}</span>
+                  {s.resumeType && <span className="badge">{s.resumeType}</span>}
+                  {s.provider && <div className="status">Provider: {s.provider}</div>}
+                  {s.cwd && <div className="status">CWD: {s.cwd}</div>}
+                </div>
+              );
+            })}
           </>
         )}
       </div>
+
+      {selectedSessionId && (
+        <div className="card">
+          <h2>Session: {selectedSessionId}</h2>
+          {selectedSession && selectedSession.resumeType && (
+            <div className="status">resumeType: {selectedSession.resumeType}</div>
+          )}
+          <div style={{ marginBottom: '8px' }}>
+            <textarea value={messageText} onChange={e => setMessageText(e.target.value)} placeholder="Type a message..." disabled={sending} rows={3} style={{ width: '100%' }} />
+            <button className="btn" onClick={sendMessage} disabled={sending || !messageText.trim()}>
+              {sending ? 'Sending...' : 'Send'}
+            </button>
+            {sendMsg && <div className="status">{sendMsg}</div>}
+          </div>
+
+          <h3>Event Stream / Timeline</h3>
+          {timelineLoading && <div className="status">Loading timeline...</div>}
+          {timelineError && <div className="status" style={{ color: '#f87171' }}>Error: {timelineError} <button className="btn" onClick={() => fetchTimeline(selectedSessionId)} style={{ marginLeft: '8px' }}>Retry</button></div>}
+          {!timelineLoading && !timelineError && (
+            <>
+              <button className="btn" onClick={() => fetchTimeline(selectedSessionId)} style={{ marginBottom: '8px' }}>Refresh / Backfill</button>
+              {timeline.length === 0 && <div className="status">No timeline entries.</div>}
+              {timeline.map((e, i) => (
+                <div key={e.id || e.cursor || i} style={{ padding: '6px 0', borderBottom: '1px solid #334155' }}>
+                  <strong>{e.type || 'event'}</strong>
+                  {e.timestamp && <span className="status" style={{ marginLeft: '8px' }}>{e.timestamp}</span>}
+                  <pre className="status" style={{ whiteSpace: 'pre-wrap', margin: '4px 0' }}>{typeof e.payload === 'string' ? e.payload : JSON.stringify(e.payload || e, null, 2)}</pre>
+                </div>
+              ))}
+              {timelineMeta && timelineMeta.gap && (
+                <div className="status" style={{ color: '#f59e0b' }}>Event gap detected — timeline may be incomplete.</div>
+              )}
+            </>
+          )}
+        </div>
+      )}
+
       <div className="card">
         <h2>Capabilities</h2>
         {caps && (

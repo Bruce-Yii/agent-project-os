@@ -47,6 +47,12 @@ export const api = {
   providers: () => request('/v1/providers'),
   agentSessions: () => request('/v1/agents/sessions'),
   createAgentSession: (provider, cwd = '', title = '') => request('/v1/agents/sessions', { method: 'POST', body: JSON.stringify({ provider, cwd, title }) }),
+  sendAgentMessage: (sessionId, text, options = {}) => request(`/v1/agents/sessions/${encodeURIComponent(sessionId)}/messages`, { method: 'POST', body: JSON.stringify({ text, options }) }),
+  agentTimeline: (sessionId, options = {}) => {
+    const qs = new URLSearchParams(options || {}).toString();
+    const path = `/v1/agents/sessions/${encodeURIComponent(sessionId)}/timeline${qs ? '?' + qs : ''}`;
+    return request(path);
+  },
   attention: () => request('/v1/attention'),
   command: (intent, payload = {}, envelope = {}) => request('/v1/commands', { method: 'POST', body: JSON.stringify({ intent, payload, envelope }) }),
 };
