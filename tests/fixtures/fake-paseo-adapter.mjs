@@ -1,7 +1,7 @@
 // Isolated fake Paseo adapter for deterministic agent-session tests.
 // Does NOT import @getpaseo. Controlled by env FAKE_PASEO_AVAILABLE ('0' => unavailable).
 
-import { randomUUID } from 'node:crypto';
+import { createHash, randomUUID } from 'node:crypto';
 
 export class PaseoRuntimeAdapter {
   constructor(options = {}) {
@@ -27,7 +27,9 @@ export class PaseoRuntimeAdapter {
 
   async createSession(provider, cwd, title, options = {}) {
     this._ensureConnected();
-    const id = `fake-session-${randomUUID()}`;
+    const id = options.idempotencyKey
+      ? `fake-session-${createHash('sha256').update(options.idempotencyKey).digest('hex').slice(0, 24)}`
+      : `fake-session-${randomUUID()}`;
     const now = new Date().toISOString();
     return {
       sessionId: id,
@@ -68,14 +70,14 @@ export class PaseoRuntimeAdapter {
     this._ensureConnected();
     return {
       entries: [
-        { type: 'history', id: 'hist-1', sessionId, content: 'backfilled event' },
+        { type: 'history', id: 'hist-1', sessionId, content: 'backfilled event', seq: 1 },
       ],
       hasOlder: false,
       hasNewer: false,
       gap: false,
-      epoch: null,
-      startCursor: null,
-      endCursor: null,
+      epoch: 'fake-epoch',
+      startCursor: { epoch: 'fake-epoch', seq: 1 },
+      endCursor: { epoch: 'fake-epoch', seq: 1 },
     };
   }
 
@@ -84,13 +86,23 @@ export class PaseoRuntimeAdapter {
     let active = true;
     const timer = setTimeout(() => {
       if (active && typeof callback === 'function') {
-        callback({ type: 'live-event', sessionId, timestamp: new Date().toISOString() });
+        callback({ type: 'live-event', id: 'live-2', seq: 2, epoch: 'fake-epoch', sessionId, timestamp: new Date().toISOString() });
       }
     }, 50);
-    return () => {
+    const unsubscribe = () => {
+      if (!active) return;
       active = false;
       clearTimeout(timer);
     };
+    unsubscribe.release = unsubscribe;
+    unsubscribe.ready = Promise.resolve();
+    return unsubscribe;
+  }
+
+  async deleteSession(sessionId) {
+    this._ensureConnected();
+    if (process.env.FAKE_PASEO_DELETE_FAIL === '1') throw new Error('fake delete failed');
+    return { deleted: true, sessionId };
   }
 
   async fetchAgentMetadata(sessionId) {

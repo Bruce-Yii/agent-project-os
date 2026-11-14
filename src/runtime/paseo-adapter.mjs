@@ -82,10 +82,22 @@ export class PaseoRuntimeAdapter {
 
   subscribeEvents(sessionId, callback) {
     this._ensureConnected();
-    return this.client.subscribeAgentTimeline(sessionId, (msg) => {
+    const nativeSubscription = this.client.subscribeAgentTimeline(sessionId, (msg) => {
       const event = this._mapEvent(msg, sessionId);
       callback(event);
     });
+    const release = () => typeof nativeSubscription.release === 'function'
+      ? nativeSubscription.release()
+      : nativeSubscription();
+    const unsubscribe = () => release();
+    unsubscribe.release = release;
+    unsubscribe.ready = nativeSubscription.ready || Promise.resolve();
+    return unsubscribe;
+  }
+
+  async deleteSession(sessionId) {
+    this._ensureConnected();
+    await this.client.deleteAgent(sessionId);
   }
 
   async getSession(sessionId) {
@@ -155,6 +167,8 @@ export class PaseoRuntimeAdapter {
       agentId: sessionId,
       payload: (msg && msg.payload) || msg,
       timestamp: (msg && msg.timestamp) || new Date().toISOString(),
+      seq: (msg && msg.seq) ?? (ev && ev.seq) ?? null,
+      epoch: (msg && msg.epoch) ?? (ev && ev.epoch) ?? null,
     };
   }
 }

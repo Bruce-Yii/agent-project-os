@@ -7,6 +7,7 @@ import { randomUUID } from 'node:crypto';
 import path from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { existsSync } from 'node:fs';
+import { streamAgentEvents } from './sse-stream.mjs';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -68,11 +69,23 @@ async function tryConnectPaseo() {
     if (!AdapterCls) return null;
     const adapter = new AdapterCls({ daemonUrl: process.env.PASEO_DAEMON_URL || 'ws://127.0.0.1:6767/ws' });
     const connectTimeoutMs = Number(process.env.PASEO_CONNECT_TIMEOUT_MS || 3000);
-    await Promise.race([
-      adapter.connect(),
-      new Promise((_, reject) => setTimeout(() => reject(new Error('Paseo connect timeout')), connectTimeoutMs)),
-    ]);
-    return adapter;
+    const connectPromise = Promise.resolve().then(() => adapter.connect());
+    let timeoutHandle;
+    try {
+      await Promise.race([
+        connectPromise,
+        new Promise((_, reject) => {
+          timeoutHandle = setTimeout(() => reject(new Error('Paseo connect timeout')), connectTimeoutMs);
+        }),
+      ]);
+      return adapter;
+    } catch (error) {
+      // If the timeout wins but the socket connects later, release that late connection.
+      void connectPromise.then(() => adapter.disconnect()).catch(() => {});
+      throw error;
+    } finally {
+      if (timeoutHandle) clearTimeout(timeoutHandle);
+    }
   } catch (err) {
     return null;
   }
@@ -504,9 +517,139 @@ fastify.get('/v1/providers', async () => {
 // ---------------------------------------------------------------------------
 // Agent sessions (Paseo-backed when adapter available, else mock)
 // ---------------------------------------------------------------------------
+async function createSessionCreationIntent(body, provider, cwd, title) {
+  const id = randomUUID();
+  const idempotencyKey = `project-os-session:${id}`;
+  await pool.query(
+    `INSERT INTO agent_session_creation_intents
+      (id, idempotency_key, provider, cwd, title, project_id, task_id, assignment_id, status)
+     VALUES ($1,$2,$3,$4,$5,$6,$7,$8,'pending')`,
+    [id, idempotencyKey, provider, cwd, title,
+      body.projectId || null, body.taskId || null, body.assignmentId || null],
+  );
+  return { id, idempotencyKey };
+}
+
+async function persistSessionAndIntent(intentId, record) {
+  const client = await pool.connect();
+  try {
+    await client.query('BEGIN');
+    await client.query(
+      `INSERT INTO agent_sessions
+        (id, provider_session_id, provider, cwd, title, status, project_id, task_id,
+         assignment_id, capabilities, created_at, updated_at)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,NOW(),NOW())
+       ON CONFLICT (id) DO UPDATE SET
+         provider_session_id=EXCLUDED.provider_session_id,
+         provider=EXCLUDED.provider, cwd=EXCLUDED.cwd, title=EXCLUDED.title,
+         status=EXCLUDED.status, project_id=EXCLUDED.project_id, task_id=EXCLUDED.task_id,
+         assignment_id=EXCLUDED.assignment_id, capabilities=EXCLUDED.capabilities,
+         updated_at=NOW()`,
+      [record.id, record.providerSessionId, record.provider, record.cwd, record.title,
+        record.status, record.projectId, record.taskId, record.assignmentId,
+        record.capabilities ? JSON.stringify(record.capabilities) : null],
+    );
+    const updated = await client.query(
+      `UPDATE agent_session_creation_intents
+       SET status='committed', provider_session_id=$2, last_error=NULL, updated_at=NOW()
+       WHERE id=$1`,
+      [intentId, record.id],
+    );
+    if (updated.rowCount !== 1) throw new Error('SESSION_CREATION_INTENT_NOT_FOUND');
+    await client.query('COMMIT');
+  } catch (error) {
+    await client.query('ROLLBACK').catch(() => {});
+    throw error;
+  } finally {
+    client.release();
+  }
+}
+
+async function updateSessionCreationIntent(intentId, status, providerSessionId, errorMessage) {
+  await pool.query(
+    `UPDATE agent_session_creation_intents
+     SET status=$2, provider_session_id=COALESCE($3, provider_session_id),
+         last_error=$4, updated_at=NOW()
+     WHERE id=$1`,
+    [intentId, status, providerSessionId || null, errorMessage || null],
+  );
+}
+
+function sessionRecordFromProvider(created, body, provider, cwd, title) {
+  if (!created || !created.sessionId) throw new Error('PASEO_CREATE_RETURNED_NO_SESSION_ID');
+  return {
+    id: created.sessionId,
+    sessionId: created.sessionId,
+    providerSessionId: created.providerSessionId || created.sessionId,
+    provider: created.provider || provider,
+    cwd: created.cwd || cwd,
+    title,
+    status: created.status || 'idle',
+    projectId: body.projectId || null,
+    taskId: body.taskId || null,
+    assignmentId: body.assignmentId || null,
+    capabilities: created.capabilities || body.capabilities || null,
+    model: created.model || null,
+    createdAt: created.createdAt || new Date().toISOString(),
+    updatedAt: created.updatedAt || new Date().toISOString(),
+    source: 'paseo',
+    mock: false,
+    resumeType: null,
+  };
+}
+
+// Reconcile durable intents after a process restart. Paseo's createAgent idempotencyKey
+// makes retrying an uncertain create safe; known remote IDs are looked up first.
+async function reconcilePendingAgentSessionCreations() {
+  if (!isReal() || !pool) return;
+  const { rows } = await pool.query(
+    `SELECT * FROM agent_session_creation_intents
+     WHERE status IN ('pending','reconciliation_required')
+     ORDER BY created_at ASC LIMIT 50`,
+  );
+  if (!rows.length) return;
+  const adapter = await tryConnectPaseo();
+  if (!adapter) {
+    fastify.log.warn({ pending: rows.length }, 'Session creation reconciliation deferred: Paseo unavailable');
+    return;
+  }
+  try {
+    for (const intent of rows) {
+      try {
+        let created = null;
+        if (intent.provider_session_id && typeof adapter.getSession === 'function') {
+          try { created = await adapter.getSession(intent.provider_session_id); } catch { created = null; }
+        }
+        if (!created) {
+          created = await adapter.createSession(intent.provider, intent.cwd, intent.title, {
+            idempotencyKey: intent.idempotency_key,
+          });
+        }
+        const body = {
+          projectId: intent.project_id,
+          taskId: intent.task_id,
+          assignmentId: intent.assignment_id,
+        };
+        const record = sessionRecordFromProvider(created, body, intent.provider, intent.cwd, intent.title);
+        await persistSessionAndIntent(intent.id, record);
+        inMemoryAgentSessions.set(record.id, record);
+        fastify.log.info({ intentId: intent.id, sessionId: record.id }, 'Reconciled agent session creation intent');
+      } catch (error) {
+        const message = error && error.message ? error.message : String(error);
+        await updateSessionCreationIntent(intent.id, 'reconciliation_required', intent.provider_session_id, message).catch(() => {});
+        fastify.log.error({ intentId: intent.id, err: error }, 'Agent session creation reconciliation failed');
+      }
+    }
+  } finally {
+    await adapter.disconnect().catch(() => {});
+  }
+}
+
 fastify.post('/v1/agents/sessions', async (request, reply) => {
   const body = request.body || {};
-  const { provider, cwd, title } = body;
+  const { provider } = body;
+  const cwd = body.cwd || process.cwd();
+  const title = body.title || '';
   if (!isNonEmptyString(provider)) {
     return reply.status(400).send({ reason: 'MISSING_PROVIDER', message: 'provider is required and must be a non-empty string' });
   }
@@ -522,77 +665,80 @@ fastify.post('/v1/agents/sessions', async (request, reply) => {
     });
   }
 
+  let intent = null;
+  let stage = 'intent';
+  let created = null;
+  let record = null;
   try {
-    const created = await adapter.createSession(provider.trim(), cwd || process.cwd(), title || '');
-    await adapter.disconnect();
-
-    const record = {
-      id: created.sessionId,
-      sessionId: created.sessionId,
-      providerSessionId: created.providerSessionId || created.sessionId,
-      provider: created.provider || provider.trim(),
-      cwd: created.cwd || cwd || process.cwd(),
-      title: title || '',
-      status: created.status || 'idle',
-      projectId: (body && body.projectId) || null,
-      taskId: (body && body.taskId) || null,
-      assignmentId: (body && body.assignmentId) || null,
-      capabilities: created.capabilities || (body && body.capabilities) || null,
-      model: created.model || null,
-      createdAt: created.createdAt || new Date().toISOString(),
-      updatedAt: created.updatedAt || new Date().toISOString(),
-      source: 'paseo',
-      mock: false,
-      resumeType: null,
-    };
-
-    // Persist to durable registry when DB is available.
-    if (isReal() && AgentSessionRepositoryCls) {
-      try {
-        const repo = new AgentSessionRepositoryCls(db);
-        await repo.save({
-          id: record.id,
-          providerSessionId: record.providerSessionId,
-          provider: record.provider,
-          cwd: record.cwd,
-          title: record.title,
-          status: record.status,
-          projectId: record.projectId,
-          taskId: record.taskId,
-          assignmentId: record.assignmentId,
-          capabilities: record.capabilities ? JSON.stringify(record.capabilities) : null,
-        });
-      } catch (e) {
-        fastify.log.error(e);
-        try { await adapter.disconnect(); } catch { /* ignore */ }
-        return reply.status(500).send({
-          reason: 'DB_SAVE_FAILED',
-          message: e && e.message ? e.message : String(e),
-          mode: 'real',
-          source: 'paseo',
-          mock: false,
-        });
-      }
+    // The durable intent is committed BEFORE the remote side effect.
+    if (isReal() && pool) {
+      intent = await createSessionCreationIntent(body, provider.trim(), cwd, title);
     }
-    // Keep in-memory cache for mock/legacy paths.
-    inMemoryAgentSessions.set(created.sessionId, record);
+    stage = 'provider-create';
+    created = await adapter.createSession(provider.trim(), cwd, title,
+      intent ? { idempotencyKey: intent.idempotencyKey } : {});
+    record = sessionRecordFromProvider(created, body, provider.trim(), cwd, title);
 
+    if (intent) {
+      stage = 'db-persist';
+      await persistSessionAndIntent(intent.id, record);
+    }
+
+    inMemoryAgentSessions.set(record.id, record);
     return reply.status(201).send({
       ...record,
       mode: 'real',
       source: 'paseo',
       mock: false,
-      note: 'Real Paseo session created.',
+      note: 'Real Paseo session created and registered.',
     });
-  } catch (err) {
-    try { await adapter.disconnect(); } catch { /* ignore */ }
+  } catch (error) {
+    const message = error && error.message ? error.message : String(error);
+    if (intent && stage === 'db-persist' && record) {
+      let compensationStatus = 'reconciliation_required';
+      let compensationError = null;
+      try {
+        if (typeof adapter.deleteSession !== 'function') {
+          throw new Error('PASEO_DELETE_SESSION_UNSUPPORTED');
+        }
+        await adapter.deleteSession(record.id);
+        compensationStatus = 'compensated';
+      } catch (deleteError) {
+        compensationError = deleteError && deleteError.message ? deleteError.message : String(deleteError);
+      }
+      await updateSessionCreationIntent(
+        intent.id,
+        compensationStatus,
+        record.id,
+        compensationError || message,
+      ).catch((updateError) => fastify.log.error({ intentId: intent.id, err: updateError }, 'Could not persist session compensation result'));
+      return reply.status(500).send({
+        reason: 'DB_SAVE_FAILED',
+        message,
+        compensationStatus,
+        compensationError,
+        mode: 'real',
+        source: 'paseo',
+        mock: false,
+      });
+    }
+
+    if (intent) {
+      await updateSessionCreationIntent(intent.id, 'reconciliation_required', created && created.sessionId, message)
+        .catch((updateError) => fastify.log.error({ intentId: intent.id, err: updateError }, 'Could not persist uncertain session creation'));
+    }
+    if (stage === 'intent') {
+      return reply.status(500).send({ reason: 'DB_INTENT_FAILED', message, mode: 'real', source: 'db', mock: false });
+    }
     return reply.status(502).send({
       reason: 'PASEO_ERROR',
-      message: err && err.message ? err.message : String(err),
+      message,
       mode: 'mock-in-memory',
       source: 'mock',
       mock: true,
     });
+  } finally {
+    await adapter.disconnect().catch((error) => fastify.log.warn({ err: error }, 'Paseo adapter disconnect failed'));
   }
 });
 
@@ -851,80 +997,12 @@ fastify.get('/v1/agents/sessions/:id/timeline', async (request, reply) => {
 // Agent session events (SSE)
 // ---------------------------------------------------------------------------
 fastify.get('/v1/agents/sessions/:id/events', async (request, reply) => {
-  const id = request.params.id;
-  reply.hijack();
-  const res = reply.raw;
-  res.writeHead(200, {
-    'Content-Type': 'text/event-stream',
-    'Cache-Control': 'no-cache, no-transform',
-    'Connection': 'keep-alive',
-    'X-Accel-Buffering': 'no',
+  await streamAgentEvents({
+    request,
+    reply,
+    connect: tryConnectPaseo,
+    sessionId: request.params.id,
   });
-
-  const send = (obj) => {
-    try { res.write(`data: ${JSON.stringify(obj)}\n\n`); } catch { /* ignore */ }
-  };
-
-  // Register client disconnect cleanup BEFORE any async connect/backfill.
-  let adapter = null;
-  let unsub = null;
-  let closed = false;
-  const cleanup = () => {
-    if (closed) return;
-    closed = true;
-    if (typeof unsub === 'function') try { unsub(); } catch { /* ignore */ }
-    if (adapter) try { adapter.disconnect(); } catch { /* ignore */ }
-    try { res.end(); } catch { /* ignore */ }
-  };
-  const lateCleanup = () => {
-    if (adapter) try { adapter.disconnect(); } catch { /* ignore */ }
-    if (typeof unsub === 'function') try { unsub(); } catch { /* ignore */ }
-    try { res.end(); } catch { /* ignore */ }
-  };
-  // Client disconnect signals. In Node 24, request.raw 'close' fires on
-  // request completion rather than connection close, so rely on reply.raw
-  // 'close' plus request.raw 'aborted'.
-  res.on('close', cleanup);
-  request.raw.on('aborted', cleanup);
-
-  try {
-    adapter = await tryConnectPaseo();
-  } catch (e) {
-    adapter = null;
-  }
-  if (closed) { lateCleanup(); return; }
-  if (!adapter) {
-    send({ type: 'error', reason: 'PASEO_UNAVAILABLE' });
-    cleanup();
-    return;
-  }
-
-  // Backfill on connect.
-  try {
-    if (typeof adapter.fetchTimeline === 'function') {
-      const tl = await adapter.fetchTimeline(id, request.query || {});
-      if (closed) { cleanup(); return; }
-      for (const entry of (tl && tl.entries) || []) {
-        if (closed) break;
-        send(entry);
-      }
-    }
-  } catch (e) {
-    if (!closed) send({ type: 'error', message: e && e.message ? e.message : String(e) });
-  }
-  if (closed) { lateCleanup(); return; }
-
-  try {
-    if (typeof adapter.subscribeEvents === 'function') {
-      unsub = adapter.subscribeEvents(id, (event) => {
-        if (!closed) send(event);
-      });
-      if (typeof unsub !== 'function') unsub = null;
-    }
-  } catch (e) {
-    if (!closed) send({ type: 'error', message: e && e.message ? e.message : String(e) });
-  }
-  if (closed) { lateCleanup(); return; }
 });
 
 // ---------------------------------------------------------------------------
@@ -954,6 +1032,11 @@ const start = async () => {
     await fastify.listen({ port: PORT, host: '127.0.0.1' });
     console.log(`Agent Project OS server running at http://127.0.0.1:${PORT}`);
     console.log(`Mode: ${mode}`);
+    if (isReal()) {
+      void reconcilePendingAgentSessionCreations().catch((error) =>
+        fastify.log.error({ err: error }, 'Session creation reconciliation startup failed'),
+      );
+    }
   } catch (err) {
     fastify.log.error(err);
     process.exit(1);

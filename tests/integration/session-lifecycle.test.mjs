@@ -111,6 +111,7 @@ after(async () => {
 
 describe('Session lifecycle (SSE + DB)', () => {
   let sessionId;
+  let durableSessionId;
   before(async () => {
     const res = await fetch(`${BASE_SSE}/v1/agents/sessions`, {
       method: 'POST',
@@ -125,7 +126,7 @@ describe('Session lifecycle (SSE + DB)', () => {
     const { res, events } = await readSSE(`${BASE_SSE}/v1/agents/sessions/${sessionId}/events`, 400);
     assert.equal(res.status, 200);
     assert.ok(events.length >= 1, 'expected at least one event');
-    assert.ok(events.some((e) => e.type === 'history' || e.type === 'live-event'), 'expected backfill or live event');
+    assert.ok(events.some((e) => e.type === 'live-event'), 'expected a live subscription event, not history-only');
   });
 
   test('SSE client disconnect + cleanup (server stays healthy)', async () => {
@@ -146,6 +147,70 @@ describe('Session lifecycle (SSE + DB)', () => {
     assert.ok(second.events.some((e) => e.type === 'history'), 'reconnect backfill missing');
   });
 
+  test('DB session creation persists and reconciles pending intents after restart', async () => {
+    const res = await fetch(`${BASE_DB}/v1/agents/sessions`, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ provider: 'fake-provider', cwd: ROOT, title: 'Durable Session' }),
+    });
+    assert.equal(res.status, 201);
+    const body = await res.json();
+    durableSessionId = body.id;
+    const saved = await dbPool.query('SELECT id, provider_session_id, provider FROM agent_sessions WHERE id=$1', [durableSessionId]);
+    assert.equal(saved.rows.length, 1);
+    assert.equal(saved.rows[0].provider_session_id, durableSessionId);
+    const intent = await dbPool.query('SELECT status FROM agent_session_creation_intents WHERE provider_session_id=$1', [durableSessionId]);
+    assert.equal(intent.rows[0].status, 'committed');
+
+    const recoveryId = 'recovery-intent-test-1';
+    const recoveryKey = 'project-os-session:recovery-intent-test-1';
+    await dbPool.query(
+      `INSERT INTO agent_session_creation_intents
+        (id, idempotency_key, provider, cwd, title, status)
+       VALUES ($1,$2,'fake-provider',$3,'Restart Recovery','pending')`,
+      [recoveryId, recoveryKey, ROOT],
+    );
+
+    await dbServer.stop();
+    dbServer = await startServer(PORT_DB, {
+      DATABASE_URL: pgInstance.connectionUri,
+      PASEO_ADAPTER_PATH: FAKE_ADAPTER,
+      FAKE_PASEO_AVAILABLE: '1',
+    });
+    const deadline = Date.now() + 5000;
+    let recovered = null;
+    while (Date.now() < deadline) {
+      const result = await dbPool.query('SELECT status, provider_session_id FROM agent_session_creation_intents WHERE id=$1', [recoveryId]);
+      if (result.rows[0]?.status === 'committed') { recovered = result.rows[0]; break; }
+      await new Promise((resolve) => setTimeout(resolve, 25));
+    }
+    assert.ok(recovered, 'pending intent was not reconciled after process restart');
+    assert.ok(recovered.provider_session_id);
+    const recoveredSession = await dbPool.query('SELECT id FROM agent_sessions WHERE id=$1', [recovered.provider_session_id]);
+    assert.equal(recoveredSession.rows.length, 1);
+  });
+
+  test('Session message and Timeline HTTP paths use the live adapter', async () => {
+    assert.ok(durableSessionId);
+    const sent = await fetch(`${BASE_DB}/v1/agents/sessions/${durableSessionId}/messages`, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ text: 'hello from lifecycle test' }),
+    });
+    assert.equal(sent.status, 200);
+    const sentBody = await sent.json();
+    assert.equal(sentBody.source, 'paseo');
+    assert.equal(sentBody.mock, false);
+    assert.equal(sentBody.deliveryStatus, 'queued');
+
+    const timeline = await fetch(`${BASE_DB}/v1/agents/sessions/${durableSessionId}/timeline`);
+    assert.equal(timeline.status, 200);
+    const timelineBody = await timeline.json();
+    assert.equal(timelineBody.source, 'paseo');
+    assert.equal(timelineBody.mock, false);
+    assert.ok(timelineBody.entries.some((entry) => entry.type === 'history'));
+  });
+
   test('DB save failure -> 500', async () => {
     // Drop table to force save failure.
     await dbPool.query('DROP TABLE IF EXISTS agent_sessions CASCADE');
@@ -157,6 +222,13 @@ describe('Session lifecycle (SSE + DB)', () => {
     assert.equal(res.status, 500);
     const body = await res.json();
     assert.equal(body.reason, 'DB_SAVE_FAILED');
+    assert.equal(body.compensationStatus, 'compensated');
+    const compensated = await dbPool.query(
+      `SELECT status, provider_session_id FROM agent_session_creation_intents
+       WHERE status='compensated' ORDER BY created_at DESC LIMIT 1`,
+    );
+    assert.equal(compensated.rows[0]?.status, 'compensated');
+    assert.ok(compensated.rows[0]?.provider_session_id);
     // restore table via migration? recreate minimal
     await dbPool.query(`CREATE TABLE IF NOT EXISTS agent_sessions (
       id TEXT PRIMARY KEY,

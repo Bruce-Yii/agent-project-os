@@ -15,7 +15,7 @@
     "test:fixtures": "python tests/wp1a/test_wp1a.py",
     "test:integration": "node --test --test-concurrency=1 tests/integration/http-pg.test.mjs",
     "test:workflow": "node --test --test-concurrency=1 tests/integration/workflow.test.mjs tests/integration/workflow-retry.test.mjs",
-    "test:agent-session": "node --test --test-concurrency=1 tests/integration/agent-session.test.mjs tests/integration/session-lifecycle.test.mjs",
+    "test:agent-session": "node --test --test-concurrency=1 tests/integration/agent-session.test.mjs tests/integration/session-lifecycle.test.mjs tests/integration/sse-lifecycle.test.mjs",
     "dev:api": "node src/http/server.mjs",
     "dev:web": "cd apps/web && vite"
   },
