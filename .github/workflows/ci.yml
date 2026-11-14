@@ -22,9 +22,8 @@ jobs:
       - name: Lint Markdown
         uses: DavidAnson/markdownlint-cli2-action@v25.0.0
         with:
-          # G0–G2 historical docs are read-only and have legacy Markdown style.
-          # Enforce lint on newly authored recovery docs, not on frozen history.
-          globs: 'docs/recovery/*.md'
+          globs: '**/*.md'
+          config: .markdownlint.json
 
   link-check:
     name: Markdown link check
@@ -37,11 +36,6 @@ jobs:
         with:
           args: --offline --no-progress './**/*.md'
           fail: true
-
-  # The historical docs/24 DAG is ADAPT/PENDING and not in this clean base.
-  # The legacy in-memory WP1-A fixture harness is QUARANTINED (weak oracle).
-  # Do not run checks whose source is absent or rejected. Real WP1-A tests
-  # belong to the stacked implementation PR and must use the real module.
 
   checksum-verify:
     name: Manifest checksum verification
@@ -70,7 +64,6 @@ jobs:
           manifest = json.loads((work / 'manifest.json').read_text())
           target = manifest['files'][0]
 
-          # Corrupt the checksum entry for target.
           lines = (work / 'CHECKSUMS.sha256').read_text().splitlines()
           out = []
           corrupted = False
@@ -91,7 +84,6 @@ jobs:
               sys.exit(1)
           print('PASS: corrupted checksum detected')
 
-          # Remove the entry entirely.
           lines2 = [l for l in (work / 'CHECKSUMS.sha256').read_text().splitlines()
                     if not (l.split() and l.split()[-1] == target)]
           (work / 'CHECKSUMS.sha256').write_text('\n'.join(lines2) + '\n')
@@ -117,6 +109,24 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
+  wp1a-build-test:
+    name: WP1-A build + typecheck + domain tests
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+      - name: Setup Node 24
+        uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - name: Install dependencies
+        run: npm ci
+      - name: Typecheck
+        run: npm run typecheck
+      - name: Build
+        run: npm run build
+      - name: Domain tests (no DB)
+        run: npm run test
 
   acceptance-contract-check:
     name: Acceptance contract (docs/46) presence
@@ -139,3 +149,20 @@ jobs:
               sys.exit(1)
           print('PASS: docs/46 present and included in manifest')
           PY
+
+  wp1a-db-test:
+    name: WP1-A DB integration tests (Testcontainers, GitHub-hosted only)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+      - name: Setup Node 24
+        uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - name: Install dependencies
+        run: npm ci
+      - name: Verify Docker available
+        run: docker version
+      - name: DB tests (Testcontainers, isolated containers only)
+        run: npm run test:db

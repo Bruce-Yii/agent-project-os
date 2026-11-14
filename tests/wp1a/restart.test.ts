@@ -1,0 +1,138 @@
+import { describe, it, after } from "node:test";
+import assert from "node:assert/strict";
+import { spawnSync } from "node:child_process";
+import { writeFileSync, unlinkSync } from "node:fs";
+import path from "node:path";
+import { createDb, closeDb } from "../../src/persistence/db.js";
+import { ProjectRepository, TaskRepository, PersonalSpaceRepository } from "../../src/persistence/repositories.js";
+import { CommandExecutor } from "../../src/commands/executor.js";
+import { startDisposablePg, type DisposablePg } from "../../src/persistence/disposable-pg.js";
+import { migrate } from "../../src/persistence/migrate.js";
+
+describe("WP1-A restart recovery (separate process)", () => {
+  let pg: DisposablePg;
+
+  it("spawns child that writes Project+Task via CommandExecutor, kills it, parent reads back + verifies idempotency replay", async () => {
+    pg = await startDisposablePg();
+    const dbUrl = pg.connectionUri;
+    const root = process.cwd();
+    const childPath = path.join(root, "restart_child_tmp.mjs");
+
+    const childScript = `
+import { createDb } from "./dist/src/persistence/db.js";
+import { migrate } from "./dist/src/persistence/migrate.js";
+import { CommandExecutor } from "./dist/src/commands/executor.js";
+
+const url = process.env.WP1A_TEST_DB_URL;
+await migrate(url);
+const { db, pool } = createDb(url);
+const executor = new CommandExecutor(db, { pool });
+const r1 = await executor.execute({
+  envelope: { commandId: "rc-1", idempotencyKey: "rk-restart", actor: "personal-owner-1", personalSpaceId: "restart-ps", createdAt: new Date().toISOString(), correlationId: "rcorr", causationId: "rcause" },
+  intent: "BootstrapPersonalSpace",
+  payload: { owner: "restart-owner" },
+});
+console.log("BOOTSTRAP:", JSON.stringify(r1));
+const r2 = await executor.execute({
+  envelope: { commandId: "rc-2", idempotencyKey: "rk-proj", actor: "personal-owner-1", personalSpaceId: "restart-ps", createdAt: new Date().toISOString(), correlationId: "rcorr2", causationId: "rcause2" },
+  intent: "CreateProject",
+  payload: { space_id: "restart-ps", name: "Restart Project", goal: "g" },
+});
+console.log("PROJECT:", JSON.stringify(r2));
+const r3 = await executor.execute({
+  envelope: { commandId: "rc-3", idempotencyKey: "rk-task", actor: "personal-owner-1", personalSpaceId: "restart-ps", projectId: r2.projectId, createdAt: new Date().toISOString(), correlationId: "rcorr3", causationId: "rcause3" },
+  intent: "CreateTask",
+  payload: { project_id: r2.projectId, title: "Restart Task" },
+});
+console.log("TASK:", JSON.stringify(r3));
+await new Promise((r) => setTimeout(r, 60000));
+`;
+
+    writeFileSync(childPath, childScript, "utf8");
+
+    const env = { ...process.env, WP1A_TEST_DB_URL: dbUrl };
+    const result = spawnSync(process.execPath, [childPath], {
+      cwd: root,
+      env,
+      timeout: 3000,
+      stdio: "ignore",
+    });
+
+    // Verify child was terminated by timeout (expected) or completed normally.
+    // Reject spawn errors (other than the expected ETIMEDOUT from spawnSync),
+    // crashes, unexpected signals, and non-zero exits.
+    const isTimeout =
+      !!result.error && (result.error as { code?: string }).code === "ETIMEDOUT";
+    assert.ok(
+      isTimeout || result.error === null || result.error === undefined,
+      `child spawn failed: ${result.error}`,
+    );
+    assert.ok(
+      isTimeout || result.signal === "SIGTERM" || result.status === 0,
+      `child should have been terminated by timeout (SIGTERM) or completed (0), got status=${result.status} signal=${result.signal} error=${result.error}`,
+    );
+    // Explicitly reject any other combination (crash, signal, non-zero exit).
+    if (!isTimeout && result.signal !== "SIGTERM" && result.status !== 0) {
+      assert.fail(
+        `unexpected child exit: status=${result.status} signal=${result.signal}`,
+      );
+    }
+    if (!isTimeout && result.error != null) {
+      assert.fail(`unexpected spawn error: ${result.error}`);
+    }
+
+    try { unlinkSync(childPath); } catch { /* ignore */ }
+
+    // Parent reads back from DB
+    const { db, pool } = createDb(dbUrl);
+    try {
+      const projRepo = new ProjectRepository(db);
+      const taskRepo = new TaskRepository(db);
+      const projects = await projRepo.findBySpace("restart-ps");
+      assert.ok(projects.length >= 1, "At least one Project should survive process restart");
+      const restartProj = projects.find((p: any) => p.name === "Restart Project");
+      assert.ok(restartProj, "Restart Project should survive process restart");
+      assert.equal(restartProj!.status, "draft");
+
+      const tasks = await taskRepo.findByProject(restartProj!.id);
+      assert.ok(tasks.length >= 1, "At least one Task should survive process restart");
+      const restartTask = tasks.find((t: any) => t.title === "Restart Task");
+      assert.ok(restartTask, "Restart Task should survive process restart");
+      assert.equal(restartTask!.status, "backlog");
+
+      // Verify idempotency replay: re-executing same idempotency key returns stored result
+      const executor = new CommandExecutor(db, { pool });
+      const replay = await executor.execute({
+        envelope: { commandId: "rc-replay", idempotencyKey: "rk-proj", actor: "personal-owner-1", personalSpaceId: "restart-ps", createdAt: new Date().toISOString(), correlationId: "rcorr-replay", causationId: "rcause-replay" },
+        intent: "CreateProject",
+        payload: { space_id: "restart-ps", name: "Restart Project", goal: "g" },
+      });
+      assert.equal(replay.status, "OK", "idempotency replay should return OK");
+      assert.equal(replay.projectId, restartProj!.id, "replay must return same projectId (persisted idempotency)");
+
+      // Verify replay returns the same stored receipt.
+      const { rows: receiptRows } = await pool.query(
+        "SELECT receipt_id FROM command_receipts WHERE idempotency_key = $1",
+        ["rk-proj"],
+      );
+      assert.equal(receiptRows.length, 1, "exactly one receipt should be stored");
+      assert.equal(
+        replay.receiptId,
+        receiptRows[0].receipt_id,
+        "replay must return same stored receipt",
+      );
+
+      // Verify exactly one project row (no duplicate from replay)
+      const projectsAfter = await projRepo.findBySpace("restart-ps");
+      const restartProjects = projectsAfter.filter((p: any) => p.name === "Restart Project");
+      assert.equal(restartProjects.length, 1, "replay must not create duplicate Project");
+    } finally {
+      await closeDb(pool);
+      await new Promise((r) => setTimeout(r, 500));
+    }
+  });
+
+  after(async () => {
+    if (pg) { await new Promise((r) => setTimeout(r, 2000)); await pg.stop(); }
+  });
+});
